@@ -3,6 +3,7 @@ import { Calendar } from './components/Calendar.js'
 import { Chatbot } from './components/Chatbot.js'
 import { AuthPages } from './components/AuthPages.js'
 import { Navigation } from './components/Navigation.js'
+import { LandingPage } from './components/LandingPage.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 
 // Global state
@@ -14,6 +15,7 @@ let calendar = null
 let chatbot = null
 let navigation = null
 let authPages = null
+let landingPage = null
 let selectedMoodTags = []
 
 // Initialize app
@@ -28,6 +30,7 @@ async function initializeApp() {
     // Initialize components
     authPages = new AuthPages()
     navigation = new Navigation()
+    landingPage = new LandingPage()
     
     // Set up theme toggle
     document.getElementById('theme-toggle').addEventListener('click', theme.toggle)
@@ -39,7 +42,7 @@ async function initializeApp() {
         currentUser = user
         showMainApp()
     } else {
-        showAuthPages()
+        showLandingPage()
     }
 
     // Set up auth state listener
@@ -49,8 +52,17 @@ async function initializeApp() {
             showMainApp()
         } else if (event === 'SIGNED_OUT') {
             currentUser = null
-            showAuthPages()
+            showLandingPage()
         }
+    })
+
+    // Landing page event listeners
+    document.addEventListener('showSignup', () => {
+        showAuthPages('signup')
+    })
+    
+    document.addEventListener('showLogin', () => {
+        showAuthPages('login')
     })
 
     // Set up form listeners
@@ -198,9 +210,27 @@ async function signOut() {
 }
 
 // UI Navigation
-function showAuthPages() {
+function showLandingPage() {
     document.getElementById('auth-container').classList.remove('hidden')
     document.getElementById('main-app').classList.add('hidden')
+    
+    // Load landing page content
+    landingPage.mount(document.getElementById('auth-container'))
+}
+
+function showAuthPages(page = 'login') {
+    document.getElementById('auth-container').classList.remove('hidden')
+    document.getElementById('main-app').classList.add('hidden')
+    
+    // Load auth pages content
+    authPages.mount(document.getElementById('auth-container'))
+    
+    // Show specific page
+    if (page === 'signup') {
+        authPages.showSignup()
+    } else {
+        authPages.showLogin()
+    }
 }
 
 function showMainApp() {
