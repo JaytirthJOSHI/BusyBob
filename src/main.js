@@ -728,7 +728,13 @@ async function handleTaskSubmit(event) {
         }
     } catch (error) {
         console.error('Error creating task:', error)
-        ui.showMessage('Error creating task', 'error')
+        console.error('Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+        })
+        ui.showMessage(`Error creating task: ${error.message || 'Unknown error'}`, 'error')
     }
 }
 
@@ -757,7 +763,13 @@ async function handleFeelingSubmit(event) {
         loadHomeData()
     } catch (error) {
         console.error('Error logging feeling:', error)
-        ui.showMessage('Error logging mood', 'error')
+        console.error('Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+        })
+        ui.showMessage(`Error logging mood: ${error.message || 'Unknown error'}`, 'error')
     }
 }
 

@@ -137,6 +137,7 @@ export const db = {
         .insert([
           {
             user_id: user.id,
+            name: task.title,
             title: task.title,
             description: task.description,
             priority: task.priority || 'medium',
@@ -250,6 +251,7 @@ export const db = {
             user_id: user.id,
             title: entry.title || '',
             content: entry.content,
+            mood_rating: entry.mood_rating || null,
             tags: entry.tags ? (Array.isArray(entry.tags) ? entry.tags : entry.tags.split(',')) : [],
             created_at: new Date().toISOString()
           }
