@@ -933,6 +933,3 @@ window.toggleTask = toggleTask
 window.deleteTask = deleteTask
 window.deleteJournalEntry = deleteJournalEntry
 
-
-
-
