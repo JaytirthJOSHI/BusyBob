@@ -13,12 +13,10 @@ export class LandingPage {
                             <!-- Navigation -->
                             <nav class="relative max-w-7xl mx-auto flex items-center justify-between pt-6 px-4 sm:px-6 lg:px-8">
                                 <div class="flex items-center">
-                                    <div class="h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
+                                    <div class="h-10 w-10 bg-gradient-to-br from-orange-400 via-red-500 to-pink-500 rounded-xl flex items-center justify-center mr-3 shadow-lg transform rotate-12 hover:rotate-0 transition-transform duration-300">
+                                        <span class="text-white font-black text-lg transform -rotate-12">B</span>
                                     </div>
-                                    <span class="text-xl font-bold text-gray-900 dark:text-white">Mindful Student</span>
+                                    <span class="text-xl font-bold text-gray-900 dark:text-white">Busy <span class="text-orange-500">BOB</span></span>
                                 </div>
                                 <div class="flex items-center space-x-4">
                                     <button id="landing-login-btn" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors">
@@ -35,11 +33,11 @@ export class LandingPage {
                                 <div class="text-center lg:text-left lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
                                     <div>
                                         <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">
-                                            <span class="block">Stay productive,</span>
-                                            <span class="block text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600">stay mindful</span>
+                                            <span class="block">Get busy,</span>
+                                            <span class="block text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-600">get organized</span>
                                         </h1>
                                         <p class="mt-3 text-base text-gray-500 dark:text-gray-300 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                                            The all-in-one productivity and wellness app designed specifically for students. Track tasks, monitor your mood, and maintain a reflective journal—all with a mindful approach.
+                                            The productivity powerhouse for busy students. Track tasks, monitor your mood, and maintain a journal—all in one place. Because busy students need smart solutions.
                                         </p>
                                         
                                         <!-- CTA Buttons -->
@@ -57,16 +55,16 @@ export class LandingPage {
 
                                         <!-- Social Proof -->
                                         <div class="mt-8">
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">Join thousands of students already using Mindful Student</p>
-                                            <div class="flex items-center mt-2 space-x-1">
-                                                <div class="flex">
-                                                    ${Array(5).fill(0).map(() => `
-                                                        <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                                                        </svg>
-                                                    `).join('')}
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">🚀 Launching soon! Be among the first to get organized</p>
+                                            <div class="flex items-center mt-2 space-x-4">
+                                                <div class="flex items-center space-x-1">
+                                                    <span class="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                                    <span class="text-sm text-gray-600 dark:text-gray-400">Free forever</span>
                                                 </div>
-                                                <span class="text-sm text-gray-600 dark:text-gray-400 ml-2">4.9/5 from 1,200+ students</span>
+                                                <div class="flex items-center space-x-1">
+                                                    <span class="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                                                    <span class="text-sm text-gray-600 dark:text-gray-400">No credit card needed</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -123,10 +121,10 @@ export class LandingPage {
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="text-center">
                             <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
-                                Everything you need to stay organized and mindful
+                                Everything busy students need to stay organized
                             </h2>
                             <p class="mt-4 text-xl text-gray-600 dark:text-gray-300">
-                                Designed specifically for the unique challenges students face
+                                Smart tools for the hustle. Built for students who get things done.
                             </p>
                         </div>
 
@@ -204,10 +202,10 @@ export class LandingPage {
                 <section class="bg-gradient-to-r from-blue-600 to-purple-700 py-16">
                     <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
                         <h2 class="text-3xl font-extrabold text-white sm:text-4xl">
-                            Ready to transform your student life?
+                            Ready to level up your productivity game?
                         </h2>
                         <p class="mt-4 text-xl text-blue-100">
-                            Join thousands of students who are already more organized, productive, and mindful.
+                            Be among the first to experience the ultimate student productivity platform.
                         </p>
                         <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                             <button id="cta-signup-btn" class="bg-white text-purple-700 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-all transform hover:scale-105 shadow-xl">
@@ -231,11 +229,13 @@ export class LandingPage {
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="flex flex-col md:flex-row justify-between items-center">
                             <div class="flex items-center mb-4 md:mb-0">
-                                <div class="h-6 w-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded mr-2"></div>
-                                <span class="text-lg font-semibold text-gray-900 dark:text-white">Mindful Student</span>
+                                <div class="h-8 w-8 bg-gradient-to-br from-orange-400 via-red-500 to-pink-500 rounded-lg flex items-center justify-center mr-2 shadow-lg transform rotate-12">
+                                    <span class="text-white font-black text-sm transform -rotate-12">B</span>
+                                </div>
+                                <span class="text-lg font-semibold text-gray-900 dark:text-white">Busy <span class="text-orange-500">BOB</span></span>
                             </div>
                             <div class="text-center text-gray-600 dark:text-gray-400">
-                                <p>&copy; 2024 Mindful Student. Made with ❤️ for students everywhere.</p>
+                                <p>&copy; 2024 Busy BOB. Made with 🔥 for students who hustle.</p>
                             </div>
                         </div>
                     </div>

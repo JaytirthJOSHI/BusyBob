@@ -1,9 +1,9 @@
 {
-  "name": "mindful-student",
+  "name": "busy-bob",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "A productivity and wellness app designed for students",
+  "description": "The ultimate student productivity platform",
   "keywords": ["productivity", "mindfulness", "student", "task-management", "mood-tracking"],
   "author": "Your Name",
   "license": "MIT",

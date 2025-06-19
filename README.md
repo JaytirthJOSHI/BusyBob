@@ -1,6 +1,6 @@
-# Mindful Student 🧘‍♀️
+# Busy BOB 🔥
 
-A beautiful, modern productivity and wellness app designed specifically for students. Track tasks, monitor mood, and maintain a reflective journal with a mindful approach.
+The ultimate productivity platform for busy students. Smart tools for the hustle. Track tasks, monitor mood, and maintain a journal—all in one place. Built for students who get things done.
 
 ## ✨ Features
 
