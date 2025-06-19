@@ -100,6 +100,31 @@ async function initializeApp() {
         // Update current date
         updateCurrentDate()
         
+        // Listen for demo login event
+        document.addEventListener('demoLogin', async () => {
+            // Demo credentials (should match a user in your Supabase or be created on the fly)
+            const demoEmail = 'demo@busybob.com'
+            const demoPassword = 'busybobdemo'
+            try {
+                // Try to sign in
+                const { data, error } = await auth.signIn(demoEmail, demoPassword)
+                if (error && error.message.includes('Invalid login credentials')) {
+                    // If user doesn't exist, sign up
+                    const { error: signupError } = await auth.signUp(demoEmail, demoPassword)
+                    if (signupError) throw signupError
+                    // Try sign in again
+                    await auth.signIn(demoEmail, demoPassword)
+                } else if (error) {
+                    throw error
+                }
+                // Show main app (auth state change will also handle this)
+                showMainApp()
+                ui.showMessage('Logged in as demo user!', 'success')
+            } catch (err) {
+                ui.showMessage('Demo login failed: ' + err.message, 'error')
+            }
+        })
+        
         console.log('🎉 App initialization complete!')
         
     } catch (error) {

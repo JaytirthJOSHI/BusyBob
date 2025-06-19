@@ -286,6 +286,18 @@
     .loading {
         animation: mobilePulse 1.5s ease-in-out infinite;
     }
+    
+    /* Mobile-specific theme toggle improvements */
+    #theme-toggle {
+        top: env(safe-area-inset-top, 1rem);
+        right: 1rem;
+        padding: 0.5rem;
+    }
+    
+    #theme-toggle svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
 }
 
 @keyframes mobilePulse {
@@ -369,6 +381,12 @@
     /* Better form field focus */
     .form-input:focus {
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Better touch feedback for theme toggle */
+    #theme-toggle:active {
+        transform: scale(0.95);
+        transition: transform 0.1s ease-out;
     }
 }
 
@@ -476,4 +494,13 @@
         opacity: 1;
         transform: translateX(0);
     }
+}
+
+/* Ensure theme toggle is accessible on all devices */
+#theme-toggle {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

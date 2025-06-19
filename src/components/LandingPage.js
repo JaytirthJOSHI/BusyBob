@@ -51,6 +51,9 @@ export class LandingPage {
                                             <button id="hero-demo-btn" class="w-full sm:w-auto bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-8 py-4 rounded-lg text-lg font-semibold border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
                                                 See How It Works
                                             </button>
+                                            <button id="hero-guest-btn" class="w-full sm:w-auto bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold px-8 py-4 rounded-lg shadow-lg transition-all transform hover:scale-105 border border-yellow-300">
+                                                Try Demo
+                                            </button>
                                         </div>
 
                                         <!-- Social Proof -->
@@ -217,6 +220,9 @@ export class LandingPage {
                             <button id="cta-login-btn" class="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-purple-700 transition-all">
                                 Already have an account? Sign In
                             </button>
+                            <button id="cta-guest-btn" class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold px-8 py-4 rounded-lg shadow-lg transition-all transform hover:scale-105 border border-yellow-300">
+                                Try Demo
+                            </button>
                         </div>
                         <p class="mt-4 text-sm text-blue-200">
                             No credit card required • Free forever • 2-minute setup
@@ -274,5 +280,13 @@ export class LandingPage {
                 document.dispatchEvent(new CustomEvent('showSignup'))
             })
         }
+
+        // Add event listeners for Try Demo buttons
+        const guestBtns = this.container.querySelectorAll('#hero-guest-btn, #cta-guest-btn')
+        guestBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.dispatchEvent(new CustomEvent('demoLogin'))
+            })
+        })
     }
 } 
