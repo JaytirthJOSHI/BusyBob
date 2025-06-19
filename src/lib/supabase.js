@@ -137,11 +137,10 @@ export const db = {
         .insert([
           {
             user_id: user.id,
-            name: task.title || task.name,
             title: task.title,
             description: task.description,
             priority: task.priority || 'medium',
-            category: task.category || 'personal',
+            category: task.category || 'general',
             completed: task.completed || false,
             due_date: task.due_date,
             due_time: task.due_time,
@@ -211,10 +210,9 @@ export const db = {
         .insert([
           {
             user_id: user.id,
-            feeling: feeling.feeling,
             rating: feeling.rating,
-            comments: feeling.notes || feeling.comments,
-            mood_tags: feeling.mood_tags,
+            comments: feeling.comments,
+            mood_tags: feeling.mood_tags ? feeling.mood_tags.split(',') : [],
             created_at: new Date().toISOString()
           }
         ])
@@ -250,10 +248,9 @@ export const db = {
         .insert([
           {
             user_id: user.id,
-            title: entry.title,
+            title: entry.title || '',
             content: entry.content,
-            mood_rating: entry.mood_rating,
-            tags: entry.tags,
+            tags: entry.tags ? (Array.isArray(entry.tags) ? entry.tags : entry.tags.split(',')) : [],
             created_at: new Date().toISOString()
           }
         ])

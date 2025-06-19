@@ -736,12 +736,10 @@ async function handleFeelingSubmit(event) {
     event.preventDefault()
     const formData = new FormData(event.target)
     
-    const comments = formData.get('comments')
     const feelingData = {
         rating: parseInt(formData.get('rating')),
         mood_tags: selectedMoodTags.join(','),
-        comments: comments,
-        feeling: comments || 'No comment'
+        comments: formData.get('comments')
     }
     
     try {
