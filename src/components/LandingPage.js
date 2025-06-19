@@ -235,7 +235,7 @@ export class LandingPage {
                                 <span class="text-lg font-semibold text-gray-900 dark:text-white">Busy <span class="text-orange-500">BOB</span></span>
                             </div>
                             <div class="text-center text-gray-600 dark:text-gray-400">
-                                <p>&copy; 2024 Busy BOB. Made with 🔥 for students who hustle.</p>
+                                <p>&copy; 2025 Busy BOB. Made with 🔥 for students who hustle.</p>
                             </div>
                         </div>
                     </div>
