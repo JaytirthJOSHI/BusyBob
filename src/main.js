@@ -549,28 +549,28 @@ function createTaskHTML(task) {
     const statusClass = task.completed ? 'status-completed' : isOverdue ? 'status-overdue' : ''
     
     return `
-        <div class="task-item border rounded-lg p-4 ${priorityClass} ${statusClass} card-hover" data-task-id="${task.id}">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3 flex-1">
+        <div class="task-item border rounded-lg p-3 sm:p-4 ${priorityClass} ${statusClass} card-hover" data-task-id="${task.id}">
+            <div class="flex items-start justify-between">
+                <div class="flex items-start space-x-3 flex-1 min-w-0">
                     <input type="checkbox" ${task.completed ? 'checked' : ''} 
                            onchange="toggleTask(${task.id})"
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    <div class="flex-1">
-                        <h3 class="font-medium text-gray-900 dark:text-white ${task.completed ? 'line-through opacity-75' : ''}">${task.title}</h3>
-                        <div class="flex items-center space-x-4 mt-1">
-                            <span class="text-xs px-2 py-1 rounded-full ${taskUtils.getCategoryColor(task.category)}">${task.category}</span>
-                            <span class="text-sm text-gray-500 dark:text-gray-400">
+                           class="h-5 w-5 sm:h-4 sm:w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-medium text-gray-900 dark:text-white ${task.completed ? 'line-through opacity-75' : ''} text-sm sm:text-base break-words">${task.title}</h3>
+                        <div class="flex flex-wrap items-center gap-2 mt-1 sm:mt-2">
+                            <span class="text-xs px-2 py-1 rounded-full ${taskUtils.getCategoryColor(task.category)} whitespace-nowrap">${task.category}</span>
+                            <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                 ${dateUtils.formatDateTime(task.due_date, task.due_time)}
                             </span>
-                            <span class="text-xs ${taskUtils.getPriorityColor(task.priority)}">
+                            <span class="text-xs ${taskUtils.getPriorityColor(task.priority)} whitespace-nowrap">
                                 ${taskUtils.getPriorityIcon(task.priority)} ${task.priority.toUpperCase()}
                             </span>
                         </div>
-                        ${task.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-2">${task.description}</p>` : ''}
+                        ${task.description ? `<p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2 break-words">${task.description}</p>` : ''}
                     </div>
                 </div>
-                <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 p-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 p-2 ml-2 flex-shrink-0">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                     </svg>
                 </button>
@@ -647,22 +647,22 @@ function renderJournalEntries() {
     
     entriesContainer.innerHTML = journalEntries.length > 0
         ? journalEntries.map(entry => `
-            <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20 card-hover">
-            <div class="flex justify-between items-start mb-4">
-                <div>
-                        ${entry.title ? `<h3 class="text-lg font-semibold text-gray-900 dark:text-white">${entry.title}</h3>` : ''}
-                        <p class="text-sm text-gray-500 dark:text-gray-400">${dateUtils.formatDate(entry.created_at)}</p>
+            <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-white/20 card-hover">
+                <div class="flex justify-between items-start mb-3 sm:mb-4">
+                    <div class="flex-1 min-w-0">
+                        ${entry.title ? `<h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white break-words">${entry.title}</h3>` : ''}
+                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">${dateUtils.formatDate(entry.created_at)}</p>
                     </div>
-                    <button onclick="deleteJournalEntry(${entry.id})" class="text-red-500 hover:text-red-700 p-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button onclick="deleteJournalEntry(${entry.id})" class="text-red-500 hover:text-red-700 p-2 ml-2 flex-shrink-0">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
                     </button>
                 </div>
-                <div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">${entry.content}</div>
-        </div>
-    `).join('')
-        : '<p class="text-gray-500 dark:text-gray-400 text-center py-8">No journal entries yet. Start writing your first entry above!</p>'
+                <div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap text-sm sm:text-base break-words">${entry.content}</div>
+            </div>
+        `).join('')
+        : '<p class="text-gray-500 dark:text-gray-400 text-center py-6 sm:py-8 text-sm sm:text-base">No journal entries yet. Start writing your first entry above!</p>'
 }
 
 // Form handlers

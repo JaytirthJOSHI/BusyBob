@@ -227,6 +227,76 @@
     .card-hover {
         padding: 1rem;
     }
+    
+    /* Smooth page transitions for mobile */
+    .page-transition {
+        transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    }
+    
+    .page-transition.hidden {
+        opacity: 0;
+        transform: translateX(20px);
+        pointer-events: none;
+    }
+    
+    /* Better touch feedback animations */
+    .nav-link:active {
+        transform: scale(0.95);
+        transition: transform 0.1s ease-out;
+    }
+    
+    .quick-action-btn:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease-out;
+    }
+    
+    /* Smooth form interactions */
+    .form-input:focus {
+        transform: none;
+        transition: all 0.2s ease-out;
+    }
+    
+    /* Better button press feedback */
+    .btn-gradient:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease-out;
+    }
+    
+    /* Smooth mood rating interactions */
+    .mood-label:active > div {
+        transform: scale(0.9);
+        transition: transform 0.1s ease-out;
+    }
+    
+    /* Better card interactions on mobile */
+    .card-hover {
+        transition: all 0.2s ease-out;
+    }
+    
+    .card-hover:active {
+        transform: scale(0.99);
+    }
+    
+    /* Smooth navigation transitions */
+    nav {
+        transition: transform 0.3s ease-out;
+    }
+    
+    /* Better loading states for mobile */
+    .loading {
+        animation: mobilePulse 1.5s ease-in-out infinite;
+    }
+}
+
+@keyframes mobilePulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(0.98);
+    }
 }
 
 /* Additional mobile optimizations */
@@ -274,6 +344,31 @@
     /* Improve scrolling on touch devices */
     .overflow-y-auto {
         -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Swipe-friendly interactions */
+    .task-item {
+        transition: transform 0.2s ease-out;
+    }
+    
+    .task-item:active {
+        transform: translateX(10px);
+    }
+    
+    /* Better scroll momentum */
+    .overflow-y-auto {
+        scroll-behavior: smooth;
+    }
+    
+    /* Improve tap targets */
+    input[type="checkbox"], input[type="radio"] {
+        min-width: 24px;
+        min-height: 24px;
+    }
+    
+    /* Better form field focus */
+    .form-input:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 }
 
