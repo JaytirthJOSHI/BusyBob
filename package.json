@@ -1,17 +1,29 @@
 {
   "name": "mindful-student",
+  "private": true,
   "version": "1.0.0",
-  "description": "A mindful student productivity and wellness app",
   "type": "module",
+  "description": "A productivity and wellness app designed for students",
+  "keywords": ["productivity", "mindfulness", "student", "task-management", "mood-tracking"],
+  "author": "Your Name",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && npx vercel --prod",
+    "deploy:netlify": "npm run build && npx netlify deploy --prod --dir=dist",
+    "lint": "echo 'Add ESLint later'",
+    "test": "echo 'Add tests later'"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.0"
+    "@supabase/supabase-js": "^2.47.10"
   },
   "devDependencies": {
-    "vite": "^5.0.0"
+    "vite": "^5.4.19"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   }
 }
