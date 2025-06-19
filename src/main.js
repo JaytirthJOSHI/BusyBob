@@ -47,9 +47,13 @@ async function initializeApp() {
 
     // Set up auth state listener
     auth.onAuthStateChange((event, session) => {
+        console.log('Auth state change:', event, session)
         if (event === 'SIGNED_IN' && session) {
             currentUser = session.user
-            showMainApp()
+            // Small delay to let user see welcome message
+            setTimeout(() => {
+                showMainApp()
+            }, 1500)
         } else if (event === 'SIGNED_OUT') {
             currentUser = null
             showLandingPage()
@@ -82,23 +86,27 @@ async function initializeApp() {
 }
 
 function setupFormListeners() {
-    // Login form
-    document.getElementById('login-form')?.addEventListener('submit', handleLogin)
+    // Use event delegation for forms that get mounted dynamically
+    document.addEventListener('submit', (e) => {
+        if (e.target.id === 'login-form') {
+            handleLogin(e)
+        } else if (e.target.id === 'signup-form') {
+            handleSignup(e)
+        } else if (e.target.id === 'task-form') {
+            handleTaskSubmit(e)
+        } else if (e.target.id === 'feeling-form') {
+            handleFeelingSubmit(e)
+        } else if (e.target.id === 'journal-form') {
+            handleJournalSubmit(e)
+        }
+    })
     
-    // Signup form
-    document.getElementById('signup-form')?.addEventListener('submit', handleSignup)
-    
-    // Sign out button
-    document.getElementById('sign-out-btn')?.addEventListener('click', signOut)
-    
-    // Task form
-    document.getElementById('task-form')?.addEventListener('submit', handleTaskSubmit)
-    
-    // Feeling form
-    document.getElementById('feeling-form')?.addEventListener('submit', handleFeelingSubmit)
-    
-    // Journal form
-    document.getElementById('journal-form')?.addEventListener('submit', handleJournalSubmit)
+    // Sign out button (exists in main app)
+    document.addEventListener('click', (e) => {
+        if (e.target.id === 'sign-out-btn') {
+            signOut()
+        }
+    })
     
     // Mood tags
     document.querySelectorAll('.mood-tag').forEach(tag => {
@@ -193,8 +201,18 @@ async function handleSignup(event) {
         
         if (error) throw error
         
-        ui.showMessage('Account created successfully! Please check your email to verify your account.', 'success')
-        authPages.showLogin()
+        // Check if user needs email confirmation
+        if (data.user && !data.session) {
+            ui.showMessage('Account created! Please check your email to verify your account, then sign in.', 'success')
+            authPages.showLogin()
+        } else if (data.user && data.session) {
+            // Auto sign-in is enabled in Supabase
+            ui.showMessage('Welcome to Busy BOB! Let\'s get you organized.', 'success')
+            // The auth state change listener will handle the redirect
+        } else {
+            ui.showMessage('Account created successfully! You can now sign in.', 'success')
+            authPages.showLogin()
+        }
     } catch (error) {
         ui.showMessage(error.message, 'error')
     }
