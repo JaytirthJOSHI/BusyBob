@@ -1,161 +1,258 @@
-// Mock Supabase for local development (no real backend needed)
+import { createClient } from '@supabase/supabase-js'
 
-// Mock data storage
-let mockUsers = []
-let mockTasks = []
-let mockFeelings = []
-let mockJournalEntries = []
-let currentUser = null
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// Mock auth object
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase environment variables. Check your .env file.')
+  console.log('VITE_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing')
+  console.log('VITE_SUPABASE_ANON_KEY:', supabaseKey ? 'Set' : 'Missing')
+}
+
+export const supabase = createClient(supabaseUrl, supabaseKey)
+
+// Auth helpers
 export const auth = {
   signUp: async (email, password, name) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    // Check if user already exists
-    if (mockUsers.find(u => u.email === email)) {
-      return { data: null, error: { message: 'User already exists' } }
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name
+          }
+        }
+      })
+      
+      if (data.user && !error) {
+        // Create user profile in the users table
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: data.user.id,
+              name: name,
+              email: email,
+              created_at: new Date().toISOString()
+            }
+          ])
+        
+        if (profileError) {
+          console.warn('Profile creation failed:', profileError)
+        }
+      }
+      
+      return { data, error }
+    } catch (err) {
+      console.error('SignUp error:', err)
+      return { data: null, error: err }
     }
-    
-    const user = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      user_metadata: { name }
-    }
-    
-    mockUsers.push(user)
-    return { data: { user }, error: null }
   },
 
   signIn: async (email, password) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    const user = mockUsers.find(u => u.email === email)
-    if (!user) {
-      return { data: null, error: { message: 'Invalid credentials' } }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+      return { data, error }
+    } catch (err) {
+      console.error('SignIn error:', err)
+      return { data: null, error: err }
     }
-    
-    currentUser = user
-    return { data: { user }, error: null }
   },
 
   signOut: async () => {
-    currentUser = null
-    return { data: null, error: null }
+    try {
+      const { error } = await supabase.auth.signOut()
+      return { data: null, error }
+    } catch (err) {
+      console.error('SignOut error:', err)
+      return { data: null, error: err }
+    }
   },
 
-  getCurrentUser: () => {
-    return Promise.resolve({ data: { user: currentUser } })
+  getCurrentUser: async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      return { data: { user } }
+    } catch (err) {
+      console.error('GetCurrentUser error:', err)
+      return { data: { user: null } }
+    }
   },
 
   onAuthStateChange: (callback) => {
-    // Mock auth state change listener
-    return () => {} // Unsubscribe function
+    return supabase.auth.onAuthStateChange(callback)
   }
 }
 
-// Mock database object
+// Database helpers
 export const db = {
   // Tasks
   getTasks: async () => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const userTasks = mockTasks.filter(task => task.user_id === currentUser?.id)
-    return { data: userTasks, error: null }
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: false })
+      return { data, error }
+    } catch (err) {
+      console.error('GetTasks error:', err)
+      return { data: [], error: err }
+    }
   },
 
   createTask: async (task) => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const newTask = {
-      ...task,
-      id: Date.now(),
-      user_id: currentUser?.id,
-      created_at: new Date().toISOString()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([
+          {
+            user_id: user.id,
+            name: task.title || task.name,
+            title: task.title,
+            description: task.description,
+            priority: task.priority || 'medium',
+            category: task.category || 'personal',
+            completed: task.completed || false,
+            due_date: task.due_date,
+            due_time: task.due_time,
+            stress_level: task.stress_level,
+            created_at: new Date().toISOString()
+          }
+        ])
+        .select()
+      return { data, error }
+    } catch (err) {
+      console.error('CreateTask error:', err)
+      return { data: null, error: err }
     }
-    mockTasks.push(newTask)
-    return { data: [newTask], error: null }
   },
 
   updateTask: async (id, updates) => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const taskIndex = mockTasks.findIndex(t => t.id === id)
-    if (taskIndex === -1) {
-      return { data: null, error: { message: 'Task not found' } }
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+      return { data, error }
+    } catch (err) {
+      console.error('UpdateTask error:', err)
+      return { data: null, error: err }
     }
-    
-    mockTasks[taskIndex] = { ...mockTasks[taskIndex], ...updates }
-    return { data: [mockTasks[taskIndex]], error: null }
   },
 
   deleteTask: async (id) => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const taskIndex = mockTasks.findIndex(t => t.id === id)
-    if (taskIndex === -1) {
-      return { data: null, error: { message: 'Task not found' } }
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', id)
+      return { data, error }
+    } catch (err) {
+      console.error('DeleteTask error:', err)
+      return { data: null, error: err }
     }
-    
-    mockTasks.splice(taskIndex, 1)
-    return { data: null, error: null }
   },
 
   // Feelings
   getFeelings: async () => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const userFeelings = mockFeelings.filter(feeling => feeling.user_id === currentUser?.id)
-    return { data: userFeelings, error: null }
+    try {
+      const { data, error } = await supabase
+        .from('feelings')
+        .select('*')
+        .order('created_at', { ascending: false })
+      return { data, error }
+    } catch (err) {
+      console.error('GetFeelings error:', err)
+      return { data: [], error: err }
+    }
   },
 
   createFeeling: async (feeling) => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const newFeeling = {
-      ...feeling,
-      id: Date.now(),
-      user_id: currentUser?.id,
-      created_at: new Date().toISOString()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const { data, error } = await supabase
+        .from('feelings')
+        .insert([
+          {
+            user_id: user.id,
+            feeling: feeling.feeling,
+            rating: feeling.rating,
+            comments: feeling.notes || feeling.comments,
+            mood_tags: feeling.mood_tags,
+            created_at: new Date().toISOString()
+          }
+        ])
+        .select()
+      return { data, error }
+    } catch (err) {
+      console.error('CreateFeeling error:', err)
+      return { data: null, error: err }
     }
-    mockFeelings.push(newFeeling)
-    return { data: [newFeeling], error: null }
   },
 
   // Journal Entries
   getJournalEntries: async () => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const userEntries = mockJournalEntries.filter(entry => entry.user_id === currentUser?.id)
-    return { data: userEntries, error: null }
+    try {
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .select('*')
+        .order('created_at', { ascending: false })
+      return { data, error }
+    } catch (err) {
+      console.error('GetJournalEntries error:', err)
+      return { data: [], error: err }
+    }
   },
 
   createJournalEntry: async (entry) => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const newEntry = {
-      ...entry,
-      id: Date.now(),
-      user_id: currentUser?.id,
-      created_at: new Date().toISOString()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .insert([
+          {
+            user_id: user.id,
+            title: entry.title,
+            content: entry.content,
+            mood_rating: entry.mood_rating,
+            tags: entry.tags,
+            created_at: new Date().toISOString()
+          }
+        ])
+        .select()
+      return { data, error }
+    } catch (err) {
+      console.error('CreateJournalEntry error:', err)
+      return { data: null, error: err }
     }
-    mockJournalEntries.push(newEntry)
-    return { data: [newEntry], error: null }
   },
 
   deleteJournalEntry: async (id) => {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    const entryIndex = mockJournalEntries.findIndex(e => e.id === id)
-    if (entryIndex === -1) {
-      return { data: null, error: { message: 'Entry not found' } }
+    try {
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('id', id)
+      return { data, error }
+    } catch (err) {
+      console.error('DeleteJournalEntry error:', err)
+      return { data: null, error: err }
     }
-    
-    mockJournalEntries.splice(entryIndex, 1)
-    return { data: null, error: null }
   }
 }
 
-// For backward compatibility
-export const supabase = {
-  auth,
-  from: (table) => ({
-    select: () => ({ data: [], error: null }),
-    insert: () => ({ data: [], error: null }),
-    update: () => ({ data: [], error: null }),
-    delete: () => ({ data: [], error: null })
-  })
-}

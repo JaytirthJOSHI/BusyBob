@@ -1,13 +1,14 @@
 export class AuthPages {
   constructor() {
-    this.initializeHTML()
+    this.container = null
   }
 
-  initializeHTML() {
-    const authContainer = document.getElementById('auth-container')
-    if (authContainer) {
-      authContainer.innerHTML = this.getAuthHTML()
-    }
+  mount(container) {
+    this.container = container
+    container.innerHTML = this.getAuthHTML()
+    
+    // Store reference globally for onclick handlers
+    window.authPages = this
   }
 
   getAuthHTML() {
@@ -15,16 +16,14 @@ export class AuthPages {
       <!-- Login Page -->
       <div id="login-page" class="max-w-md w-full space-y-8">
         <div class="text-center">
-          <div class="mx-auto h-16 w-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
+          <div class="mx-auto h-16 w-16 bg-gradient-to-br from-orange-400 via-red-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg transform rotate-12 hover:rotate-0 transition-transform duration-300">
+            <span class="text-white font-black text-2xl transform -rotate-12">B</span>
           </div>
           <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
-            Welcome to Mindful Student
+            Welcome to Busy <span class="text-orange-500">BOB</span>
           </h2>
           <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Your personal companion for productivity and wellness
+            Your productivity powerhouse for getting things done
           </p>
         </div>
 
@@ -61,16 +60,14 @@ export class AuthPages {
       <!-- Sign Up Page -->
       <div id="signup-page" class="max-w-md w-full space-y-8 hidden">
         <div class="text-center">
-          <div class="mx-auto h-16 w-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-            </svg>
+          <div class="mx-auto h-16 w-16 bg-gradient-to-br from-orange-400 via-red-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg transform rotate-12 hover:rotate-0 transition-transform duration-300">
+            <span class="text-white font-black text-2xl transform -rotate-12">B</span>
           </div>
           <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
-            Create Your Account
+            Join Busy <span class="text-orange-500">BOB</span>
           </h2>
           <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Start your mindful journey today
+            Start your productivity journey today
           </p>
         </div>
 
@@ -117,13 +114,16 @@ export class AuthPages {
     document.getElementById('signup-page').classList.add('hidden')
   }
 
-  showSignUp() {
+  showSignup() {
     document.getElementById('login-page').classList.add('hidden')
     document.getElementById('signup-page').classList.remove('hidden')
   }
+
+  showSignUp() {
+    this.showSignup()
+  }
 }
 
-// Global access for onclick handlers
-window.authPages = new AuthPages() 
+
 
 
