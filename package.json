@@ -1,0 +1,19 @@
+{
+  "name": "mindful-student",
+  "version": "1.0.0",
+  "description": "A mindful student productivity and wellness app",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
+
+

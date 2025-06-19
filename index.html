@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mindful Student</title>
+    
+    <!-- External CSS and Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/styles/main.css">
+    
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
+    <!-- Theme Toggle Button -->
+    <button id="theme-toggle" 
+        class="fixed top-4 right-4 z-50 p-3 rounded-full glass-effect hover:bg-white/20 dark:hover:bg-gray-800/20 theme-toggle shadow-lg">
+        <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+        <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+    </button>
+
+    <!-- Authentication Container -->
+    <div id="auth-container" class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <!-- Auth pages will be loaded here by AuthPages component -->
+    </div>
+
+    <!-- Main Application -->
+    <div id="main-app" class="hidden">
+        <!-- Header -->
+        <header class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <div class="h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Mindful Student</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-600 dark:text-gray-400" id="user-name"></span>
+                        <button id="sign-out-btn" class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Bar -->
+        <nav class="fixed bottom-0 inset-x-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700 z-30">
+            <!-- Navigation will be loaded here by Navigation component -->
+        </nav>
+
+        <!-- Page Content Container -->
+        <main class="min-h-screen pb-20 pt-4">
+            <!-- Home Page -->
+            <div id="home-page" class="page-content page-transition">
+                <div class="container mx-auto px-4 py-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Welcome Section -->
+                        <div class="lg:col-span-3">
+                            <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg p-8 text-white card-hover">
+                                <h2 class="text-3xl font-bold mb-2">Welcome back, <span id="welcome-name"></span>!</h2>
+                                <p class="text-blue-100 mb-4" id="current-date"></p>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                                    <div class="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+                                        <div class="text-2xl font-bold" id="tasks-count">0</div>
+                                        <div class="text-sm text-blue-100">Pending Tasks</div>
+                                    </div>
+                                    <div class="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+                                        <div class="text-2xl font-bold" id="mood-average">-</div>
+                                        <div class="text-sm text-blue-100">Average Mood</div>
+                                    </div>
+                                    <div class="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+                                        <div class="text-2xl font-bold" id="streak-count">0</div>
+                                        <div class="text-sm text-blue-100">Day Streak</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20 card-hover">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+                                <div class="space-y-3">
+                                    <button data-page="tasks" class="quick-action-btn w-full p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-left">
+                                        <div class="font-medium">Add New Task</div>
+                                        <div class="text-sm opacity-75">Create a new task with deadline</div>
+                                    </button>
+                                    <button data-page="feelings" class="quick-action-btn w-full p-3 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors text-left">
+                                        <div class="font-medium">Log Mood</div>
+                                        <div class="text-sm opacity-75">Track how you're feeling</div>
+                                    </button>
+                                    <button data-page="journal" class="quick-action-btn w-full p-3 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors text-left">
+                                        <div class="font-medium">Write Journal</div>
+                                        <div class="text-sm opacity-75">Reflect on your day</div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analytics Section -->
+                        <div class="lg:col-span-2 space-y-6">
+                            <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20 card-hover">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Mood Trend</h3>
+                                <div class="h-48">
+                                    <canvas id="moodChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20 card-hover">
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Task Completion</h3>
+                                    <div class="h-40">
+                                        <canvas id="taskChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20 card-hover">
+                                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Upcoming Tasks</h3>
+                                    <div id="upcoming-tasks" class="space-y-2">
+                                        <!-- Upcoming tasks will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Page -->
+            <div id="tasks-page" class="page-content page-transition hidden">
+                <div class="container mx-auto px-4 py-6">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-8 border border-white/20 card-hover">
+                            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-6">My Tasks</h2>
+                            
+                            <!-- Task Form -->
+                            <form id="task-form" class="mb-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="task-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Task Title</label>
+                                        <input type="text" name="title" id="task-title" required
+                                            class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label for="task-category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+                                        <select name="category" id="task-category"
+                                            class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                            <option value="general">General</option>
+                                            <option value="study">Study</option>
+                                            <option value="work">Work</option>
+                                            <option value="personal">Personal</option>
+                                            <option value="health">Health</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="task-due-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Date</label>
+                                        <input type="date" name="due_date" id="task-due-date" required
+                                            class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label for="task-due-time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Time</label>
+                                        <input type="time" name="due_time" id="task-due-time" required
+                                            class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label for="task-priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+                                        <select name="priority" id="task-priority"
+                                            class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                            <option value="low">Low</option>
+                                            <option value="medium" selected>Medium</option>
+                                            <option value="high">High</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="task-stress-level" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Stress Level</label>
+                                        <select name="stress_level" id="task-stress-level" required
+                                            class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                            <option value="1">Very Low</option>
+                                            <option value="2">Low</option>
+                                            <option value="3" selected>Medium</option>
+                                            <option value="4">High</option>
+                                            <option value="5">Very High</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label for="task-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description (Optional)</label>
+                                    <textarea name="description" id="task-description" rows="3"
+                                        class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                                </div>
+                                <button type="submit" class="btn-gradient mt-4 w-full text-white py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                    Add Task
+                                </button>
+                            </form>
+
+                            <!-- Task List -->
+                            <div id="task-list" class="space-y-4">
+                                <!-- Tasks will be dynamically added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar Page -->
+            <div id="calendar-page" class="page-content page-transition hidden">
+                <div class="container mx-auto px-4 py-6">
+                    <div class="max-w-6xl mx-auto">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Calendar Container -->
+                            <div class="lg:col-span-2">
+                                <div id="calendar-container"></div>
+                            </div>
+                            
+                            <!-- Selected Date Tasks -->
+                            <div class="lg:col-span-1">
+                                <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20 card-hover">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4" id="selected-date-title">Today's Tasks</h3>
+                                    <div id="selected-date-tasks" class="space-y-3">
+                                        <!-- Selected date tasks will be shown here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feelings Page -->
+            <div id="feelings-page" class="page-content page-transition hidden">
+                <div class="container mx-auto px-4 py-6">
+                    <div class="max-w-3xl mx-auto">
+                        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-8 border border-white/20 card-hover">
+                            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">How are you feeling today?</h2>
+                            <form id="feeling-form" class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Rate your mood:</label>
+                                    <div class="flex justify-center space-x-4" id="mood-rating">
+                                        <label class="cursor-pointer mood-label" data-rating="1">
+                                            <input type="radio" name="rating" value="1" class="sr-only peer" required>
+                                            <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-2xl hover:scale-110 transition-transform peer-checked:bg-red-500 peer-checked:text-white">😞</div>
+                                            <div class="text-center text-xs mt-2 text-gray-600 dark:text-gray-400">Very Bad</div>
+                                        </label>
+                                        <label class="cursor-pointer mood-label" data-rating="2">
+                                            <input type="radio" name="rating" value="2" class="sr-only peer" required>
+                                            <div class="w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-2xl hover:scale-110 transition-transform peer-checked:bg-orange-500 peer-checked:text-white">😕</div>
+                                            <div class="text-center text-xs mt-2 text-gray-600 dark:text-gray-400">Bad</div>
+                                        </label>
+                                        <label class="cursor-pointer mood-label" data-rating="3">
+                                            <input type="radio" name="rating" value="3" class="sr-only peer" required>
+                                            <div class="w-16 h-16 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center text-2xl hover:scale-110 transition-transform peer-checked:bg-yellow-500 peer-checked:text-white">😐</div>
+                                            <div class="text-center text-xs mt-2 text-gray-600 dark:text-gray-400">Okay</div>
+                                        </label>
+                                        <label class="cursor-pointer mood-label" data-rating="4">
+                                            <input type="radio" name="rating" value="4" class="sr-only peer" required>
+                                            <div class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-2xl hover:scale-110 transition-transform peer-checked:bg-green-500 peer-checked:text-white">😊</div>
+                                            <div class="text-center text-xs mt-2 text-gray-600 dark:text-gray-400">Good</div>
+                                        </label>
+                                        <label class="cursor-pointer mood-label" data-rating="5">
+                                            <input type="radio" name="rating" value="5" class="sr-only peer" required>
+                                            <div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-2xl hover:scale-110 transition-transform peer-checked:bg-blue-500 peer-checked:text-white">😄</div>
+                                            <div class="text-center text-xs mt-2 text-gray-600 dark:text-gray-400">Excellent</div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="mood-tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        What's affecting your mood? (Optional)
+                                    </label>
+                                    <div class="flex flex-wrap gap-2 mb-4">
+                                        <button type="button" class="mood-tag px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors" data-tag="work">Work</button>
+                                        <button type="button" class="mood-tag px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors" data-tag="study">Study</button>
+                                        <button type="button" class="mood-tag px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors" data-tag="family">Family</button>
+                                        <button type="button" class="mood-tag px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors" data-tag="friends">Friends</button>
+                                        <button type="button" class="mood-tag px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors" data-tag="health">Health</button>
+                                        <button type="button" class="mood-tag px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors" data-tag="weather">Weather</button>
+                                        <button type="button" class="mood-tag px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors" data-tag="sleep">Sleep</button>
+                                    </div>
+                                    <input type="hidden" name="mood_tags" id="mood-tags">
+                                </div>
+
+                                <div>
+                                    <label for="feeling-comments" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Any thoughts you'd like to share?
+                                    </label>
+                                    <textarea id="feeling-comments" name="comments" rows="4"
+                                        class="form-input block w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                                        shadow-sm focus:border-blue-500 focus:ring-blue-500
+                                        placeholder-gray-500 dark:placeholder-gray-400"
+                                        placeholder="Share your thoughts here..."></textarea>
+                                </div>
+
+                                <div class="flex justify-end">
+                                    <button type="submit" class="btn-gradient text-white px-8 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        Save Mood
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Journal Page -->
+            <div id="journal-page" class="page-content page-transition hidden">
+                <div class="container mx-auto px-4 py-6">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-8 mb-8 border border-white/20 card-hover">
+                            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Daily Journal</h2>
+                            <form id="journal-form" class="space-y-6">
+                                <div>
+                                    <label for="journal-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Title (Optional)
+                                    </label>
+                                    <input type="text" id="journal-title" name="title"
+                                        class="form-input block w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                                        shadow-sm focus:border-blue-500 focus:ring-blue-500
+                                        placeholder-gray-500 dark:placeholder-gray-400"
+                                        placeholder="Give your entry a title...">
+                                </div>
+                                
+                                <div>
+                                    <label for="journal-content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Write your thoughts
+                                    </label>
+                                    <textarea id="journal-content" name="content" rows="8" required
+                                        class="form-input block w-full rounded-lg border-gray-300 dark:border-gray-600 
+                                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                                        shadow-sm focus:border-blue-500 focus:ring-blue-500
+                                        placeholder-gray-500 dark:placeholder-gray-400"
+                                        placeholder="Share your thoughts, feelings, or experiences here..."></textarea>
+                                </div>
+
+                                <div class="flex justify-between items-center">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        <span id="journal-char-count">0</span> characters
+                                    </div>
+                                    <button type="submit" class="btn-gradient text-white px-8 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        Save Entry
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div id="journal-entries" class="space-y-6">
+                            <!-- Journal entries will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- External JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
+
+
+
+
+
