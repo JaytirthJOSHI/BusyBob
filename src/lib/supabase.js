@@ -85,7 +85,30 @@ export const auth = {
 
   onAuthStateChange: (callback) => {
     return supabase.auth.onAuthStateChange(callback)
-  }
+  },
+
+  signInWithGoogle: async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        }
+      })
+      return { data, error }
+    } catch (err) {
+      console.error('Google signIn error:', err)
+      return { data: null, error: err }
+    }
+  },
+
+
+
+
 }
 
 // Database helpers
@@ -255,5 +278,4 @@ export const db = {
     }
   }
 }
-
 

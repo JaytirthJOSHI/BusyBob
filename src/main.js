@@ -6,6 +6,8 @@ import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 
+console.log('🚀 Main.js loaded - starting initialization...')
+
 // Global state
 let currentUser = null
 let tasks = []
@@ -20,67 +22,107 @@ let selectedMoodTags = []
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM loaded, calling initializeApp...')
     initializeApp()
 })
 
 async function initializeApp() {
-    // Initialize theme
-    theme.initialize()
-    
-    // Initialize components
-    authPages = new AuthPages()
-    navigation = new Navigation()
-    landingPage = new LandingPage()
-    
-    // Set up theme toggle
-    document.getElementById('theme-toggle').addEventListener('click', theme.toggle)
-    
-    // Check authentication state
-    const { data: { user } } = await auth.getCurrentUser()
-    
-    if (user) {
-        currentUser = user
-        showMainApp()
-    } else {
-        showLandingPage()
-    }
-
-    // Set up auth state listener
-    auth.onAuthStateChange((event, session) => {
-        console.log('Auth state change:', event, session)
-        if (event === 'SIGNED_IN' && session) {
-            currentUser = session.user
-            // Don't auto-redirect - let user choose when to enter the app
-            console.log('User signed in:', currentUser.email)
-        } else if (event === 'SIGNED_OUT') {
-            currentUser = null
+    try {
+        console.log('🔧 Starting app initialization...')
+        
+        // Initialize theme
+        console.log('🎨 Initializing theme...')
+        theme.initialize()
+        
+        // Initialize components
+        console.log('📦 Creating components...')
+        authPages = new AuthPages()
+        navigation = new Navigation()
+        landingPage = new LandingPage()
+        console.log('✅ Components created successfully')
+        
+        // Set up theme toggle
+        console.log('🌙 Setting up theme toggle...')
+        document.getElementById('theme-toggle').addEventListener('click', theme.toggle)
+        
+        // Check authentication state
+        console.log('🔐 Checking authentication state...')
+        const { data: { user } } = await auth.getCurrentUser()
+        
+        if (user) {
+            console.log('👤 User is authenticated, showing main app')
+            currentUser = user
+            showMainApp()
+        } else {
+            console.log('🏠 No user found, showing landing page')
             showLandingPage()
         }
-    })
 
-    // Landing page event listeners
-    document.addEventListener('showSignup', () => {
-        showAuthPages('signup')
-    })
-    
-    document.addEventListener('showLogin', () => {
-        showAuthPages('login')
-    })
+        // Set up auth state listener
+        auth.onAuthStateChange((event, session) => {
+            console.log('Auth state change:', event, session)
+            if (event === 'SIGNED_IN' && session) {
+                currentUser = session.user
+                // Don't auto-redirect - let user choose when to enter the app
+                console.log('User signed in:', currentUser.email)
+            } else if (event === 'SIGNED_OUT') {
+                currentUser = null
+                // Remove chatbot when user signs out
+                if (chatbot) {
+                    const chatbotToggle = document.getElementById('chatbot-toggle')
+                    const chatbotWindow = document.getElementById('chatbot-window')
+                    if (chatbotToggle) chatbotToggle.remove()
+                    if (chatbotWindow) chatbotWindow.remove()
+                    chatbot = null
+                }
+                showLandingPage()
+            }
+        })
 
-    // Set up form listeners
-    setupFormListeners()
-    
-    // Set up navigation listeners
-    setupNavigationListeners()
-    
-    // Initialize calendar
-    calendar = new Calendar('calendar-container', onDateSelect)
-    
-    // Initialize chatbot
-    chatbot = new Chatbot()
-    
-    // Update current date
-    updateCurrentDate()
+        // Landing page event listeners
+        document.addEventListener('showSignup', () => {
+            showAuthPages('signup')
+        })
+        
+        document.addEventListener('showLogin', () => {
+            showAuthPages('login')
+        })
+
+        // Set up form listeners
+        setupFormListeners()
+        
+        // Set up navigation listeners
+        setupNavigationListeners()
+        
+        // Initialize calendar
+        calendar = new Calendar('calendar-container', onDateSelect)
+        
+        // Update current date
+        updateCurrentDate()
+        
+        console.log('🎉 App initialization complete!')
+        
+    } catch (error) {
+        console.error('❌ Error during app initialization:', error)
+        // Show error message to user
+        document.body.innerHTML = `
+            <div class="min-h-screen bg-red-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+                    <div class="text-red-600 text-center mb-4">
+                        <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                        <h2 class="text-xl font-bold text-gray-900">Oops! Something went wrong</h2>
+                        <p class="text-gray-600 mt-2">There was an error loading the app. Please refresh the page and try again.</p>
+                        <p class="text-sm text-gray-500 mt-4">Error: ${error.message}</p>
+                        <button onclick="window.location.reload()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                            Refresh Page
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `
+    }
 }
 
 function setupFormListeners() {
@@ -103,6 +145,8 @@ function setupFormListeners() {
     document.addEventListener('click', (e) => {
         if (e.target.id === 'sign-out-btn') {
             signOut()
+        } else if (e.target.id === 'google-login' || e.target.id === 'google-signup') {
+            handleGoogleAuth()
         }
     })
     
@@ -269,7 +313,34 @@ async function handleSignup(event) {
 async function signOut() {
     try {
         await auth.signOut()
+        currentUser = null
+        
+        // Remove chatbot when user signs out
+        if (chatbot) {
+            const chatbotToggle = document.getElementById('chatbot-toggle')
+            const chatbotWindow = document.getElementById('chatbot-window')
+            if (chatbotToggle) chatbotToggle.remove()
+            if (chatbotWindow) chatbotWindow.remove()
+            chatbot = null
+        }
+        
+        showLandingPage()
         ui.showMessage('Signed out successfully', 'success')
+    } catch (error) {
+        console.error('Error signing out:', error)
+        ui.showMessage('Error signing out', 'error')
+    }
+}
+
+// Social Authentication functions
+async function handleGoogleAuth() {
+    try {
+        ui.showMessage('Redirecting to Google...', 'info')
+        const { data, error } = await auth.signInWithGoogle()
+        
+        if (error) throw error
+        
+        // OAuth will redirect, so we don't need to handle success here
     } catch (error) {
         ui.showMessage(error.message, 'error')
     }
@@ -277,11 +348,33 @@ async function signOut() {
 
 // UI Navigation
 function showLandingPage() {
-    document.getElementById('auth-container').classList.remove('hidden')
-    document.getElementById('main-app').classList.add('hidden')
+    console.log('🏠 Showing landing page...')
+    const authContainer = document.getElementById('auth-container')
+    const mainApp = document.getElementById('main-app')
+    
+    if (!authContainer) {
+        console.error('❌ auth-container element not found!')
+        return
+    }
+    
+    if (!mainApp) {
+        console.error('❌ main-app element not found!')
+        return
+    }
+    
+    // Clean up any existing chatbot elements
+    const existingChatbotToggle = document.getElementById('chatbot-toggle')
+    const existingChatbotWindow = document.getElementById('chatbot-window')
+    if (existingChatbotToggle) existingChatbotToggle.remove()
+    if (existingChatbotWindow) existingChatbotWindow.remove()
+    
+    authContainer.classList.remove('hidden')
+    mainApp.classList.add('hidden')
     
     // Load landing page content
-    landingPage.mount(document.getElementById('auth-container'))
+    console.log('📄 Mounting landing page content...')
+    landingPage.mount(authContainer)
+    console.log('✅ Landing page mounted successfully!')
 }
 
 function showAuthPages(page = 'login') {
@@ -308,6 +401,12 @@ function showMainApp() {
         const userName = currentUser.user_metadata?.name || currentUser.email
         document.getElementById('user-name').textContent = userName
         document.getElementById('welcome-name').textContent = userName.split(' ')[0]
+    }
+    
+    // Initialize chatbot only when showing main app
+    if (!chatbot) {
+        console.log('🤖 Initializing chatbot for authenticated user...')
+        chatbot = new Chatbot()
     }
     
     // Load data and show home page
