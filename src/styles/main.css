@@ -163,6 +163,118 @@
     .card-hover:hover {
         transform: none;
     }
+    
+    /* Better touch targets for mobile */
+    button, .nav-link, .quick-action-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Improve form inputs on mobile */
+    input, select, textarea {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+    }
+    
+    /* Better spacing for mobile */
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    /* Improve task items on mobile */
+    .task-item {
+        padding: 0.75rem;
+    }
+    
+    /* Better mood rating on mobile */
+    .mood-label > div {
+        min-width: 48px;
+        min-height: 48px;
+    }
+    
+    /* Improve navigation on mobile */
+    nav {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    /* Better button spacing on mobile */
+    .btn-gradient {
+        padding: 0.75rem 1rem;
+    }
+    
+    /* Improve chart containers on mobile */
+    canvas {
+        max-height: 200px;
+    }
+    
+    /* Better modal/overlay handling on mobile */
+    .fixed {
+        position: fixed;
+    }
+    
+    /* Improve text readability on mobile */
+    .text-sm {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+    }
+    
+    /* Better grid layouts on mobile */
+    .grid {
+        gap: 0.75rem;
+    }
+    
+    /* Improve card padding on mobile */
+    .card-hover {
+        padding: 1rem;
+    }
+}
+
+/* Additional mobile optimizations */
+@media (max-width: 480px) {
+    /* Even smaller screens */
+    .container {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+    
+    /* Smaller text for very small screens */
+    h1 {
+        font-size: 1.25rem;
+    }
+    
+    h2 {
+        font-size: 1.125rem;
+    }
+    
+    /* Better form layout on very small screens */
+    .grid-cols-1 > div {
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Improve button sizes on very small screens */
+    .btn-gradient {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    /* Remove hover effects on touch devices */
+    .card-hover:hover {
+        transform: none;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Better touch feedback */
+    button:active, .nav-link:active, .quick-action-btn:active {
+        transform: scale(0.98);
+    }
+    
+    /* Improve scrolling on touch devices */
+    .overflow-y-auto {
+        -webkit-overflow-scrolling: touch;
+    }
 }
 
 /* Focus improvements for accessibility */
