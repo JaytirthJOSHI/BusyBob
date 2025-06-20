@@ -4,6 +4,7 @@ import { Chatbot } from './components/Chatbot.js'
 import { AuthPages } from './components/AuthPages.js'
 import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
+import { Grades } from './components/Grades.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 
 console.log('🚀 Main.js loaded - starting initialization...')
@@ -18,6 +19,7 @@ let chatbot = null
 let navigation = null
 let authPages = null
 let landingPage = null
+let grades = null
 let selectedMoodTags = []
 
 // Initialize app
@@ -39,6 +41,7 @@ async function initializeApp() {
         authPages = new AuthPages()
         navigation = new Navigation()
         landingPage = new LandingPage()
+        grades = new Grades()
         console.log('✅ Components created successfully')
         
         // Set up theme toggle
@@ -490,6 +493,11 @@ function showPage(pageName) {
             break
         case 'journal':
             loadJournalEntries()
+            break
+        case 'grades':
+            if (grades) {
+                grades.init()
+            }
             break
     }
 }

@@ -4,7 +4,13 @@
   "version": "1.0.0",
   "type": "module",
   "description": "The ultimate student productivity platform",
-  "keywords": ["productivity", "mindfulness", "student", "task-management", "mood-tracking"],
+  "keywords": [
+    "productivity",
+    "mindfulness",
+    "student",
+    "task-management",
+    "mood-tracking"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "scripts": {
@@ -17,7 +23,8 @@
     "test": "echo 'Add tests later'"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.47.10"
+    "@supabase/supabase-js": "^2.47.10",
+    "studentvue.js": "^0.1.1"
   },
   "devDependencies": {
     "vite": "^5.4.19"
