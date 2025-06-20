@@ -110,17 +110,36 @@ async function initializeApp() {
                 const { data, error } = await auth.signIn(demoEmail, demoPassword)
                 if (error && error.message.includes('Invalid login credentials')) {
                     // If user doesn't exist, sign up
-                    const { error: signupError } = await auth.signUp(demoEmail, demoPassword)
+                    const { error: signupError } = await auth.signUp(demoEmail, demoPassword, 'Demo User')
                     if (signupError) throw signupError
                     // Try sign in again
                     await auth.signIn(demoEmail, demoPassword)
                 } else if (error) {
                     throw error
                 }
-                // Show main app (auth state change will also handle this)
+                
+                // Ensure user record exists in users table
+                await db.ensureUser()
+                
+                // Populate demo data
+                await db.populateDemoData()
+                
+                // Show main app
                 showMainApp()
-                ui.showMessage('Logged in as demo user!', 'success')
+                
+                // Load data after a short delay to ensure demo data is processed
+                setTimeout(async () => {
+                    try {
+                        await loadAllData()
+                        ui.showMessage('Logged in as demo user with sample data!', 'success')
+                    } catch (loadError) {
+                        console.error('Error loading demo data:', loadError)
+                        ui.showMessage('Demo data loaded, but some items may not appear. Please refresh if needed.', 'warning')
+                    }
+                }, 1000)
+                
             } catch (err) {
+                console.error('Demo login error:', err)
                 ui.showMessage('Demo login failed: ' + err.message, 'error')
             }
         })
@@ -478,16 +497,29 @@ function showPage(pageName) {
 // Data loading functions
 async function loadAllData() {
     try {
-        await Promise.all([
+        console.log('🔄 Starting to load all data...')
+        
+        const results = await Promise.allSettled([
             loadTasks(),
             loadFeelings(),
             loadJournalEntries()
         ])
         
+        // Check for any failures
+        const failures = results.filter(result => result.status === 'rejected')
+        if (failures.length > 0) {
+            console.error('Some data loading failed:', failures)
+            failures.forEach(failure => {
+                console.error('Data loading error:', failure.reason)
+            })
+        }
+        
+        console.log('✅ Data loading completed')
         loadHomeData()
         loadCharts()
+        
     } catch (error) {
-        console.error('Error loading data:', error)
+        console.error('❌ Error in loadAllData:', error)
         ui.showMessage('Error loading data. Please refresh the page.', 'error')
     }
 }
