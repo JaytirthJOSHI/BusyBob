@@ -89,10 +89,13 @@ export const auth = {
 
   signInWithGoogle: async () => {
     try {
+      // Always use production URL for OAuth redirect to avoid localhost issues
+      const redirectUrl = 'https://busybob.site';
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

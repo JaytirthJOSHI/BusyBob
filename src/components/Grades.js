@@ -117,11 +117,28 @@ export class Grades {
         });
 
         if (!response.ok) {
-            const errorBody = await response.json();
-            throw new Error(errorBody.error || `Request failed with status ${response.status}`);
+            let errorMessage = `Request failed with status ${response.status}`;
+            try {
+                const errorBody = await response.json();
+                errorMessage = errorBody.error || errorMessage;
+            } catch (e) {
+                // If we can't parse the error response, use the status text
+                errorMessage = response.statusText || errorMessage;
+            }
+            throw new Error(errorMessage);
         }
 
-        return response.json();
+        const text = await response.text();
+        if (!text) {
+            throw new Error('Empty response from server');
+        }
+
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error('Failed to parse JSON response:', text);
+            throw new Error('Invalid response format from server');
+        }
     }
 
     async loadAllData() {
