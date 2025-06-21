@@ -13,7 +13,6 @@ console.log('🚀 Main.js loaded - starting initialization...')
 // Global state
 let currentUser = null
 let tasks = []
-let feelings = []
 let journalEntries = []
 let calendar = null
 let chatbot = null
@@ -22,7 +21,193 @@ let authPages = null
 let landingPage = null
 let grades = null
 let settings = null
-let selectedMoodTags = []
+
+const moodManager = {
+    feelings: [],
+    lastCheckedDate: null,
+    
+    async init() {
+        await this.load()
+        this.ui.render()
+        this.checkPrompt()
+    },
+
+    async load() {
+        try {
+            const { data, error } = await db.getFeelings()
+            if (error) throw error
+            this.feelings = data || []
+        } catch (error) {
+            console.error("Error loading feelings:", error)
+            ui.showMessage("Failed to load mood data.", "error")
+        }
+    },
+
+    async log(rating, date) {
+        try {
+            const feelingData = { rating }
+            if (date) {
+                feelingData.created_at = date.toISOString()
+            }
+            const { data, error } = await db.createFeeling(feelingData)
+            if (error) throw error
+            
+            await this.load() // Reload all feelings
+            this.ui.render()
+            ui.showMessage("Mood logged successfully!", "success")
+
+            if (window.loadHomeData) window.loadHomeData()
+            
+        } catch (error) {
+            console.error("Error logging mood:", error)
+            ui.showMessage("Failed to save mood.", "error")
+        }
+    },
+    
+    checkPrompt() {
+        const today = new Date().toDateString()
+        if (this.lastCheckedDate === today) return
+
+        this.lastCheckedDate = today
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
+        const yesterdayStr = yesterday.toISOString().split('T')[0]
+
+        const yesterdayFeeling = this.feelings.find(f => f.created_at.startsWith(yesterdayStr))
+        const todayFeeling = this.feelings.find(f => f.created_at.startsWith(new Date().toISOString().split('T')[0]))
+
+        if (!todayFeeling && !yesterdayFeeling) {
+            const lastFeelingDate = this.feelings.length > 0 ? new Date(this.feelings[0].created_at) : null
+            if (lastFeelingDate) {
+                const daysSinceLastLog = (new Date() - lastFeelingDate) / (1000 * 60 * 60 * 24)
+                if (daysSinceLastLog > 1) {
+                    this.ui.showYesterdayPrompt()
+                }
+            } else {
+                 this.ui.showYesterdayPrompt()
+            }
+        }
+    },
+
+    ui: {
+        render() {
+            const container = document.getElementById('mood-logging-section')
+            if (!container) return
+
+            const today = new Date().toISOString().split('T')[0]
+            const todaysFeeling = moodManager.feelings.find(f => f.created_at.startsWith(today))
+
+            if (todaysFeeling) {
+                container.innerHTML = this.renderLoggedState(todaysFeeling)
+            } else {
+                container.innerHTML = this.renderLoggingForm()
+                this.addFormEventListeners()
+            }
+        },
+
+        renderLoggingForm() {
+            return `
+                <div class="space-y-3">
+                    <div class="flex justify-around">
+                        ${[1, 2, 3, 4, 5].map(rating => this.renderMoodButton(rating)).join('')}
+                    </div>
+                    <button id="save-mood-btn" class="w-full btn-gradient text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm" disabled>
+                        Save Mood
+                    </button>
+                </div>
+            `
+        },
+        
+        renderMoodButton(rating) {
+            const emojis = ['😞', '😕', '😐', '🙂', '😄']
+            return `
+                <button data-rating="${rating}" class="mood-btn h-12 w-12 rounded-full flex items-center justify-center text-2xl transition-transform transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-800">
+                    ${emojis[rating-1]}
+                </button>
+            `
+        },
+
+        renderLoggedState(feeling) {
+            const emojis = ['😞', '😕', '😐', '🙂', '😄']
+            return `
+                <div class="text-center">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Today's Mood:</p>
+                    <div class="text-5xl my-2">${emojis[feeling.rating - 1]}</div>
+                    <p class="font-semibold text-gray-800 dark:text-gray-200">You felt ${this.getRatingText(feeling.rating)}</p>
+                </div>
+            `
+        },
+
+        getRatingText(rating) {
+            return ['Very Bad', 'Bad', 'Okay', 'Good', 'Excellent'][rating - 1]
+        },
+
+        addFormEventListeners() {
+            let selectedRating = 0
+            const saveBtn = document.getElementById('save-mood-btn')
+
+            document.querySelectorAll('#mood-logging-section .mood-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#mood-logging-section .mood-btn').forEach(b => b.classList.remove('ring-2', 'ring-blue-500'))
+                    btn.classList.add('ring-2', 'ring-blue-500')
+                    selectedRating = parseInt(btn.dataset.rating)
+                    saveBtn.disabled = false
+                })
+            })
+
+            saveBtn.addEventListener('click', () => {
+                if (selectedRating > 0) {
+                    moodManager.log(selectedRating)
+                }
+            })
+        },
+
+        showYesterdayPrompt() {
+            const promptHTML = `
+                <div id="yesterday-mood-prompt" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-sm text-center">
+                        <h3 class="font-bold text-lg text-gray-900 dark:text-white">How was yesterday?</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 mb-4">You didn't log your mood. Taking a moment to reflect can be helpful.</p>
+                        <div class="flex justify-around mb-4">
+                            ${[1, 2, 3, 4, 5].map(rating => this.renderMoodButton(rating)).join('')}
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="save-yesterday-mood" class="flex-1 btn-gradient text-white py-2 px-4 rounded-lg text-sm" disabled>Save</button>
+                            <button id="dismiss-yesterday-prompt" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg text-sm">Dismiss</button>
+                        </div>
+                    </div>
+                </div>
+            `
+            document.body.insertAdjacentHTML('beforeend', promptHTML)
+
+            let selectedRating = 0
+            const saveBtn = document.getElementById('save-yesterday-mood')
+            const promptEl = document.getElementById('yesterday-mood-prompt')
+
+            promptEl.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    promptEl.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('ring-2', 'ring-blue-500'))
+                    btn.classList.add('ring-2', 'ring-blue-500')
+                    selectedRating = parseInt(btn.dataset.rating)
+                    saveBtn.disabled = false
+                })
+            })
+            
+            saveBtn.addEventListener('click', async () => {
+                if (selectedRating > 0) {
+                    const yesterday = new Date()
+                    yesterday.setDate(yesterday.getDate() - 1)
+                    await moodManager.log(selectedRating, yesterday)
+                    promptEl.remove()
+                }
+            })
+
+            document.getElementById('dismiss-yesterday-prompt').addEventListener('click', () => {
+                promptEl.remove()
+            })
+        }
+    }
+}
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
@@ -184,8 +369,6 @@ function setupFormListeners() {
             handleSignup(e)
         } else if (e.target.id === 'task-form') {
             handleTaskSubmit(e)
-        } else if (e.target.id === 'feeling-form') {
-            handleFeelingSubmit(e)
         } else if (e.target.id === 'reflection-form') {
             handleReflectionSubmit(e)
         }
@@ -198,11 +381,6 @@ function setupFormListeners() {
         } else if (e.target.id === 'google-login' || e.target.id === 'google-signup') {
             handleGoogleAuth()
         }
-    })
-    
-    // Mood tags
-    document.querySelectorAll('.mood-tag').forEach(tag => {
-        tag.addEventListener('click', toggleMoodTag)
     })
     
     // Journal character counter
@@ -515,9 +693,10 @@ async function loadAllData() {
     try {
         console.log('🔄 Starting to load all data...')
         
+        await moodManager.init()
+
         const results = await Promise.allSettled([
             loadTasks(),
-            loadFeelings(),
             loadJournalData()
         ])
         
@@ -549,10 +728,13 @@ function loadHomeData() {
     document.getElementById('tasks-count').textContent = pendingTasks.length
     
     // Update mood average
+    const feelings = moodManager.feelings;
     if (feelings.length > 0) {
         const recentFeelings = feelings.slice(0, 7) // Last 7 entries
         const average = recentFeelings.reduce((sum, feeling) => sum + feeling.rating, 0) / recentFeelings.length
         document.getElementById('mood-average').textContent = average.toFixed(1)
+    } else {
+        document.getElementById('mood-average').textContent = '-';
     }
     
     // Update streak (simplified calculation)
@@ -679,18 +861,6 @@ function loadSelectedDateTasks(date) {
     }
 }
 
-async function loadFeelings() {
-    try {
-        const { data, error } = await db.getFeelings()
-        if (error) throw error
-        
-        feelings = data || []
-    } catch (error) {
-        console.error('Error loading feelings:', error)
-        ui.showMessage('Error loading mood data', 'error')
-    }
-}
-
 async function loadJournalData() {
     try {
         const { data, error } = await db.getJournalEntries()
@@ -708,22 +878,14 @@ async function loadJournalData() {
 }
 
 function renderTodaysReflection() {
-    const today = new Date().toISOString().split('T')[0]
-    const todaysEntry = journalEntries.find(entry => entry.created_at.startsWith(today))
-    
     const contentTextarea = document.getElementById('reflection-content')
     const charCount = document.getElementById('reflection-char-count')
     const saveButton = document.getElementById('save-reflection-btn')
 
-    if (todaysEntry) {
-        contentTextarea.value = todaysEntry.content
-        saveButton.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
-        saveButton.disabled = true
-    } else {
-        contentTextarea.value = ''
-        saveButton.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
-        saveButton.disabled = false
-    }
+    // Always start with a blank slate for a new entry
+    contentTextarea.value = ''
+    saveButton.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
+    saveButton.disabled = true; // Initially disabled
 
     const count = contentTextarea.value.length
     charCount.textContent = `${count}`
@@ -740,19 +902,36 @@ function renderPastJournalEntries() {
 
     if (sortedEntries.length > 0) {
         listContainer.innerHTML = sortedEntries.map(entry => `
-            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">${new Date(entry.created_at).toLocaleDateString()}</p>
-                <p class="text-gray-800 dark:text-gray-200">${entry.content}</p>
+            <div class="bg-white/80 dark:bg-gray-800/80 p-4 rounded-xl shadow border border-white/20 relative card-hover">
+                <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">${new Date(entry.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p class="text-gray-600 dark:text-gray-400 text-sm mt-2">${entry.content}</p>
+                <button onclick="deleteJournalEntry('${entry.id}')" class="absolute top-2 right-2 text-red-500 hover:text-red-700 p-1 opacity-50 hover:opacity-100 transition-opacity">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
         `).join('')
     } else {
-        listContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-8">No past entries yet.</p>'
+        listContainer.innerHTML = `
+            <div class="text-center py-8">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No entries yet</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by writing your first reflection.</p>
+            </div>
+        `
     }
 }
 
 function calculateAndRenderStreak() {
+    const streakContainer = document.getElementById('journal-streak-count');
+    if (!streakContainer) return;
+
     if (journalEntries.length === 0) {
-        document.getElementById('journal-streak-count').textContent = '0'
+        streakContainer.innerHTML = `
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M4 17v4m-2-2h4m1-12a9 9 0 011 17.928M15 3a9 9 0 011 17.928m-3.5 1.072L12 21l-1-4-4 1 1-4-4-1 4-1-1-4 4 1 1-4 1 4 4-1-4 4 1 4-1-4z"></path></svg>
+            0 Day Streak
+        `
         return
     }
 
@@ -766,7 +945,6 @@ function calculateAndRenderStreak() {
     const todayStr = today.toISOString().split('T')[0];
     const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-    // Check if the most recent entry is today or yesterday
     if (entryDates[0] === todayStr || entryDates[0] === yesterdayStr) {
         streak = 1;
         for (let i = 0; i < entryDates.length - 1; i++) {
@@ -779,54 +957,29 @@ function calculateAndRenderStreak() {
             if (diffDays === 1) {
                 streak++;
             } else {
-                break; // Streak is broken
+                break;
             }
         }
     }
     
-    document.getElementById('journal-streak-count').textContent = streak.toString()
-
-    // Update streak badges
-    document.querySelectorAll('.streak-badge').forEach(badge => {
-        if (streak >= parseInt(badge.dataset.streak, 10)) {
-            badge.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-200', 'font-semibold', 'p-2', 'rounded-lg');
-        } else {
-            badge.classList.remove('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-200', 'font-semibold', 'p-2', 'rounded-lg');
-        }
-    });
+    streakContainer.innerHTML = `
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10s5 2 7 0l2.657-2.657a8 8 0 010 11.314z"></path></svg>
+        ${streak} Day Streak
+    `
 }
 
 function setupJournalListeners() {
-    const todayTab = document.getElementById('journal-today-tab');
-    const pastTab = document.getElementById('journal-past-tab');
-    const todayView = document.getElementById('journal-today-view');
-    const pastView = document.getElementById('journal-past-view');
-
-    todayTab.addEventListener('click', () => {
-        todayTab.classList.add('active-tab', 'border-blue-500', 'text-gray-800', 'dark:text-white');
-        todayTab.classList.remove('text-gray-500', 'dark:text-gray-400');
-        pastTab.classList.remove('active-tab', 'border-blue-500', 'text-gray-800', 'dark:text-white');
-        pastTab.classList.add('text-gray-500', 'dark:text-gray-400');
-        todayView.classList.remove('hidden');
-        pastView.classList.add('hidden');
-    });
-
-    pastTab.addEventListener('click', () => {
-        pastTab.classList.add('active-tab', 'border-blue-500', 'text-gray-800', 'dark:text-white');
-        pastTab.classList.remove('text-gray-500', 'dark:text-gray-400');
-        todayTab.classList.remove('active-tab', 'border-blue-500', 'text-gray-800', 'dark:text-white');
-        todayTab.classList.add('text-gray-500', 'dark:text-gray-400');
-        pastView.classList.remove('hidden');
-        todayView.classList.add('hidden');
-    });
-
     const contentTextarea = document.getElementById('reflection-content');
     const charCount = document.getElementById('reflection-char-count');
-    contentTextarea.addEventListener('input', () => {
-        const count = contentTextarea.value.length;
-        charCount.textContent = `${count}`;
-        document.getElementById('save-reflection-btn').disabled = false;
-    });
+    const saveButton = document.getElementById('save-reflection-btn');
+
+    if(contentTextarea && charCount && saveButton) {
+        contentTextarea.addEventListener('input', () => {
+            const count = contentTextarea.value.length;
+            charCount.textContent = `${count}`;
+            saveButton.disabled = count === 0 || count > 280;
+        });
+    }
 }
 
 async function handleTaskSubmit(event) {
@@ -876,41 +1029,6 @@ async function handleTaskSubmit(event) {
     }
 }
 
-async function handleFeelingSubmit(event) {
-    event.preventDefault()
-    const formData = new FormData(event.target)
-    
-    const feelingData = {
-        rating: parseInt(formData.get('rating')),
-        mood_tags: selectedMoodTags.join(','),
-        comments: formData.get('comments')
-    }
-    
-    try {
-        const { data, error } = await db.createFeeling(feelingData)
-        if (error) throw error
-        
-        feelings.unshift(data[0])
-        
-        ui.showMessage('Mood logged successfully!', 'success')
-        event.target.reset()
-        selectedMoodTags = []
-        updateMoodTagsDisplay()
-        
-        // Refresh home data
-        loadHomeData()
-    } catch (error) {
-        console.error('Error logging feeling:', error)
-        console.error('Error details:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code
-        })
-        ui.showMessage(`Error logging mood: ${error.message || 'Unknown error'}`, 'error')
-    }
-}
-
 async function handleReflectionSubmit(event) {
     event.preventDefault()
     const form = event.target
@@ -922,16 +1040,8 @@ async function handleReflectionSubmit(event) {
     }
     
     try {
-        const today = new Date().toISOString().split('T')[0]
-        const todaysEntry = journalEntries.find(entry => entry.created_at.startsWith(today))
-
-        if (todaysEntry) {
-            // Update existing entry
-            await db.updateJournalEntry(todaysEntry.id, content)
-        } else {
-            // Create new entry
-            await db.addJournalEntry(content)
-        }
+        // Always create a new entry
+        await db.addJournalEntry(content)
         
         ui.showMessage('Reflection saved!', 'success')
         await loadJournalData() // Reload all journal data to update streak and views
@@ -944,35 +1054,52 @@ async function handleReflectionSubmit(event) {
 
 // Action handlers
 async function toggleTask(taskId) {
-    const task = tasks.find(t => t.id === taskId)
-    if (!task) return
-    
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
     try {
-        const { data, error } = await db.updateTask(taskId, { completed: !task.completed })
-        if (error) throw error
+        const { data, error } = await db.updateTask(taskId, { completed: !task.completed });
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data || data.length === 0) {
+            throw new Error("Update failed. No rows were updated. This might be due to security policies.");
+        }
         
-        task.completed = !task.completed
-        renderTasks()
+        const updatedTask = data[0];
+        const taskIndex = tasks.findIndex(t => t.id === updatedTask.id);
+        if (taskIndex !== -1) {
+            tasks[taskIndex] = updatedTask;
+        }
+        
+        renderTasks();
         
         // Update calendar
         if (calendar) {
-            calendar.setTasks(tasks)
+            calendar.setTasks(tasks);
         }
         
         // Refresh home data
-        loadHomeData()
+        loadHomeData();
         
         // Show feedback
-        if (task.completed) {
-            ui.showMessage('Task completed! Great job! 🎉', 'success')
-            const taskElement = document.querySelector(`[data-task-id="${taskId}"]`)
+        if (updatedTask.completed) {
+            ui.showMessage('Task completed! Great job! 🎉', 'success');
+            const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
             if (taskElement) {
-                animations.pulse(taskElement, 600)
+                animations.pulse(taskElement, 600);
             }
+        } else {
+            // Optional: show a message for marking task as incomplete
+            ui.showMessage('Task marked as not complete.', 'info');
         }
     } catch (error) {
-        console.error('Error updating task:', error)
-        ui.showMessage('Error updating task', 'error')
+        console.error('Error updating task:', error);
+        ui.showMessage('Error updating task: ' + error.message, 'error');
+        // No need to revert state as we are not doing optimistic updates anymore
+        renderTasks(); // Re-render to ensure UI is consistent with data
     }
 }
 
@@ -1006,7 +1133,8 @@ async function deleteJournalEntry(entryId) {
         if (error) throw error
         
         journalEntries = journalEntries.filter(e => e.id !== entryId)
-        renderJournalEntries()
+        renderPastJournalEntries()
+        calculateAndRenderStreak()
         
         ui.showMessage('Journal entry deleted', 'success')
     } catch (error) {
@@ -1020,33 +1148,10 @@ function onDateSelect(date) {
     loadSelectedDateTasks(date)
 }
 
-function toggleMoodTag(event) {
-    event.preventDefault()
-    const tag = event.target.dataset.tag
-    
-    if (selectedMoodTags.includes(tag)) {
-        selectedMoodTags = selectedMoodTags.filter(t => t !== tag)
-        event.target.classList.remove('bg-blue-500', 'text-white')
-        event.target.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300')
-    } else {
-        selectedMoodTags.push(tag)
-        event.target.classList.add('bg-blue-500', 'text-white')
-        event.target.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300')
-    }
-    
-    updateMoodTagsDisplay()
-}
-
-function updateMoodTagsDisplay() {
-    const hiddenInput = document.getElementById('mood-tags')
-    if (hiddenInput) {
-        hiddenInput.value = selectedMoodTags.join(',')
-    }
-}
-
 function loadCharts() {
     // Mood chart
     const moodCtx = document.getElementById('moodChart')
+    const feelings = moodManager.feelings;
     if (moodCtx && feelings.length > 0) {
         const recentFeelings = feelings.slice(0, 7).reverse()
         new Chart(moodCtx, {
@@ -1108,4 +1213,4 @@ function updateCurrentDate() {
 window.toggleTask = toggleTask
 window.deleteTask = deleteTask
 window.deleteJournalEntry = deleteJournalEntry
-
+window.loadHomeData = loadHomeData

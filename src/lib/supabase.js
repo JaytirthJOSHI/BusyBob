@@ -390,7 +390,6 @@ export const db = {
         .insert([
           {
             user_id: user.id,
-            name: task.title,
             title: task.title,
             description: task.description,
             priority: task.priority || 'medium',
@@ -443,6 +442,7 @@ export const db = {
   // Feelings
   getFeelings: async () => {
     try {
+      await db.ensureUser()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
@@ -451,6 +451,7 @@ export const db = {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
+      
       return { data, error }
     } catch (err) {
       console.error('GetFeelings error:', err)
@@ -470,12 +471,13 @@ export const db = {
           {
             user_id: user.id,
             rating: feeling.rating,
-            comments: feeling.comments,
-            mood_tags: feeling.mood_tags ? feeling.mood_tags.split(',') : [],
-            created_at: new Date().toISOString()
+            comments: feeling.comments || '',
+            mood_tags: feeling.mood_tags || [],
+            created_at: feeling.created_at || new Date().toISOString()
           }
         ])
         .select()
+      
       return { data, error }
     } catch (err) {
       console.error('CreateFeeling error:', err)
@@ -532,22 +534,16 @@ export const db = {
     }
   },
 
-  addTask: async (task) => {
+  deleteJournalEntry: async (id) => {
     try {
-      await db.ensureUser()
       const { data, error } = await supabase
-        .from('tasks')
-        .insert([task])
-        .select()
-      
-      if (error) {
-        console.error('Error adding task:', error)
-        throw error
-      }
-      return data[0]
+        .from('journal_entries')
+        .delete()
+        .eq('id', id)
+      return { data, error }
     } catch (err) {
-      console.error('AddTask error:', err)
-      throw err
+      console.error('DeleteJournalEntry error:', err)
+      return { data: null, error: err }
     }
   },
 }

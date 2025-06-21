@@ -8,7 +8,7 @@ export class Settings {
     }
 
     async init() {
-        console.log('⚙️ Initializing Settings component...')
+        console.log('Initializing Settings component...')
         await this.loadConnectedAccounts()
         this.render()
         this.setupEventListeners()
@@ -183,9 +183,18 @@ export class Settings {
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">Dark Mode</p>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">Toggle between light and dark themes</p>
                                 </div>
-                                <button id="theme-toggle" class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 dark:bg-gray-700 transition-colors">
-                                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1 dark:translate-x-6"></span>
-                                </button>
+                                <div class="flex items-center space-x-2">
+                                    <button id="settings-theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                                        <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                        </svg>
+                                        <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div class="flex items-center justify-between">
                                 <div>
@@ -245,7 +254,7 @@ export class Settings {
         }
 
         // Theme toggle
-        const themeToggle = container.querySelector('#theme-toggle')
+        const themeToggle = container.querySelector('#settings-theme-toggle')
         if (themeToggle) {
             themeToggle.addEventListener('click', () => {
                 document.documentElement.classList.toggle('dark')

@@ -58,7 +58,7 @@ export class LandingPage {
 
                                         <!-- Social Proof -->
                                         <div class="mt-8">
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">🚀 Launching soon! Be among the first to get organized</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">Launching soon! Be among the first to get organized</p>
                                             <div class="flex items-center mt-2 space-x-4">
                                                 <div class="flex items-center space-x-1">
                                                     <span class="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -103,7 +103,6 @@ export class LandingPage {
                                                             <div class="flex items-center justify-between">
                                                                 <span class="text-sm text-gray-600 dark:text-gray-300">Mood Today</span>
                                                                 <div class="flex space-x-1">
-                                                                    <span class="text-lg">😊</span>
                                                                     <span class="text-sm text-gray-500">Good</span>
                                                                 </div>
                                                             </div>
@@ -241,7 +240,7 @@ export class LandingPage {
                                 <span class="text-lg font-semibold text-gray-900 dark:text-white">Busy <span class="text-orange-500">BOB</span></span>
                             </div>
                             <div class="text-center text-gray-600 dark:text-gray-400">
-                                <p>&copy; 2025 Busy BOB. Made with 🔥 for students who hustle.</p>
+                                <p>&copy; 2025 Busy BOB. Made for students who hustle.</p>
                             </div>
                         </div>
                     </div>

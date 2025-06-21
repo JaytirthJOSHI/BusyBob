@@ -418,34 +418,14 @@ export class Grades {
     render() {
         const container = document.getElementById('grades-container')
         if (!container) return
-        
-        container.innerHTML = `
-            <div class="grades-section bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-md" role="alert">
-                    <p class="font-bold">Under Development</p>
-                    <p>This feature is still being tested. Some functionality may not work as expected.</p>
-                </div>
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                        📊 Grades & Assignments
-                    </h2>
-                    <div class="flex items-center space-x-2">
-                        ${this.isConnected ? 
-                            '<span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Connected</span>' :
-                            '<span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">Disconnected</span>'
-                        }
-                        <button id="refresh-grades" class="btn-secondary">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                            </svg>
-                            Refresh
-                        </button>
-                    </div>
-                </div>
 
-                ${!this.isConnected ? this.renderConnectionForm() : this.renderGradesContent()}
-            </div>
-        `
+        if (!this.isConnected) {
+            container.innerHTML = this.renderConnectionForm()
+        } else if (this.grades === -1 || this.assignments === -1) {
+            container.innerHTML = this.renderConnectionError()
+        } else {
+            container.innerHTML = this.renderGradesContent()
+        }
     }
 
     renderConnectionForm() {
@@ -743,11 +723,32 @@ export class Grades {
     }
 
     renderDataError(item) {
-        return `<div class="text-center py-10"><p class="text-red-500 dark:text-red-400">Could not load ${item}. It may not be available from your school district.</p></div>`
+        return `<div class="text-center p-4"><p class="text-red-500">Error loading ${item}. Please try again.</p></div>`
+    }
+
+    renderConnectionError() {
+        return `
+            <div class="text-center py-10 px-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <div class="w-16 h-16 mx-auto bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Connection Problem</h2>
+                <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                    We couldn't connect to StudentVue with your saved credentials. Your password may have changed. Please update your credentials in the settings.
+                </p>
+                <button id="go-to-settings-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                    Go to Settings
+                </button>
+            </div>
+        `
     }
 
     renderCourseCard(course) {
-        const gradeColor = this.getGradeColor(course.percentage)
+        const mark = course.marks[0] // Assuming one mark per course for simplicity
+        const percentage = parseFloat(mark?.percentage) || 0
+        const gradeColor = this.getGradeColor(percentage)
         const gradeClass = `text-${gradeColor}-600 dark:text-${gradeColor}-400`
         
         return `
@@ -763,7 +764,7 @@ export class Grades {
                 </div>
                 
                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div class="bg-${gradeColor}-500 h-2 rounded-full" style="width: ${Math.min(course.percentage, 100)}%"></div>
+                    <div class="bg-${gradeColor}-500 h-2 rounded-full" style="width: ${Math.min(percentage, 100)}%"></div>
                 </div>
                 
                 ${course.assignments.length > 0 ? `

@@ -196,7 +196,7 @@ export class Chatbot {
     // Mood/feelings responses
     if (message.includes('sad') || message.includes('down') || message.includes('depressed')) {
       const responses = [
-        "I'm sorry you're feeling down. Your feelings are valid, and it's okay to not be okay sometimes. Small steps can help: try getting some sunlight, connecting with a friend, or doing one small thing you enjoy. You matter. 💙",
+        "I'm sorry you're feeling down. Your feelings are valid, and it's okay to not be okay sometimes. Small steps can help: try getting some sunlight, connecting with a friend, or doing one small thing you enjoy. You matter. ",
         "Difficult emotions are part of being human. Consider journaling about what you're feeling, or try some gentle self-care. Remember, this feeling is temporary. Is there something specific that's been weighing on you?",
         "Thank you for sharing how you're feeling. Sometimes just acknowledging our emotions helps. Consider reaching out to someone you trust, or try a small act of self-kindness today. You're stronger than you know."
       ]
@@ -206,7 +206,7 @@ export class Chatbot {
     // Happy/positive responses
     if (message.includes('happy') || message.includes('good') || message.includes('great') || message.includes('excited')) {
       const responses = [
-        "That's wonderful to hear! 😊 Positive emotions are so important. Consider taking a moment to really savor this feeling and maybe write about what's making you happy in your journal. What's bringing you joy today?",
+        "That's wonderful to hear!  Positive emotions are so important. Consider taking a moment to really savor this feeling and maybe write about what's making you happy in your journal. What's bringing you joy today?",
         "I love hearing that you're feeling good! These positive moments are worth celebrating. Maybe share this happiness with someone you care about, or use this energy for something meaningful to you.",
         "Fantastic! When we're feeling good, it's a great time to practice gratitude or do something kind for others. Your positive energy is contagious! What's been the highlight of your day?"
       ]
@@ -236,7 +236,7 @@ export class Chatbot {
     // Gratitude responses
     if (message.includes('grateful') || message.includes('thankful') || message.includes('appreciate')) {
       const responses = [
-        "Gratitude is such a powerful practice! 🙏 It literally rewires our brains for positivity. Consider keeping a daily gratitude journal - even just 3 things you're thankful for can make a difference. What are you most grateful for today?",
+        "Gratitude is such a powerful practice!  It literally rewires our brains for positivity. Consider keeping a daily gratitude journal - even just 3 things you're thankful for can make a difference. What are you most grateful for today?",
         "I love that you're thinking about gratitude! Research shows it improves mental health, relationships, and even physical health. Try expressing gratitude to someone today - it'll boost both your moods!",
         "Gratitude is like a superpower for happiness! You might try the 'gratitude visit' - write a letter to someone who's impacted your life positively. Even if you don't send it, the act of writing it is powerful."
       ]
@@ -284,10 +284,6 @@ export class Chatbot {
         </div>
       </div>
     `
-    
-    const messagesContainer = document.getElementById('chatbot-messages')
-    messagesContainer.insertAdjacentHTML('beforeend', typingHTML)
-    messagesContainer.scrollTop = messagesContainer.scrollHeight
   }
 
   hideTypingIndicator() {
