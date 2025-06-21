@@ -291,6 +291,10 @@ async function initializeApp() {
         // Update current date
         updateCurrentDate()
         
+        // Start live clock
+        updateLiveClock()
+        setInterval(updateLiveClock, 1000)
+        
         // Listen for demo login event
         document.addEventListener('demoLogin', async () => {
             // Demo credentials (should match a user in your Supabase or be created on the fly)
@@ -676,9 +680,8 @@ function showPage(pageName) {
             loadJournalData()
             break
         case 'grades':
-            if (grades) {
-                grades.init()
-            }
+            grades = new Grades()
+            grades.init()
             break
         case 'settings':
             if (settings) {
@@ -1208,6 +1211,31 @@ function updateCurrentDate() {
         dateElement.textContent = dateUtils.getCurrentDate()
     }
 }
+
+function updateLiveClock() {
+    const clockElement = document.getElementById('live-clock');
+    if (clockElement) {
+        const now = new Date();
+        const timezone = localStorage.getItem('timezone');
+        
+        const options = {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true // Or false for 24-hour format
+        };
+
+        if (timezone) {
+            options.timeZone = timezone;
+        }
+
+        const timeString = now.toLocaleTimeString([], options);
+        clockElement.textContent = timeString;
+    }
+}
+
+// Listen for timezone changes from settings
+window.addEventListener('timezoneChange', updateLiveClock);
 
 // Make functions globally available for onclick handlers
 window.toggleTask = toggleTask

@@ -12,6 +12,7 @@ export class Settings {
         await this.loadConnectedAccounts()
         this.render()
         this.setupEventListeners()
+        this.loadTimezones()
     }
 
     async loadConnectedAccounts() {
@@ -198,6 +199,24 @@ export class Settings {
                             </div>
                             <div class="flex items-center justify-between">
                                 <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">Timezone</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Select your local timezone</p>
+                                </div>
+                                <select id="timezone-selector" class="form-input mt-1 block w-full max-w-xs rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm">
+                                    <option>Loading timezones...</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">Show Grades Tab</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Show or hide the Grades tab in the navigation bar</p>
+                                </div>
+                                <button id="grades-tab-toggle" class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors">
+                                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">Notifications</p>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">Manage your notification preferences</p>
                                 </div>
@@ -261,6 +280,28 @@ export class Settings {
                 const isDark = document.documentElement.classList.contains('dark')
                 localStorage.setItem('theme', isDark ? 'dark' : 'light')
             })
+        }
+
+        // Timezone selector
+        const timezoneSelector = container.querySelector('#timezone-selector');
+        if (timezoneSelector) {
+            timezoneSelector.addEventListener('change', (e) => {
+                localStorage.setItem('timezone', e.target.value);
+                // Optionally, dispatch an event to notify the clock to update immediately
+                window.dispatchEvent(new Event('timezoneChange'));
+            });
+        }
+
+        // Grades tab toggle
+        const gradesTabToggle = container.querySelector('#grades-tab-toggle');
+        if (gradesTabToggle) {
+            this.updateGradesToggleVisual();
+            gradesTabToggle.addEventListener('click', () => {
+                const isEnabled = localStorage.getItem('showGradesTab') !== 'false';
+                localStorage.setItem('showGradesTab', !isEnabled);
+                this.updateGradesToggleVisual();
+                window.dispatchEvent(new Event('settingsChange'));
+            });
         }
     }
 
@@ -552,4 +593,46 @@ export class Settings {
             }
         }, 3000)
     }
-} 
+
+    updateGradesToggleVisual() {
+        const gradesTabToggle = document.getElementById('grades-tab-toggle');
+        if (!gradesTabToggle) return;
+
+        const isEnabled = localStorage.getItem('showGradesTab') !== 'false';
+        const slider = gradesTabToggle.querySelector('span');
+
+        if (isEnabled) {
+            gradesTabToggle.classList.add('bg-blue-600');
+            gradesTabToggle.classList.remove('bg-gray-200');
+            slider.classList.add('translate-x-6');
+            slider.classList.remove('translate-x-1');
+        } else {
+            gradesTabToggle.classList.add('bg-gray-200');
+            gradesTabToggle.classList.remove('bg-blue-600');
+            slider.classList.add('translate-x-1');
+            slider.classList.remove('translate-x-6');
+        }
+    }
+
+    async loadTimezones() {
+        const selector = document.getElementById('timezone-selector');
+        if (!selector) return;
+
+        try {
+            const response = await fetch('http://worldtimeapi.org/api/timezone');
+            if (!response.ok) throw new Error('Failed to fetch timezones');
+            
+            const timezones = await response.json();
+            const savedTimezone = localStorage.getItem('timezone');
+
+            selector.innerHTML = timezones.map(tz => {
+                const isSelected = tz === savedTimezone ? 'selected' : '';
+                return `<option value="${tz}" ${isSelected}>${tz.replace(/_/g, ' ')}</option>`;
+            }).join('');
+
+        } catch (error) {
+            console.error('Error loading timezones:', error);
+            selector.innerHTML = '<option>Could not load timezones</option>';
+        }
+    }
+}

@@ -192,6 +192,18 @@ If you have any questions or need help:
 - Create an issue on GitHub
 - Email: support@mindful-student.app (if you set this up)
 
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the MIT License.
+
+## Acknowledgements
+
+- Timezone data provided by the [World Time API](http://worldtimeapi.org/).
+
 ---
 
 **Made with ❤️ for students who want to be more mindful and productive**
