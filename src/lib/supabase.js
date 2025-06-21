@@ -500,32 +500,32 @@ export const db = {
 
   addJournalEntry: async (content) => {
     try {
-        await db.ensureUser()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) throw new Error('Not authenticated')
+      await db.ensureUser()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
 
-        const { data, error } = await supabase
-            .from('journal_entries')
+      const { data, error } = await supabase
+        .from('journal_entries')
             .insert([{ user_id: user.id, content: content, created_at: new Date().toISOString() }])
-            .select()
-        return { data, error }
+        .select()
+      return { data, error }
     } catch (err) {
         console.error('addJournalEntry error:', err)
-        return { data: null, error: err }
+      return { data: null, error: err }
     }
   },
 
   updateJournalEntry: async (id, content) => {
     try {
-        const { data, error } = await supabase
-            .from('journal_entries')
+      const { data, error } = await supabase
+        .from('journal_entries')
             .update({ content: content, updated_at: new Date().toISOString() })
-            .eq('id', id)
+        .eq('id', id)
             .select()
-        return { data, error }
+      return { data, error }
     } catch (err) {
         console.error('updateJournalEntry error:', err)
-        return { data: null, error: err }
+      return { data: null, error: err }
     }
   },
 
