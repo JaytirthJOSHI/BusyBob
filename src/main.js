@@ -183,8 +183,8 @@ function setupFormListeners() {
             handleTaskSubmit(e)
         } else if (e.target.id === 'feeling-form') {
             handleFeelingSubmit(e)
-        } else if (e.target.id === 'journal-form') {
-            handleJournalSubmit(e)
+        } else if (e.target.id === 'reflection-form') {
+            handleReflectionSubmit(e)
         }
     })
     
@@ -492,7 +492,7 @@ function showPage(pageName) {
             loadCalendar()
             break
         case 'journal':
-            loadJournalEntries()
+            loadJournalData()
             break
         case 'grades':
             if (grades) {
@@ -510,7 +510,7 @@ async function loadAllData() {
         const results = await Promise.allSettled([
             loadTasks(),
             loadFeelings(),
-            loadJournalEntries()
+            loadJournalData()
         ])
         
         // Check for any failures
@@ -664,22 +664,11 @@ function loadSelectedDateTasks(date) {
         ? "Today's Tasks" 
         : `Tasks for ${dateUtils.formatDate(dateStr)}`
     
-    selectedTasksContainer.innerHTML = dayTasks.length > 0
-        ? dayTasks.map(task => `
-            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div class="flex items-center space-x-3">
-                    <input type="checkbox" ${task.completed ? 'checked' : ''} 
-                           onchange="toggleTask(${task.id})"
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                    <div>
-                        <div class="font-medium text-sm text-gray-900 dark:text-white ${task.completed ? 'line-through opacity-75' : ''}">${task.title}</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">${dateUtils.formatDateTime(task.due_date, task.due_time)}</div>
-                    </div>
-                </div>
-                <span class="text-xs px-2 py-1 rounded-full ${taskUtils.getPriorityColor(task.priority)}">${task.priority}</span>
-        </div>
-    `).join('')
-        : '<p class="text-gray-500 dark:text-gray-400 text-sm">No tasks for this date</p>'
+    if (dayTasks.length > 0) {
+        selectedTasksContainer.innerHTML = dayTasks.map(task => createTaskHTML(task)).join('')
+    } else {
+        selectedTasksContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-4">No tasks for this date.</p>'
+    }
 }
 
 async function loadFeelings() {
@@ -690,47 +679,148 @@ async function loadFeelings() {
         feelings = data || []
     } catch (error) {
         console.error('Error loading feelings:', error)
+        ui.showMessage('Error loading mood data', 'error')
     }
 }
 
-async function loadJournalEntries() {
+async function loadJournalData() {
     try {
         const { data, error } = await db.getJournalEntries()
         if (error) throw error
-        
         journalEntries = data || []
-        renderJournalEntries()
+        
+        renderPastJournalEntries()
+        renderTodaysReflection()
+        calculateAndRenderStreak()
+        setupJournalListeners()
     } catch (error) {
         console.error('Error loading journal entries:', error)
         ui.showMessage('Error loading journal entries', 'error')
     }
 }
 
-function renderJournalEntries() {
-    const entriesContainer = document.getElementById('journal-entries')
-    if (!entriesContainer) return
+function renderTodaysReflection() {
+    const today = new Date().toISOString().split('T')[0]
+    const todaysEntry = journalEntries.find(entry => entry.created_at.startsWith(today))
     
-    entriesContainer.innerHTML = journalEntries.length > 0
-        ? journalEntries.map(entry => `
-            <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-white/20 card-hover">
-                <div class="flex justify-between items-start mb-3 sm:mb-4">
-                    <div class="flex-1 min-w-0">
-                        ${entry.title ? `<h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white break-words">${entry.title}</h3>` : ''}
-                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">${dateUtils.formatDate(entry.created_at)}</p>
-                    </div>
-                    <button onclick="deleteJournalEntry(${entry.id})" class="text-red-500 hover:text-red-700 p-2 ml-2 flex-shrink-0">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                    </button>
-                </div>
-                <div class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap text-sm sm:text-base break-words">${entry.content}</div>
-            </div>
-        `).join('')
-        : '<p class="text-gray-500 dark:text-gray-400 text-center py-6 sm:py-8 text-sm sm:text-base">No journal entries yet. Start writing your first entry above!</p>'
+    const contentTextarea = document.getElementById('reflection-content')
+    const charCount = document.getElementById('reflection-char-count')
+    const saveButton = document.getElementById('save-reflection-btn')
+
+    if (todaysEntry) {
+        contentTextarea.value = todaysEntry.content
+        saveButton.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
+        saveButton.disabled = true
+    } else {
+        contentTextarea.value = ''
+        saveButton.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
+        saveButton.disabled = false
+    }
+
+    const count = contentTextarea.value.length
+    charCount.textContent = `${count}`
+    document.getElementById('reflection-date').textContent = new Date().toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
 }
 
-// Form handlers
+function renderPastJournalEntries() {
+    const listContainer = document.getElementById('journal-entries-list')
+    if (!listContainer) return
+
+    const sortedEntries = journalEntries.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
+    if (sortedEntries.length > 0) {
+        listContainer.innerHTML = sortedEntries.map(entry => `
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">${new Date(entry.created_at).toLocaleDateString()}</p>
+                <p class="text-gray-800 dark:text-gray-200">${entry.content}</p>
+            </div>
+        `).join('')
+    } else {
+        listContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-8">No past entries yet.</p>'
+    }
+}
+
+function calculateAndRenderStreak() {
+    if (journalEntries.length === 0) {
+        document.getElementById('journal-streak-count').textContent = '0'
+        return
+    }
+
+    const entryDates = [...new Set(journalEntries.map(e => e.created_at.split('T')[0]))].sort().reverse();
+    
+    let streak = 0;
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    // Check if the most recent entry is today or yesterday
+    if (entryDates[0] === todayStr || entryDates[0] === yesterdayStr) {
+        streak = 1;
+        for (let i = 0; i < entryDates.length - 1; i++) {
+            const current = new Date(entryDates[i]);
+            const next = new Date(entryDates[i+1]);
+            
+            const diffTime = current - next;
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) {
+                streak++;
+            } else {
+                break; // Streak is broken
+            }
+        }
+    }
+    
+    document.getElementById('journal-streak-count').textContent = streak.toString()
+
+    // Update streak badges
+    document.querySelectorAll('.streak-badge').forEach(badge => {
+        if (streak >= parseInt(badge.dataset.streak, 10)) {
+            badge.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-200', 'font-semibold', 'p-2', 'rounded-lg');
+        } else {
+            badge.classList.remove('bg-green-100', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-200', 'font-semibold', 'p-2', 'rounded-lg');
+        }
+    });
+}
+
+function setupJournalListeners() {
+    const todayTab = document.getElementById('journal-today-tab');
+    const pastTab = document.getElementById('journal-past-tab');
+    const todayView = document.getElementById('journal-today-view');
+    const pastView = document.getElementById('journal-past-view');
+
+    todayTab.addEventListener('click', () => {
+        todayTab.classList.add('active-tab', 'border-blue-500', 'text-gray-800', 'dark:text-white');
+        todayTab.classList.remove('text-gray-500', 'dark:text-gray-400');
+        pastTab.classList.remove('active-tab', 'border-blue-500', 'text-gray-800', 'dark:text-white');
+        pastTab.classList.add('text-gray-500', 'dark:text-gray-400');
+        todayView.classList.remove('hidden');
+        pastView.classList.add('hidden');
+    });
+
+    pastTab.addEventListener('click', () => {
+        pastTab.classList.add('active-tab', 'border-blue-500', 'text-gray-800', 'dark:text-white');
+        pastTab.classList.remove('text-gray-500', 'dark:text-gray-400');
+        todayTab.classList.remove('active-tab', 'border-blue-500', 'text-gray-800', 'dark:text-white');
+        todayTab.classList.add('text-gray-500', 'dark:text-gray-400');
+        pastView.classList.remove('hidden');
+        todayView.classList.add('hidden');
+    });
+
+    const contentTextarea = document.getElementById('reflection-content');
+    const charCount = document.getElementById('reflection-char-count');
+    contentTextarea.addEventListener('input', () => {
+        const count = contentTextarea.value.length;
+        charCount.textContent = `${count}`;
+        document.getElementById('save-reflection-btn').disabled = false;
+    });
+}
+
 async function handleTaskSubmit(event) {
     event.preventDefault()
     const formData = new FormData(event.target)
@@ -813,33 +903,34 @@ async function handleFeelingSubmit(event) {
     }
 }
 
-async function handleJournalSubmit(event) {
+async function handleReflectionSubmit(event) {
     event.preventDefault()
-    const formData = new FormData(event.target)
+    const form = event.target
+    const content = form.querySelector('#reflection-content').value
     
-    const entryData = {
-        title: formData.get('title'),
-        content: formData.get('content')
+    if (content.length < 1 || content.length > 280) {
+        ui.showMessage('Reflection must be between 1 and 280 characters.', 'error')
+        return
     }
     
     try {
-        const { data, error } = await db.createJournalEntry(entryData)
-        if (error) throw error
-        
-        journalEntries.unshift(data[0])
-        renderJournalEntries()
-        
-        ui.showMessage('Journal entry saved!', 'success')
-        event.target.reset()
-        
-        // Reset character counter
-        const charCount = document.getElementById('journal-char-count')
-        if (charCount) {
-            charCount.textContent = '0'
+        const today = new Date().toISOString().split('T')[0]
+        const todaysEntry = journalEntries.find(entry => entry.created_at.startsWith(today))
+
+        if (todaysEntry) {
+            // Update existing entry
+            await db.updateJournalEntry(todaysEntry.id, content)
+        } else {
+            // Create new entry
+            await db.addJournalEntry(content)
         }
+        
+        ui.showMessage('Reflection saved!', 'success')
+        await loadJournalData() // Reload all journal data to update streak and views
+        
     } catch (error) {
         console.error('Error saving journal entry:', error)
-        ui.showMessage('Error saving journal entry', 'error')
+        ui.showMessage('Could not save reflection.', 'error')
     }
 }
 

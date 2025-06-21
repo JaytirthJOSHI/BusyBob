@@ -498,42 +498,34 @@ export const db = {
     }
   },
 
-  createJournalEntry: async (entry) => {
+  addJournalEntry: async (content) => {
     try {
-      await db.ensureUser()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+        await db.ensureUser()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Not authenticated')
 
-      const { data, error } = await supabase
-        .from('journal_entries')
-        .insert([
-          {
-            user_id: user.id,
-            title: entry.title || '',
-            content: entry.content,
-            mood_rating: entry.mood_rating || null,
-            tags: entry.tags ? (Array.isArray(entry.tags) ? entry.tags : entry.tags.split(',')) : [],
-            created_at: new Date().toISOString()
-          }
-        ])
-        .select()
-      return { data, error }
+        const { data, error } = await supabase
+            .from('journal_entries')
+            .insert([{ user_id: user.id, content: content, created_at: new Date().toISOString() }])
+            .select()
+        return { data, error }
     } catch (err) {
-      console.error('CreateJournalEntry error:', err)
-      return { data: null, error: err }
+        console.error('addJournalEntry error:', err)
+        return { data: null, error: err }
     }
   },
 
-  deleteJournalEntry: async (id) => {
+  updateJournalEntry: async (id, content) => {
     try {
-      const { data, error } = await supabase
-        .from('journal_entries')
-        .delete()
-        .eq('id', id)
-      return { data, error }
+        const { data, error } = await supabase
+            .from('journal_entries')
+            .update({ content: content, updated_at: new Date().toISOString() })
+            .eq('id', id)
+            .select()
+        return { data, error }
     } catch (err) {
-      console.error('DeleteJournalEntry error:', err)
-      return { data: null, error: err }
+        console.error('updateJournalEntry error:', err)
+        return { data: null, error: err }
     }
   },
 
