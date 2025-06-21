@@ -5,6 +5,7 @@ import { AuthPages } from './components/AuthPages.js'
 import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
 import { Grades } from './components/Grades.js'
+import { Settings } from './components/Settings.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 
 console.log('🚀 Main.js loaded - starting initialization...')
@@ -20,6 +21,7 @@ let navigation = null
 let authPages = null
 let landingPage = null
 let grades = null
+let settings = null
 let selectedMoodTags = []
 
 // Initialize app
@@ -42,6 +44,7 @@ async function initializeApp() {
         navigation = new Navigation()
         landingPage = new LandingPage()
         grades = new Grades()
+        settings = new Settings()
         console.log('✅ Components created successfully')
         
         // Set up theme toggle
@@ -497,6 +500,11 @@ function showPage(pageName) {
         case 'grades':
             if (grades) {
                 grades.init()
+            }
+            break
+        case 'settings':
+            if (settings) {
+                settings.init()
             }
             break
     }

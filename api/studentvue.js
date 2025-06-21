@@ -1,19 +1,37 @@
-const StudentVue = require('studentvue.js');
+import StudentVue from 'studentvue';
+import express from 'express';
+
+const router = express.Router();
 
 async function handleRequest(body) {
+    console.log('StudentVue API request body:', body);
     const { districtUrl, username, password, action } = body;
 
     if (!districtUrl || !username || !password || !action) {
+        console.error('Missing required parameters:', { districtUrl, username, password, action });
         return {
             statusCode: 400,
             body: JSON.stringify({ error: 'Missing required parameters.' }),
         };
     }
 
+    let client;
     try {
-        const client = await StudentVue.login(districtUrl, username, password);
-        let data;
+        console.log('Attempting to login to StudentVue...');
+        client = await StudentVue.login(districtUrl, { username, password });
+        console.log('Successfully logged in to StudentVue');
+    } catch (error) {
+        console.error('StudentVue login failed:', { message: error.message, stack: error.stack });
+        return {
+            statusCode: 401, // Unauthorized
+            body: JSON.stringify({ error: `StudentVue login failed: ${error.message}` }),
+        };
+    }
+        
+    let data;
+    console.log(`Fetching data for action: ${action}`);
 
+    try {
         switch (action) {
             case 'getGradebook':
                 data = await client.getGradebook();
@@ -31,33 +49,42 @@ async function handleRequest(body) {
                 data = await client.getCalendar();
                 break;
             default:
+                console.error('Invalid action specified:', action);
                 return {
                     statusCode: 400,
                     body: JSON.stringify({ error: 'Invalid action specified.' }),
                 };
         }
         
+        console.log(`Successfully fetched data for ${action}:`, data ? 'Data received' : 'No data');
         return {
             statusCode: 200,
             body: JSON.stringify(data),
         };
 
     } catch (error) {
-        console.error(`StudentVue API error for action "${action}":`, error);
+        console.error(`Error during StudentVue API action "${action}":`, {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: `Failed to fetch data from StudentVue. ${error.message}` }),
+            body: JSON.stringify({ error: `Failed to fetch ${action} from StudentVue: ${error.message}` }),
         };
     }
 }
 
-// This is the standard entry point for Vercel Serverless Functions
-module.exports = async (req, res) => {
-    if (req.method !== 'POST') {
-        res.status(405).send('Method Not Allowed');
-        return;
+// Express router for handling StudentVue API requests
+router.post('/', async (req, res) => {
+    try {
+        const result = await handleRequest(req.body);
+        res.status(result.statusCode).json(JSON.parse(result.body));
+    } catch (error) {
+        console.error('Express router error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
+});
 
-    const result = await handleRequest(req.body);
-    res.status(result.statusCode).json(JSON.parse(result.body));
-}; 
+// Export the router for Express
+export { router }; 

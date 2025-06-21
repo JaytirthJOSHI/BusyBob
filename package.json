@@ -15,6 +15,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
+    "start": "node server.js",
+    "dev:server": "node server.js",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "npm run build && npx vercel --prod",
@@ -24,7 +26,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",
-    "studentvue.js": "^0.1.1"
+    "express": "^4.18.2",
+    "studentvue": "^2.0.4"
   },
   "devDependencies": {
     "vite": "^5.4.19"

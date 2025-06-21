@@ -28,3 +28,7 @@ CREATE POLICY "Users can delete their own StudentVue credentials" ON studentvue_
 
 -- Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_studentvue_credentials_user_id ON studentvue_credentials(user_id);
+
+
+
+

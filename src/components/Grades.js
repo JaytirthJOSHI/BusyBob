@@ -98,46 +98,68 @@ export class Grades {
         }
     }
 
-    async fetchStudentVueData(action) {
+    async fetchStudentVueData(action, retries = 3) {
         if (!this.districtUrl || !this.username || !this.password) {
             throw new Error('User credentials are not set.');
         }
         
-        const response = await fetch('/api/studentvue', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                districtUrl: this.districtUrl,
-                username: this.username,
-                password: this.password,
-                action: action,
-            }),
-        });
-
-        if (!response.ok) {
-            let errorMessage = `Request failed with status ${response.status}`;
+        for (let attempt = 1; attempt <= retries; attempt++) {
             try {
-                const errorBody = await response.json();
-                errorMessage = errorBody.error || errorMessage;
-            } catch (e) {
-                // If we can't parse the error response, use the status text
-                errorMessage = response.statusText || errorMessage;
+                const response = await fetch('/api/studentvue', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        districtUrl: this.districtUrl,
+                        username: this.username,
+                        password: this.password,
+                        action: action,
+                    }),
+                });
+
+                if (!response.ok) {
+                    let errorMessage = `Request failed with status ${response.status}`;
+                    try {
+                        const errorBody = await response.json();
+                        errorMessage = errorBody.error || errorMessage;
+                    } catch (e) {
+                        // If we can't parse the error response, use the status text
+                        errorMessage = response.statusText || errorMessage;
+                    }
+                    
+                    // If it's the last attempt, throw the error
+                    if (attempt === retries) {
+                        throw new Error(errorMessage);
+                    }
+                    
+                    // Otherwise, wait and retry
+                    console.log(`Attempt ${attempt} failed for ${action}, retrying in ${attempt * 1000}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+                    continue;
+                }
+
+                const text = await response.text();
+                if (!text) {
+                    throw new Error('Empty response from server');
+                }
+
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Failed to parse JSON response:', text);
+                    throw new Error('Invalid response format from server');
+                }
+            } catch (error) {
+                // If it's the last attempt, throw the error
+                if (attempt === retries) {
+                    throw error;
+                }
+                
+                // Otherwise, wait and retry
+                console.log(`Attempt ${attempt} failed for ${action}, retrying in ${attempt * 1000}ms...`);
+                await new Promise(resolve => setTimeout(resolve, attempt * 1000));
             }
-            throw new Error(errorMessage);
-        }
-
-        const text = await response.text();
-        if (!text) {
-            throw new Error('Empty response from server');
-        }
-
-        try {
-            return JSON.parse(text);
-        } catch (e) {
-            console.error('Failed to parse JSON response:', text);
-            throw new Error('Invalid response format from server');
         }
     }
 
@@ -230,47 +252,51 @@ export class Grades {
 
     parseGradebook(gradebook) {
         const grades = []
-        
         try {
-            if (!gradebook || !gradebook.Gradebook || !gradebook.Gradebook.Courses || !Array.isArray(gradebook.Gradebook.Courses.Course)) {
+            if (!gradebook || !gradebook.Gradebook || !gradebook.Gradebook.Courses || !gradebook.Gradebook.Courses.Course) {
                 console.warn('Gradebook data is not in the expected format.', gradebook)
                 return []
             }
 
-            const courses = gradebook.Gradebook.Courses.Course || []
-            
+            // Always treat Course as an array
+            const courses = Array.isArray(gradebook.Gradebook.Courses.Course)
+                ? gradebook.Gradebook.Courses.Course
+                : [gradebook.Gradebook.Courses.Course]
+
             courses.forEach(course => {
-                const mark = course.Marks?.Mark?.[0]
-                const courseData = {
-                    name: course.Title || 'Unknown Course',
-                    teacher: course.Teacher || 'Unknown Teacher',
+                // Always treat Mark as an array
+                let marks = course.Marks?.Mark
+                if (marks && !Array.isArray(marks)) marks = [marks]
+                const mark = marks && marks.length > 0 ? marks[0] : null
+
+                // Always treat Assignment as an array
+                let assignments = []
+                if (mark && mark.Assignments && mark.Assignments.Assignment) {
+                    assignments = Array.isArray(mark.Assignments.Assignment)
+                        ? mark.Assignments.Assignment
+                        : [mark.Assignments.Assignment]
+                }
+
+                grades.push({
+                    name: course.Title || course.CourseName || 'Unknown Course',
+                    teacher: course.Staff || course.Teacher || 'Unknown Teacher',
                     period: course.Period || '',
                     grade: mark?.CalculatedScoreString || 'N/A',
-                    percentage: mark?.CalculatedScoreRaw || 0,
-                    assignments: []
-                }
-                
-                if (course.Assignments?.Assignment) {
-                    const assignments = Array.isArray(course.Assignments.Assignment) 
-                        ? course.Assignments.Assignment 
-                        : [course.Assignments.Assignment]
-                    
-                    courseData.assignments = assignments.map(assignment => ({
-                        name: assignment.Name || 'Unknown Assignment',
-                        score: assignment.Score || 'N/A',
-                        maxScore: assignment.MaxScore || 'N/A',
-                        dueDate: assignment.DueDate || '',
-                        category: assignment.Category || 'General'
+                    percentage: parseFloat(mark?.CalculatedScoreRaw) || 0,
+                    assignments: assignments.map(assignment => ({
+                        name: assignment.Measure || assignment.Name || 'Unknown Assignment',
+                        score: assignment.ScoreCalValue || assignment.DisplayScore || assignment.Point || 'N/A',
+                        maxScore: assignment.ScoreMaxValue || assignment.PointPossible || 'N/A',
+                        dueDate: assignment.DueDate || assignment.Date || '',
+                        category: assignment.Type || assignment.Category || 'General',
+                        notes: assignment.Notes || '',
                     }))
-                }
-                
-                grades.push(courseData)
+                })
             })
         } catch (error) {
             console.error('Error parsing gradebook:', error)
             this.showMessage('There was an error parsing your gradebook data.', 'error')
         }
-        
         return grades
     }
 
@@ -278,46 +304,115 @@ export class Grades {
         const assignments = []
         
         try {
-            if (!calendar || !calendar.StudentCalendar || !calendar.StudentCalendar.Events || !Array.isArray(calendar.StudentCalendar.Events.Event)) {
-                console.warn('Calendar data is not in the expected format.', calendar)
-                return []
+            // Handle CalendarListing format (what we're actually getting)
+            if (calendar?.CalendarListing?.EventLists?.EventList) {
+                const eventLists = Array.isArray(calendar.CalendarListing.EventLists.EventList) 
+                    ? calendar.CalendarListing.EventLists.EventList 
+                    : [calendar.CalendarListing.EventLists.EventList]
+                
+                eventLists.forEach(eventList => {
+                    if (eventList && Array.isArray(eventList)) {
+                        eventList.forEach(event => {
+                            if (event && (event.DayType === 'Assignment' || event.DayType === 'Homework' || event.Title?.includes('Assignment'))) {
+                                assignments.push({
+                                    name: event.Title || 'Unknown Assignment',
+                                    dueDate: event.Date || '',
+                                    course: event.Course || 'Unknown Course',
+                                    description: event.Description || '',
+                                    type: event.DayType || 'Assignment'
+                                })
+                            }
+                        })
+                    }
+                })
+                return assignments
             }
-
-            const events = calendar.StudentCalendar.Events.Event || []
             
-            events.forEach(event => {
-                if (event && (event.Type === 'Assignment' || event.Type === 'Homework')) {
-                    assignments.push({
-                        name: event.Title || 'Unknown Assignment',
-                        dueDate: event.StartDate || '',
-                        course: event.Course || 'Unknown Course',
-                        description: event.Description || '',
-                        type: event.Type || 'Assignment'
-                    })
-                }
-            })
+            // Handle StudentCalendar format (original expected format)
+            if (calendar?.StudentCalendar?.Events?.Event) {
+                const events = Array.isArray(calendar.StudentCalendar.Events.Event) 
+                    ? calendar.StudentCalendar.Events.Event 
+                    : [calendar.StudentCalendar.Events.Event]
+                
+                events.forEach(event => {
+                    if (event && (event.Type === 'Assignment' || event.Type === 'Homework')) {
+                        assignments.push({
+                            name: event.Title || 'Unknown Assignment',
+                            dueDate: event.StartDate || '',
+                            course: event.Course || 'Unknown Course',
+                            description: event.Description || '',
+                            type: event.Type || 'Assignment'
+                        })
+                    }
+                })
+                return assignments
+            }
+            
+            console.warn('Calendar data is not in the expected format.', calendar)
+            return []
         } catch (error) {
             console.error('Error parsing assignments:', error)
             this.showMessage('There was an error parsing your assignments data.', 'error')
+            return []
         }
-        
-        return assignments
     }
 
     parseAttendance(attendanceData) {
-        if (!attendanceData?.Attendance || !Array.isArray(attendanceData.Attendance.Absences?.Absence)) {
-            console.warn('Attendance data is not in the expected format.', attendanceData)
+        if (!attendanceData || !attendanceData.Attendance) {
+            console.warn('Attendance data not in any expected format.', attendanceData)
             return null
         }
         return attendanceData.Attendance
     }
 
     parseSchedule(scheduleData) {
-        if (!scheduleData?.ClassSchedule || !Array.isArray(scheduleData.ClassSchedule.Classes?.Class)) {
-            console.warn('Schedule data is not in the expected format.', scheduleData)
-            return null
+        try {
+            console.log('Parsing schedule data:', scheduleData);
+            
+            const schedule = scheduleData?.StudentClassSchedule;
+            if (!schedule) {
+                console.warn('Schedule data is missing the "StudentClassSchedule" property.', scheduleData);
+                return null;
+            }
+
+            const classLists = schedule.ClassLists;
+            if (!classLists) {
+                console.warn('Schedule data is missing the "ClassLists" property.', schedule);
+                return null;
+            }
+
+            // The actual class list can be nested under different keys, so we check for them.
+            // It could be ClassListing, Class, or just an array.
+            let classes = [];
+            if (classLists.ClassListing) {
+                classes = Array.isArray(classLists.ClassListing) ? classLists.ClassListing : [classLists.ClassListing];
+            } else if (classLists.Class) {
+                classes = Array.isArray(classLists.Class) ? classLists.Class : [classLists.Class];
+            } else if (Array.isArray(classLists)) {
+                classes = classLists;
+            } else {
+                console.warn('Could not find a class list in "ClassLists".', classLists);
+                return null;
+            }
+            
+            console.log('Found and parsed schedule with classes:', classes);
+            
+            return {
+                type: 'StudentClassSchedule',
+                classes: classes.map(cls => ({
+                    period: cls['@Period'] || 'N/A',
+                    name: cls['@CourseTitle'] || 'Unknown Course',
+                    teacher: cls['@Teacher'] || 'Unknown Teacher',
+                    room: cls['@RoomName'] || 'N/A',
+                    email: cls['@TeacherEmail'] || '',
+                })),
+                schoolName: schedule['@SchoolName'] || 'Unknown School',
+            };
+
+        } catch (error) {
+            console.error('Error parsing schedule:', error);
+            return null;
         }
-        return scheduleData.ClassSchedule.Classes.Class
     }
 
     render() {
@@ -354,79 +449,30 @@ export class Grades {
     }
 
     renderConnectionForm() {
-        return `
-            <div class="connection-form">
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                    <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                        Connect to StudentVue
-                    </h3>
-                    <p class="text-blue-700 dark:text-blue-300 text-sm">
-                        Select your school district and enter your credentials to view your grades and assignments.
+        const container = document.getElementById('grades-container')
+        if (!container) return
+
+        container.innerHTML = `
+            <div class="max-w-4xl mx-auto p-6">
+                <div class="text-center py-12">
+                    <div class="w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-12 h-12 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Connect Your StudentVue Account</h2>
+                    <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                        To view your grades, assignments, attendance, and schedule, you need to connect your StudentVue account first.
                     </p>
-                </div>
-                
-                <form id="studentvue-form" class="space-y-4">
-                    <div class="space-y-2 p-4 border rounded-lg dark:border-gray-700">
-                        <label for="district-search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Find by District Name
-                        </label>
-                        <div class="relative">
-                            <input type="text" id="district-search" name="district-search"
-                                   placeholder="Start typing your district name..."
-                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="flex items-center my-4">
-                            <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
-                            <span class="flex-shrink mx-4 text-gray-500 dark:text-gray-400 text-sm">OR</span>
-                            <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
-                        </div>
-
-                        <label for="zip-code-search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Find by ZIP Code
-                        </label>
-                        <div class="flex items-center gap-2">
-                            <input type="text" id="zip-code-search" name="zipCodeSearch" pattern="[0-9]{5}"
-                                   placeholder="e.g., 90210"
-                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
-                            <button type="button" id="find-by-zip-btn" class="btn-secondary">Find</button>
-                        </div>
-                        
-                        <div id="district-results" class="relative z-10 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md mt-2 max-h-60 overflow-y-auto hidden"></div>
-
-                        <input type="hidden" id="district-url" name="districtUrl">
-                        <p id="selected-district" class="mt-2 text-sm text-gray-600 dark:text-gray-400 font-medium"></p>
-                        
-                        <p class="text-center text-xs text-gray-500 dark:text-gray-400 pt-2">
-                            Can't find your school? 
-                            <a href="mailto:support@busybob.com?subject=Missing%20School%20District" class="text-blue-500 hover:underline">
-                                Let us know!
-                            </a>
+                    <div class="space-y-4">
+                        <button id="go-to-settings" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                            Go to Settings to Connect
+                        </button>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            You can manage all your connected accounts in the Settings page
                         </p>
                     </div>
-
-                    <div class="space-y-2 p-4 border rounded-lg dark:border-gray-700">
-                        <label for="studentvue-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Username
-                        </label>
-                        <input type="text" id="studentvue-username" name="username" required
-                               placeholder="Your StudentVue username"
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
-                    </div>
-
-                    <div class="space-y-2 p-4 border rounded-lg dark:border-gray-700">
-                        <label for="studentvue-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Password
-                        </label>
-                        <input type="password" id="studentvue-password" name="password" required
-                               placeholder="Your StudentVue password"
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
-                    </div>
-
-                    <div class="flex justify-end">
-                        <button type="submit" id="connect-studentvue-btn" class="btn-primary">Connect and Save</button>
-                    </div>
-                </form>
+                </div>
             </div>
         `
     }
@@ -486,28 +532,63 @@ export class Grades {
         if (this.schedule === -1) return this.renderDataError('schedule data')
         if (!this.schedule) return this.renderDataNotFound('schedule')
 
+        const { classes, schoolName, term } = this.schedule
+
+        if (!classes || classes.length === 0) {
+            return `
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Schedule Found</h3>
+                    <p class="text-gray-600 dark:text-gray-400">No schedule data is available for the current term.</p>
+                </div>
+            `
+        }
+
         return `
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-700">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Period</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Course</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Teacher</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Room</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        ${this.schedule.map(cls => `
+            <div class="space-y-6">
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">School: ${schoolName || 'N/A'}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Term: ${term || 'Current Term'}</p>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">${cls.Period}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${cls.CourseTitle}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${cls.Teacher}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${cls.RoomName}</td>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Period</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Course</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Teacher</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Room</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Contact</th>
                             </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            ${classes.map(cls => `
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                        ${cls.period}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">
+                                        ${cls.name}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        ${cls.teacher}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        ${cls.room}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        ${cls.email ? `<a href="mailto:${cls.email}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">${cls.email}</a>` : 'N/A'}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         `
     }
@@ -516,46 +597,138 @@ export class Grades {
         if (this.attendance === -1) return this.renderDataError('attendance data')
         if (!this.attendance) return this.renderDataNotFound('attendance')
         
-        const { Absences, DailyTotals, PeriodTotals } = this.attendance
+        const { Absences, TotalExcused, TotalTardies, TotalUnexcused, TotalActivities, TotalUnexcusedTardies, SchoolName } = this.attendance
+
+        // Helper function to get total from period totals
+        const getTotal = (periodTotals, type = '0') => {
+            if (!periodTotals || !Array.isArray(periodTotals)) return '0'
+            const total = periodTotals.find(p => p.Number === type || p.Number === '0')
+            return total ? total.Total || '0' : '0'
+        }
 
         return `
             <div class="space-y-6">
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Summary</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                            <div class="text-2xl font-bold">${DailyTotals?.Total || 0}</div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">Total Days Absent</div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">School: ${SchoolName || 'N/A'}</h3>
+                </div>
+                
+                <!-- Attendance Summary -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                            ${getTotal(TotalActivities?.PeriodTotal)}
                         </div>
-                        <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                            <div class="text-2xl font-bold">${PeriodTotals?.Tardies || 0}</div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">Total Tardies</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Activities</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                            ${getTotal(TotalTardies?.PeriodTotal)}
                         </div>
-                        <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                            <div class="text-2xl font-bold">${PeriodTotals?.Unexcused || 0}</div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">Unexcused Absences</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Tardies</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="text-2xl font-bold text-red-600 dark:text-red-400">
+                            ${getTotal(TotalUnexcused?.PeriodTotal)}
                         </div>
-                         <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                            <div class="text-2xl font-bold">${PeriodTotals?.Excused || 0}</div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">Excused Absences</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Unexcused</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                            ${getTotal(TotalUnexcusedTardies?.PeriodTotal)}
                         </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Unexcused Tardies</div>
                     </div>
                 </div>
+
+                <!-- Absences Detail -->
                 <div>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Absences</h3>
-                    <ul class="divide-y divide-gray-200 dark:divide-gray-700">
-                        ${Absences.Absence.map(absence => `
-                            <li class="py-3 flex justify-between items-center">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white">${absence.AbsenceDate}</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">${absence.Reason}</p>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Absence Details</h3>
+                    ${Absences?.Absence && Absences.Absence.length > 0 ? `
+                        <div class="space-y-4">
+                            ${Absences.Absence.map(absence => `
+                                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <p class="text-lg font-medium text-gray-900 dark:text-white">
+                                                ${absence.AbsenceDate || 'Unknown Date'}
+                                            </p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                ${absence.Reason || 'No reason provided'}
+                                            </p>
+                                            ${absence.Note ? `
+                                                <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                                                    Note: ${absence.Note}
+                                                </p>
+                                            ` : ''}
+                                        </div>
+                                        <span class="px-3 py-1 text-xs font-semibold rounded-full ${
+                                            absence.CodeAllDayDescription?.includes('Activity') 
+                                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                        }">
+                                            ${absence.CodeAllDayDescription || 'Absent'}
+                                        </span>
+                                    </div>
+                                    
+                                    ${absence.Periods?.Period && absence.Periods.Period.length > 0 ? `
+                                        <div class="mt-4">
+                                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Period Details:</h4>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                ${absence.Periods.Period.map(period => `
+                                                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded border-l-4 ${
+                                                        period.Name?.includes('Absent') 
+                                                            ? 'border-red-400' 
+                                                            : period.Name?.includes('Tardy') 
+                                                                ? 'border-yellow-400'
+                                                                : 'border-gray-400'
+                                                    }">
+                                                        <div class="flex justify-between items-start">
+                                                            <div>
+                                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                                    Period ${period.Number || 'N/A'}
+                                                                </p>
+                                                                <p class="text-xs text-gray-600 dark:text-gray-400">
+                                                                    ${period.Course || 'N/A'}
+                                                                </p>
+                                                                <p class="text-xs text-gray-500 dark:text-gray-500">
+                                                                    ${period.Staff || 'N/A'}
+                                                                </p>
+                                                            </div>
+                                                            ${period.Name && period.Name !== 'Not Included' ? `
+                                                                <span class="text-xs px-2 py-1 rounded ${
+                                                                    period.Name.includes('Absent') 
+                                                                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                                                        : period.Name.includes('Tardy')
+                                                                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                                                }">
+                                                                    ${period.Name}
+                                                                </span>
+                                                            ` : ''}
+                                                        </div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    ` : `
+                                        <div class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                                            No period details available
+                                        </div>
+                                    `}
                                 </div>
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${absence.Excused ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                                    ${absence.Excused ? 'Excused' : 'Unexcused'}
-                                </span>
-                            </li>
-                        `).join('')}
-                    </ul>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="text-center py-8">
+                            <div class="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Perfect Attendance!</h3>
+                            <p class="text-gray-600 dark:text-gray-400">No absences recorded for this period.</p>
+                        </div>
+                    `}
                 </div>
             </div>
         `
@@ -633,91 +806,97 @@ export class Grades {
 
     setupEventListeners() {
         const container = document.getElementById('grades-container')
-        if (!container) return
+        if (!container) {
+            console.error('Grades container not found')
+            return
+        }
+
+        console.log('Setting up event listeners for grades component')
 
         // Use event delegation for dynamically added elements
         container.addEventListener('click', (event) => {
             if (event.target.id === 'refresh-grades') {
                 this.refreshData()
+            } else if (event.target.id === 'go-to-settings') {
+                // Navigate to settings page
+                window.location.hash = '#settings'
             }
         })
 
         if (this.isConnected) {
-            // Tab switching logic
-            const tabs = new Tabs(document.getElementById('studentvue-tabs'), {
-                defaultTabId: 'gradebook-tab',
-                activeClasses: 'text-blue-600 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-500 border-blue-600 dark:border-blue-500',
-                inactiveClasses: 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300'
-            })
-        }
-
-        if (!this.isConnected) {
-            const form = container.querySelector('#studentvue-form')
-            if (form) {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault()
-                    this.handleConnection(form)
-                })
-
-                const districtSearch = form.querySelector('#district-search')
-                const zipCodeSearch = form.querySelector('#zip-code-search')
-                const findByZipBtn = form.querySelector('#find-by-zip-btn')
-                const districtResults = form.querySelector('#district-results')
-
-                const displayResults = (filteredDistricts) => {
-                    if (filteredDistricts.length > 0) {
-                        districtResults.innerHTML = filteredDistricts.map(d => 
-                            `<div class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" data-url="${d.parentVueUrl}" data-name="${d.name}">${d.name} <span class='text-xs text-gray-500'>(${d.address})</span></div>`
-                        ).join('')
-                    } else {
-                        districtResults.innerHTML = '<div class="p-2 text-gray-500">No districts found</div>'
-                    }
-                    districtResults.classList.remove('hidden')
-                }
-
-                districtSearch.addEventListener('input', () => {
-                    const query = districtSearch.value.toLowerCase()
-                    zipCodeSearch.value = '' // Clear other search
-                    if (query.length < 3) {
-                        districtResults.innerHTML = ''
-                        districtResults.classList.add('hidden')
-                        return
-                    }
-                    const filteredDistricts = districts.filter(d => d.name.toLowerCase().includes(query)).slice(0, 50)
-                    displayResults(filteredDistricts)
+            console.log('User is connected, setting up tab switching')
+            
+            // Tab switching logic - using the correct data attributes
+            const tabsContainer = document.getElementById('studentvue-tabs')
+            if (tabsContainer) {
+                console.log('Found tabs container')
+                const tabButtons = tabsContainer.querySelectorAll('[data-tabs-target]')
+                console.log('Found tab buttons:', tabButtons.length)
+                
+                // Hide all tab contents initially
+                const allTabContents = document.querySelectorAll('#studentvue-tab-content > div')
+                console.log('Found tab contents:', allTabContents.length)
+                allTabContents.forEach(content => {
+                    content.classList.add('hidden')
                 })
                 
-                findByZipBtn.addEventListener('click', () => {
-                    const zipCode = zipCodeSearch.value
-                    districtSearch.value = '' // Clear other search
-                    if (!/^\d{5}$/.test(zipCode)) {
-                        this.showMessage('Please enter a valid 5-digit ZIP code.', 'error')
-                        return
+                // Show first tab by default
+                const firstTab = tabButtons[0]
+                if (firstTab) {
+                    const firstTabTarget = firstTab.getAttribute('data-tabs-target')
+                    console.log('First tab target:', firstTabTarget)
+                    const firstTabContent = document.querySelector(firstTabTarget)
+                    
+                    if (firstTabContent) {
+                        console.log('Found first tab content, setting as active')
+                        // Set first tab as active
+                        firstTab.classList.add('text-blue-600', 'border-blue-600', 'dark:text-blue-500', 'dark:border-blue-500')
+                        firstTab.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300')
+                        firstTab.setAttribute('aria-selected', 'true')
+                        firstTabContent.classList.remove('hidden')
+                    } else {
+                        console.error('First tab content not found:', firstTabTarget)
                     }
-                    const filteredDistricts = districts.filter(d => d.address.includes(zipCode))
-                    displayResults(filteredDistricts)
+                }
+                
+                tabButtons.forEach((button, index) => {
+                    console.log(`Setting up click listener for tab ${index}:`, button.getAttribute('data-tabs-target'))
+                    button.addEventListener('click', () => {
+                        console.log('Tab clicked:', button.getAttribute('data-tabs-target'))
+                        const targetSelector = button.getAttribute('data-tabs-target')
+                        const targetContent = document.querySelector(targetSelector)
+                        
+                        if (!targetContent) {
+                            console.error('Target content not found:', targetSelector)
+                            return
+                        }
+                        
+                        console.log('Found target content, switching tabs')
+                        
+                        // Update active button
+                        tabButtons.forEach(btn => {
+                            btn.classList.remove('text-blue-600', 'border-blue-600', 'dark:text-blue-500', 'dark:border-blue-500')
+                            btn.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300')
+                            btn.setAttribute('aria-selected', 'false')
+                        })
+                        button.classList.add('text-blue-600', 'border-blue-600', 'dark:text-blue-500', 'dark:border-blue-500')
+                        button.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300')
+                        button.setAttribute('aria-selected', 'true')
+                        
+                        // Show target content
+                        allTabContents.forEach(content => {
+                            content.classList.add('hidden')
+                        })
+                        targetContent.classList.remove('hidden')
+                        
+                        console.log('Successfully switched to tab:', targetSelector)
+                    })
                 })
-
-                districtResults.addEventListener('click', (event) => {
-                    const target = event.target.closest('[data-url]')
-                    if (target) {
-                        const url = target.dataset.url
-                        const name = target.dataset.name
-                        form.querySelector('#district-url').value = url
-                        form.querySelector('#selected-district').textContent = `Selected: ${name}`
-                        districtSearch.value = ''
-                        zipCodeSearch.value = ''
-                        districtResults.classList.add('hidden')
-                    }
-                })
-
-                // Hide results when clicking outside
-                document.addEventListener('click', (event) => {
-                    if (!form.contains(event.target)) {
-                        districtResults.classList.add('hidden')
-                    }
-                })
+            } else {
+                console.error('Tabs container not found')
             }
+        } else {
+            console.log('User is not connected, skipping tab setup')
         }
     }
 
