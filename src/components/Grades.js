@@ -1,5 +1,13 @@
 import { auth, db, supabase } from '../lib/supabase.js'
 import districts from '../lib/districts.js'
+import { 
+    parseGradebook, 
+    parseAssignments, 
+    parseAttendance, 
+    parseSchedule,
+    calculateGPA,
+    getGradeColor 
+} from '../utils/grades-parser.js'
 
 export class Grades {
     constructor() {
@@ -189,7 +197,7 @@ export class Grades {
         try {
             console.log('Fetching gradebook via proxy...');
             const gradebook = await this.fetchStudentVueData('getGradebook');
-            this.grades = this.parseGradebook(gradebook);
+            this.grades = parseGradebook(gradebook);
             console.log('📊 Grades loaded:', this.grades);
         } catch (error) {
             console.error('Error loading grades:', error);
@@ -202,7 +210,7 @@ export class Grades {
         try {
             console.log('Fetching calendar via proxy...');
             const calendar = await this.fetchStudentVueData('getCalendar');
-            this.assignments = this.parseAssignments(calendar);
+            this.assignments = parseAssignments(calendar);
             console.log('📝 Assignments loaded:', this.assignments);
         } catch (error) {
             console.error('Error loading assignments:', error);
@@ -215,7 +223,7 @@ export class Grades {
         try {
             console.log('Fetching attendance via proxy...');
             const attendance = await this.fetchStudentVueData('getAttendance');
-            this.attendance = this.parseAttendance(attendance);
+            this.attendance = parseAttendance(attendance);
             console.log('📋 Attendance loaded:', this.attendance);
         } catch (error) {
             console.error('Error loading attendance:', error);
@@ -228,7 +236,7 @@ export class Grades {
         try {
             console.log('Fetching schedule via proxy...');
             const schedule = await this.fetchStudentVueData('getSchedule');
-            this.schedule = this.parseSchedule(schedule);
+            this.schedule = parseSchedule(schedule);
             console.log('🗓️ Schedule loaded:', this.schedule);
         } catch (error) {
             console.error('Error loading schedule:', error);
@@ -247,171 +255,6 @@ export class Grades {
             console.error('Error loading school info:', error);
             this.schoolInfo = -1;
             this.showMessage(`Could not load school info: ${error.message}`, 'error');
-        }
-    }
-
-    parseGradebook(gradebook) {
-        const grades = []
-        try {
-            if (!gradebook || !gradebook.Gradebook || !gradebook.Gradebook.Courses || !gradebook.Gradebook.Courses.Course) {
-                console.warn('Gradebook data is not in the expected format.', gradebook)
-                return []
-            }
-
-            // Always treat Course as an array
-            const courses = Array.isArray(gradebook.Gradebook.Courses.Course)
-                ? gradebook.Gradebook.Courses.Course
-                : [gradebook.Gradebook.Courses.Course]
-
-            courses.forEach(course => {
-                // Always treat Mark as an array
-                let marks = course.Marks?.Mark
-                if (marks && !Array.isArray(marks)) marks = [marks]
-                const mark = marks && marks.length > 0 ? marks[0] : null
-
-                // Always treat Assignment as an array
-                let assignments = []
-                if (mark && mark.Assignments && mark.Assignments.Assignment) {
-                    assignments = Array.isArray(mark.Assignments.Assignment)
-                        ? mark.Assignments.Assignment
-                        : [mark.Assignments.Assignment]
-                }
-
-                grades.push({
-                    name: course.Title || course.CourseName || 'Unknown Course',
-                    teacher: course.Staff || course.Teacher || 'Unknown Teacher',
-                    period: course.Period || '',
-                    grade: mark?.CalculatedScoreString || 'N/A',
-                    percentage: parseFloat(mark?.CalculatedScoreRaw) || 0,
-                    assignments: assignments.map(assignment => ({
-                        name: assignment.Measure || assignment.Name || 'Unknown Assignment',
-                        score: assignment.ScoreCalValue || assignment.DisplayScore || assignment.Point || 'N/A',
-                        maxScore: assignment.ScoreMaxValue || assignment.PointPossible || 'N/A',
-                        dueDate: assignment.DueDate || assignment.Date || '',
-                        category: assignment.Type || assignment.Category || 'General',
-                        notes: assignment.Notes || '',
-                    }))
-                })
-            })
-        } catch (error) {
-            console.error('Error parsing gradebook:', error)
-            this.showMessage('There was an error parsing your gradebook data.', 'error')
-        }
-        return grades
-    }
-
-    parseAssignments(calendar) {
-        const assignments = []
-        
-        try {
-            // Handle CalendarListing format (what we're actually getting)
-            if (calendar?.CalendarListing?.EventLists?.EventList) {
-                const eventLists = Array.isArray(calendar.CalendarListing.EventLists.EventList) 
-                    ? calendar.CalendarListing.EventLists.EventList 
-                    : [calendar.CalendarListing.EventLists.EventList]
-                
-                eventLists.forEach(eventList => {
-                    if (eventList && Array.isArray(eventList)) {
-                        eventList.forEach(event => {
-                            if (event && (event.DayType === 'Assignment' || event.DayType === 'Homework' || event.Title?.includes('Assignment'))) {
-                                assignments.push({
-                                    name: event.Title || 'Unknown Assignment',
-                                    dueDate: event.Date || '',
-                                    course: event.Course || 'Unknown Course',
-                                    description: event.Description || '',
-                                    type: event.DayType || 'Assignment'
-                                })
-                            }
-                        })
-                    }
-                })
-                return assignments
-            }
-            
-            // Handle StudentCalendar format (original expected format)
-            if (calendar?.StudentCalendar?.Events?.Event) {
-                const events = Array.isArray(calendar.StudentCalendar.Events.Event) 
-                    ? calendar.StudentCalendar.Events.Event 
-                    : [calendar.StudentCalendar.Events.Event]
-                
-                events.forEach(event => {
-                    if (event && (event.Type === 'Assignment' || event.Type === 'Homework')) {
-                        assignments.push({
-                            name: event.Title || 'Unknown Assignment',
-                            dueDate: event.StartDate || '',
-                            course: event.Course || 'Unknown Course',
-                            description: event.Description || '',
-                            type: event.Type || 'Assignment'
-                        })
-                    }
-                })
-                return assignments
-            }
-            
-            console.warn('Calendar data is not in the expected format.', calendar)
-            return []
-        } catch (error) {
-            console.error('Error parsing assignments:', error)
-            this.showMessage('There was an error parsing your assignments data.', 'error')
-            return []
-        }
-    }
-
-    parseAttendance(attendanceData) {
-        if (!attendanceData || !attendanceData.Attendance) {
-            console.warn('Attendance data not in any expected format.', attendanceData)
-            return null
-        }
-        return attendanceData.Attendance
-    }
-
-    parseSchedule(scheduleData) {
-        try {
-            console.log('Parsing schedule data:', scheduleData);
-            
-            const schedule = scheduleData?.StudentClassSchedule;
-            if (!schedule) {
-                console.warn('Schedule data is missing the "StudentClassSchedule" property.', scheduleData);
-                return null;
-            }
-
-            const classLists = schedule.ClassLists;
-            if (!classLists) {
-                console.warn('Schedule data is missing the "ClassLists" property.', schedule);
-                return null;
-            }
-
-            // The actual class list can be nested under different keys, so we check for them.
-            // It could be ClassListing, Class, or just an array.
-            let classes = [];
-            if (classLists.ClassListing) {
-                classes = Array.isArray(classLists.ClassListing) ? classLists.ClassListing : [classLists.ClassListing];
-            } else if (classLists.Class) {
-                classes = Array.isArray(classLists.Class) ? classLists.Class : [classLists.Class];
-            } else if (Array.isArray(classLists)) {
-                classes = classLists;
-            } else {
-                console.warn('Could not find a class list in "ClassLists".', classLists);
-                return null;
-            }
-            
-            console.log('Found and parsed schedule with classes:', classes);
-            
-            return {
-                type: 'StudentClassSchedule',
-                classes: classes.map(cls => ({
-                    period: cls['@Period'] || 'N/A',
-                    name: cls['@CourseTitle'] || 'Unknown Course',
-                    teacher: cls['@Teacher'] || 'Unknown Teacher',
-                    room: cls['@RoomName'] || 'N/A',
-                    email: cls['@TeacherEmail'] || '',
-                })),
-                schoolName: schedule['@SchoolName'] || 'Unknown School',
-            };
-
-        } catch (error) {
-            console.error('Error parsing schedule:', error);
-            return null;
         }
     }
 
@@ -497,7 +340,7 @@ export class Grades {
         if (this.grades === -1) return this.renderDataError('gradebook data')
         if (!this.grades || this.grades.length === 0) return this.renderDataNotFound('grades')
 
-        const gpa = this.calculateGPA()
+        const gpa = calculateGPA(this.grades)
         return `
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 ${this.grades.map(course => this.renderCourseCard(course)).join('')}
@@ -748,14 +591,14 @@ export class Grades {
     renderCourseCard(course) {
         const mark = course.marks[0] // Assuming one mark per course for simplicity
         const percentage = parseFloat(mark?.percentage) || 0
-        const gradeColor = this.getGradeColor(percentage)
+        const gradeColor = getGradeColor(percentage)
         const gradeClass = `text-${gradeColor}-600 dark:text-${gradeColor}-400`
         
         return `
             <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div class="flex items-center justify-between mb-3">
                     <h4 class="font-semibold text-gray-900 dark:text-white text-sm">${course.name}</h4>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">${course.period}</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Period ${course.period}</span>
                 </div>
                 
                 <div class="flex items-center justify-between mb-2">
@@ -767,138 +610,151 @@ export class Grades {
                     <div class="bg-${gradeColor}-500 h-2 rounded-full" style="width: ${Math.min(percentage, 100)}%"></div>
                 </div>
                 
-                ${course.assignments.length > 0 ? `
-                    <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Recent Assignments:</p>
-                        ${course.assignments.slice(0, 3).map(assignment => `
-                            <div class="flex justify-between items-center text-xs">
-                                <span class="text-gray-600 dark:text-gray-400 truncate">${assignment.name}</span>
-                                <span class="text-gray-900 dark:text-white font-medium">${assignment.score}/${assignment.maxScore}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
+                <div class="mt-4">
+                    <button class="view-assignments-btn w-full text-center text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline" data-course-name="${course.name}">
+                        View Assignments
+                    </button>
+                </div>
             </div>
         `
     }
 
-    getGradeColor(percentage) {
-        if (percentage >= 90) return 'green'
-        if (percentage >= 80) return 'blue'
-        if (percentage >= 70) return 'yellow'
-        if (percentage >= 60) return 'orange'
-        return 'red'
-    }
+    renderAssignmentsModal(courseName) {
+        const course = this.grades.find(c => c.name === courseName);
+        if (!course || !course.assignments || course.assignments.length === 0) {
+            return `
+                <div id="assignments-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
+                    <div class="relative p-5 border w-full max-w-2xl mx-auto rounded-md bg-white dark:bg-gray-800 shadow-lg">
+                        <div class="flex justify-between items-center pb-3">
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Assignments for ${courseName}</h3>
+                            <button id="close-assignments-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400">No assignments to display.</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        const assignmentsList = course.assignments.map(a => `
+            <li class="py-3 sm:py-4">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 rounded-full bg-${getGradeColor( (a.score / a.maxScore) * 100 )} flex items-center justify-center text-white font-bold">
+                            ${a.score && a.maxScore ? Math.round((a.score / a.maxScore) * 100) + '%' : 'N/A'}
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate dark:text-white">
+                            ${a.name}
+                        </p>
+                        <p class="text-sm text-gray-500 truncate dark:text-gray-400">
+                            ${a.category} - Due: ${new Date(a.dueDate).toLocaleDateString()}
+                        </p>
+                    </div>
+                    <div class="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
+                        ${a.score} / ${a.maxScore}
+                    </div>
+                </div>
+            </li>
+        `).join('');
 
-    calculateGPA() {
-        if (this.grades.length === 0) return 'N/A'
-        
-        const totalPoints = this.grades.reduce((sum, course) => {
-            const percentage = course.percentage
-            if (percentage >= 90) return sum + 4.0
-            if (percentage >= 80) return sum + 3.0
-            if (percentage >= 70) return sum + 2.0
-            if (percentage >= 60) return sum + 1.0
-            return sum + 0.0
-        }, 0)
-        
-        return (totalPoints / this.grades.length).toFixed(2)
+        return `
+            <div id="assignments-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
+                <div class="relative p-5 border w-full max-w-2xl mx-auto rounded-md bg-white dark:bg-gray-800 shadow-lg">
+                    <div class="flex justify-between items-center pb-3">
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Assignments for ${courseName}</h3>
+                        <button id="close-assignments-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <ul class="max-h-96 overflow-y-auto">
+                            ${assignmentsList}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     setupEventListeners() {
-        const container = document.getElementById('grades-container')
+        const container = document.getElementById('grades-container');
         if (!container) {
-            console.error('Grades container not found')
-            return
+            console.error('Grades container not found');
+            return;
         }
 
-        console.log('Setting up event listeners for grades component')
+        let activeTab = 'gradebook-tab'; // Default active tab
+
+        console.log('Setting up event listeners for grades component');
 
         // Use event delegation for dynamically added elements
         container.addEventListener('click', (event) => {
+            // Handle tab switching
+            const tabButton = event.target.closest('[data-tabs-target]');
+            if (tabButton) {
+                activeTab = tabButton.id;
+                this.updateTab(activeTab);
+            }
+
             if (event.target.id === 'refresh-grades') {
-                this.refreshData()
+                this.refreshData();
             } else if (event.target.id === 'go-to-settings') {
                 // Navigate to settings page
-                window.location.hash = '#settings'
+                window.location.hash = '#settings';
             }
-        })
+        });
+
+        // Setup for dynamically added content like modals
+        document.body.addEventListener('click', (event) => {
+            if (event.target.closest('#close-assignments-modal')) {
+                const modal = document.getElementById('assignments-modal');
+                if (modal) {
+                    modal.remove();
+                }
+            }
+
+            const viewAssignmentsBtn = event.target.closest('.view-assignments-btn');
+            if (viewAssignmentsBtn) {
+                const courseName = viewAssignmentsBtn.dataset.courseName;
+                const modalHtml = this.renderAssignmentsModal(courseName);
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+        });
 
         if (this.isConnected) {
-            console.log('User is connected, setting up tab switching')
-            
-            // Tab switching logic - using the correct data attributes
-            const tabsContainer = document.getElementById('studentvue-tabs')
-            if (tabsContainer) {
-                console.log('Found tabs container')
-                const tabButtons = tabsContainer.querySelectorAll('[data-tabs-target]')
-                console.log('Found tab buttons:', tabButtons.length)
-                
-                // Hide all tab contents initially
-                const allTabContents = document.querySelectorAll('#studentvue-tab-content > div')
-                console.log('Found tab contents:', allTabContents.length)
-                allTabContents.forEach(content => {
-                    content.classList.add('hidden')
-                })
-                
-                // Show first tab by default
-                const firstTab = tabButtons[0]
-                if (firstTab) {
-                    const firstTabTarget = firstTab.getAttribute('data-tabs-target')
-                    console.log('First tab target:', firstTabTarget)
-                    const firstTabContent = document.querySelector(firstTabTarget)
-                    
-                    if (firstTabContent) {
-                        console.log('Found first tab content, setting as active')
-                        // Set first tab as active
-                        firstTab.classList.add('text-blue-600', 'border-blue-600', 'dark:text-blue-500', 'dark:border-blue-500')
-                        firstTab.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300')
-                        firstTab.setAttribute('aria-selected', 'true')
-                        firstTabContent.classList.remove('hidden')
-                    } else {
-                        console.error('First tab content not found:', firstTabTarget)
-                    }
-                }
-                
-                tabButtons.forEach((button, index) => {
-                    console.log(`Setting up click listener for tab ${index}:`, button.getAttribute('data-tabs-target'))
-                    button.addEventListener('click', () => {
-                        console.log('Tab clicked:', button.getAttribute('data-tabs-target'))
-                        const targetSelector = button.getAttribute('data-tabs-target')
-                        const targetContent = document.querySelector(targetSelector)
-                        
-                        if (!targetContent) {
-                            console.error('Target content not found:', targetSelector)
-                            return
-                        }
-                        
-                        console.log('Found target content, switching tabs')
-                        
-                        // Update active button
-                        tabButtons.forEach(btn => {
-                            btn.classList.remove('text-blue-600', 'border-blue-600', 'dark:text-blue-500', 'dark:border-blue-500')
-                            btn.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300')
-                            btn.setAttribute('aria-selected', 'false')
-                        })
-                        button.classList.add('text-blue-600', 'border-blue-600', 'dark:text-blue-500', 'dark:border-blue-500')
-                        button.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300')
-                        button.setAttribute('aria-selected', 'true')
-                        
-                        // Show target content
-                        allTabContents.forEach(content => {
-                            content.classList.add('hidden')
-                        })
-                        targetContent.classList.remove('hidden')
-                        
-                        console.log('Successfully switched to tab:', targetSelector)
-                    })
-                })
-            } else {
-                console.error('Tabs container not found')
-            }
+            console.log('User is connected, setting up initial tab state');
+            this.updateTab(activeTab); // Set the initial active tab
         } else {
-            console.log('User is not connected, skipping tab setup')
+            console.log('User is not connected, skipping tab setup');
         }
+    }
+
+    updateTab(tabId) {
+        const tabs = document.querySelectorAll('#studentvue-tabs button');
+        const tabContents = document.querySelectorAll('#studentvue-tab-content > div');
+
+        tabs.forEach(tab => {
+            const isSelected = tab.id === tabId;
+            tab.setAttribute('aria-selected', isSelected);
+            if (isSelected) {
+                tab.classList.add('text-blue-600', 'border-blue-600', 'dark:text-blue-500', 'dark:border-blue-500');
+                tab.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300');
+            } else {
+                tab.classList.remove('text-blue-600', 'border-blue-600', 'dark:text-blue-500', 'dark:border-blue-500');
+                tab.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300', 'dark:hover:text-gray-300');
+            }
+        });
+
+        tabContents.forEach(content => {
+            if (content.id === tabId.replace('-tab', '')) {
+                content.classList.remove('hidden');
+            } else {
+                content.classList.add('hidden');
+            }
+        });
     }
 
     async handleConnection(form) {

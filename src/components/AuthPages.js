@@ -175,5 +175,3 @@ export class AuthPages {
     this.showSignup()
   }
 }
-
-
