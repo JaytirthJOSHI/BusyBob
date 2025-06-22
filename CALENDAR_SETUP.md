@@ -26,15 +26,42 @@ BusyBob already has Google OAuth set up for user authentication. The calendar in
 Since you already have Google OAuth working, you just need to ensure your Google Cloud Console project has the Calendar API enabled:
 
 1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Select your existing project (the one used for busybob.site)
-3. Enable the Google Calendar API if not already enabled
-4. Ensure your OAuth consent screen includes the calendar scope: `https://www.googleapis.com/auth/calendar.readonly`
+2. Click the project dropdown at the top of the page and select your existing BusyBob project
+3. In the left sidebar, click "APIs & Services" > "Library"
+4. Search for "Google Calendar API" in the search bar
+5. Click on "Google Calendar API" in the results
+6. Click the "Enable" button if the API is not already enabled
+
+Next, configure the OAuth consent screen:
+
+1. In the left sidebar, click "APIs & Services" > "OAuth consent screen"
+2. Under "Scopes for Google APIs", click "Add or Remove Scopes"
+3. Search for "calendar" in the filter box
+4. Check the box for `https://www.googleapis.com/auth/calendar.readonly`
+5. Click "Update" to save the changes
+
+Verify your OAuth credentials:
+
+1. Go to "APIs & Services" > "Credentials"
+2. Find your existing OAuth 2.0 Client ID
+3. Click the edit (pencil) icon 
+4. Ensure the following are configured:
+   - Authorized JavaScript origins: `https://busybob.site`
+   - Authorized redirect URIs: `https://busybob.site/auth/google/callback`
+5. Click "Save" if you made any changes
+
+Test the integration:
+
+1. Sign out of BusyBob if currently logged in
+2. Sign back in using Google OAuth
+3. Navigate to the Calendar page
+4. You should now see the option to connect Google Calendar
 
 ### Microsoft Outlook Setup
 
 1. Go to the [Microsoft Azure Portal](https://portal.azure.com/)
 2. Register a new application
-3. Add the Microsoft Graph API permission: `Calendars.Read`
+3. Add th e Microsoft Graph API permission: `Calendars.Read`
 4. Set the redirect URI to: `https://busybob.site/auth/microsoft/callback`
 5. Copy the Client ID and Client Secret
 
