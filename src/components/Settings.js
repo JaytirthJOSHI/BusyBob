@@ -652,3 +652,4 @@ export class Settings {
         throw new Error('Invalid URL format');
     }
 }
+
