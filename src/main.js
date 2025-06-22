@@ -6,6 +6,8 @@ import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
 import { AcademicHub } from './components/AcademicHub.js'
 import { Settings } from './components/Settings.js'
+import { PrivacyPolicy } from './components/PrivacyPolicy.js'
+import { TermsOfService } from './components/TermsOfService.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 
 console.log('🚀 Main.js loaded - starting initialization...')
@@ -21,6 +23,8 @@ let authPages = null
 let landingPage = null
 let academicHub = null
 let settings = null
+let privacyPolicy = null
+let termsOfService = null
 
 const moodManager = {
     feelings: [],
@@ -219,6 +223,44 @@ async function initializeApp() {
     try {
         console.log('🔧 Starting app initialization...')
         
+        // Check for direct URL access to legal pages
+        const path = window.location.pathname
+        if (path === '/privacy-policy' || path === '/terms-of-service') {
+            const page = path === '/privacy-policy' ? 'privacy-policy' : 'terms-of-service'
+            console.log(`📄 Direct access to ${page} detected`)
+            
+            // Initialize components needed for legal pages
+            console.log('📦 Creating components...')
+            authPages = new AuthPages()
+            navigation = new Navigation()
+            landingPage = new LandingPage()
+            academicHub = new AcademicHub()
+            settings = new Settings()
+            privacyPolicy = new PrivacyPolicy()
+            termsOfService = new TermsOfService()
+            
+            // Initialize theme
+            console.log('🎨 Initializing theme...')
+            theme.initialize()
+            
+            // Set up theme toggle
+            console.log('🌙 Setting up theme toggle...')
+            document.getElementById('theme-toggle').addEventListener('click', theme.toggle)
+            
+            // Show main app and navigate to legal page
+            showMainApp()
+            setTimeout(() => {
+                showPage(page)
+            }, 100)
+            
+            // Set up event listeners
+            setupFormListeners()
+            setupNavigationListeners()
+            
+            console.log('🎉 Legal page initialization complete!')
+            return
+        }
+        
         // Initialize theme
         console.log('🎨 Initializing theme...')
         theme.initialize()
@@ -230,6 +272,8 @@ async function initializeApp() {
         landingPage = new LandingPage()
         academicHub = new AcademicHub()
         settings = new Settings()
+        privacyPolicy = new PrivacyPolicy()
+        termsOfService = new TermsOfService()
         console.log('✅ Components created successfully')
         
         // Set up theme toggle
@@ -277,6 +321,15 @@ async function initializeApp() {
         
         document.addEventListener('showLogin', () => {
             showAuthPages('login')
+        })
+
+        // Legal page event listeners
+        document.addEventListener('showLegalPage', (e) => {
+            const { page } = e.detail
+            showMainApp()
+            setTimeout(() => {
+                showPage(page)
+            }, 100)
         })
 
         // Set up form listeners
@@ -693,6 +746,16 @@ function showPage(pageName) {
         case 'settings':
             if (settings) {
                 settings.init()
+            }
+            break
+        case 'privacy-policy':
+            if (privacyPolicy) {
+                privacyPolicy.initializeHTML()
+            }
+            break
+        case 'terms-of-service':
+            if (termsOfService) {
+                termsOfService.initializeHTML()
             }
             break
     }

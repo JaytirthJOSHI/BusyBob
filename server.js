@@ -237,6 +237,15 @@ app.post('/api/google/refresh', async (req, res) => {
     }
 });
 
+// Legal pages routes
+app.get('/privacy-policy', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/terms-of-service', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // Serve the main app
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));

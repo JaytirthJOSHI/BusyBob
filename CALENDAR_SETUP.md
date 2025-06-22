@@ -61,7 +61,7 @@ Test the integration:
 
 1. Go to the [Microsoft Azure Portal](https://portal.azure.com/)
 2. Register a new application
-3. Add th e Microsoft Graph API permission: `Calendars.Read`
+3. Add the Microsoft Graph API permission: `Calendars.Read`
 4. Set the redirect URI to: `https://busybob.site/auth/microsoft/callback`
 5. Copy the Client ID and Client Secret
 

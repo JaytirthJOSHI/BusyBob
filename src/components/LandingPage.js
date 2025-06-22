@@ -239,8 +239,18 @@ export class LandingPage {
                                 </div>
                                 <span class="text-lg font-semibold text-gray-900 dark:text-white">Busy <span class="text-orange-500">BOB</span></span>
                             </div>
-                            <div class="text-center text-gray-600 dark:text-gray-400">
-                                <p>&copy; 2025 Busy BOB. Made for students who hustle.</p>
+                            <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
+                                <div class="flex space-x-4 text-sm">
+                                    <button id="landing-privacy-link" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                        Privacy Policy
+                                    </button>
+                                    <button id="landing-terms-link" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                        Terms of Service
+                                    </button>
+                                </div>
+                                <div class="text-center text-gray-600 dark:text-gray-400">
+                                    <p>&copy; 2025 Busy BOB. Made for students who hustle.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -287,6 +297,21 @@ export class LandingPage {
                 document.dispatchEvent(new CustomEvent('demoLogin'))
             })
         })
+
+        // Legal links
+        const privacyLink = this.container.querySelector('#landing-privacy-link')
+        if (privacyLink) {
+            privacyLink.addEventListener('click', () => {
+                document.dispatchEvent(new CustomEvent('showLegalPage', { detail: { page: 'privacy-policy' } }))
+            })
+        }
+
+        const termsLink = this.container.querySelector('#landing-terms-link')
+        if (termsLink) {
+            termsLink.addEventListener('click', () => {
+                document.dispatchEvent(new CustomEvent('showLegalPage', { detail: { page: 'terms-of-service' } }))
+            })
+        }
     }
 } 
 

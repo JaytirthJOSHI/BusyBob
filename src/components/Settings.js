@@ -189,7 +189,7 @@ export class Settings {
                 </div>
 
                 <!-- Danger Zone -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-red-200 dark:border-red-800">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-red-200 dark:border-red-800 mb-6">
                     <div class="p-6">
                         <h2 class="text-xl font-semibold text-red-600 dark:text-red-400 mb-4">Danger Zone</h2>
                         <div class="space-y-4">
@@ -200,6 +200,33 @@ export class Settings {
                                 </div>
                                 <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                                     Delete Account
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legal -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Legal</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">Privacy Policy</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Learn how we collect, use, and protect your data</p>
+                                </div>
+                                <button id="privacy-policy-link" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
+                                    View Policy
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">Terms of Service</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Read our terms and conditions of service</p>
+                                </div>
+                                <button id="terms-of-service-link" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
+                                    View Terms
                                 </button>
                             </div>
                         </div>
@@ -264,6 +291,8 @@ export class Settings {
             if (event.target.id === 'disconnect-studentvue') this.disconnectStudentVue();
             if (event.target.id === 'connect-canvas') this.showCanvasConnectionModal();
             if (event.target.id === 'disconnect-canvas') this.disconnectCanvas();
+            if (event.target.id === 'privacy-policy-link') this.showPrivacyPolicy();
+            if (event.target.id === 'terms-of-service-link') this.showTermsOfService();
         });
 
         // Load user email
@@ -650,6 +679,16 @@ export class Settings {
             return match[0];
         }
         throw new Error('Invalid URL format');
+    }
+
+    showPrivacyPolicy() {
+        // Navigate to privacy policy page
+        document.dispatchEvent(new CustomEvent('pageChange', { detail: { page: 'privacy-policy' } }));
+    }
+
+    showTermsOfService() {
+        // Navigate to terms of service page
+        document.dispatchEvent(new CustomEvent('pageChange', { detail: { page: 'terms-of-service' } }));
     }
 }
 
