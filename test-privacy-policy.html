@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900">
+    <div class="container mx-auto p-4">
+        <h1 class="text-2xl font-bold mb-4">Privacy Policy Test</h1>
+        <button id="test-privacy-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Test Privacy Policy
+        </button>
+        <div id="privacy-policy-page" class="mt-4 border border-gray-300 p-4 rounded">
+            <!-- Privacy Policy will load here -->
+        </div>
+    </div>
+
+    <script type="module">
+        import { PrivacyPolicy } from './src/components/PrivacyPolicy.js';
+        
+        let privacyPolicy;
+        
+        document.getElementById('test-privacy-btn').addEventListener('click', () => {
+            try {
+                console.log('Creating PrivacyPolicy instance...');
+                privacyPolicy = new PrivacyPolicy();
+                console.log('PrivacyPolicy created successfully:', privacyPolicy);
+            } catch (error) {
+                console.error('Error creating PrivacyPolicy:', error);
+                document.getElementById('privacy-policy-page').innerHTML = `
+                    <div class="text-red-600">
+                        <h2>Error loading Privacy Policy:</h2>
+                        <p>${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html> 

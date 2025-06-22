@@ -235,7 +235,8 @@ async function initializeApp() {
             navigation = new Navigation()
             landingPage = new LandingPage()
             academicHub = new AcademicHub()
-            settings = new Settings()
+            calendar = new Calendar('calendar-container', onDateSelect)
+            settings = new Settings(calendar)
             privacyPolicy = new PrivacyPolicy()
             termsOfService = new TermsOfService()
             
@@ -251,6 +252,7 @@ async function initializeApp() {
             showMainApp()
             setTimeout(() => {
                 showPage(page)
+                console.log(`✅ Navigated to ${page} page`)
             }, 100)
             
             // Set up event listeners
