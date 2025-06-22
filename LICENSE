@@ -1,0 +1,21 @@
+Copyright (c) 2024 Jay Tirth Joshi
+
+**BusyBob License**
+
+This software is proprietary and is not licensed under an open-source license. The source code is made available for reference and educational purposes only.
+
+**You are allowed to:**
+- Read the code to understand its functionality and for educational purposes.
+- Use snippets of the code as inspiration for your own projects, both personal and commercial.
+
+**You are NOT allowed to:**
+- Redistribute the source code or the compiled software, in whole or in part.
+- Use the software for any public-facing or commercial purposes.
+- Create derivative works for public distribution.
+
+**Attribution is Required:**
+If you use concepts or code snippets from this project for inspiration, you must provide a clear and visible attribution to this project in your work. Please include the following in a README file, "About" page, or a similar location:
+
+"Portions of this project were inspired by BusyBob (https://github.com/jaytirthjoshi/BusyBob)."
+
+This license is granted by the copyright holder, and any use of the code outside of these terms is strictly prohibited. The copyright holder is not liable for any issues that may arise from the use of this code.

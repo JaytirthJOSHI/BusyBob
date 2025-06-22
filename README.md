@@ -85,9 +85,8 @@ We welcome contributions! Please see our contributing guidelines for more detail
 
 ## License
 
-This project is licensed under the MIT License.
+This project has a special LICENSE. Please see the [LICENSE](LICENSE) file for details on what you can and cannot do with the code.
 
 ---
 
 **Made for students who hustle.** 🚀
-
