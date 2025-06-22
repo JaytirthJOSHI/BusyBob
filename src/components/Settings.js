@@ -917,7 +917,7 @@ export class Settings {
             
             const authUrl = new URL('https://accounts.spotify.com/authorize')
             authUrl.searchParams.append('response_type', 'code')
-            authUrl.searchParams.append('client_id', 'YOUR_SPOTIFY_CLIENT_ID') // This will be replaced with actual client ID
+            authUrl.searchParams.append('client_id', import.meta.env.VITE_SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID')
             authUrl.searchParams.append('scope', scope)
             authUrl.searchParams.append('redirect_uri', `${window.location.origin}/auth/spotify/callback`)
             authUrl.searchParams.append('state', state)
