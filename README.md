@@ -1,209 +1,93 @@
-# Busy BOB 🔥
+# Busy BOB - The Ultimate Student Productivity Platform
 
-The ultimate productivity platform for busy students. Smart tools for the hustle. Track tasks, monitor mood, and maintain a journal—all in one place. Built for students who get things done.
+Busy BOB is the productivity powerhouse for busy students. Track tasks, monitor your mood, maintain a journal, and manage all your academic data—all in one place. Because busy students need smart solutions.
 
-## ✨ Features
+## Features
 
-- **Task Management** - Organize tasks with priorities, categories, and due dates
-- **Mood Tracking** - Log daily feelings with ratings and notes
-- **Journal Entries** - Reflect on your day with structured journaling
-- **Interactive Calendar** - Visual timeline of tasks and mood patterns
-- **Analytics Dashboard** - Track productivity and wellness trends
-- **Dark/Light Theme** - Comfortable viewing in any environment
-- **Progressive Web App** - Install on mobile devices like a native app
-- **Real-time Sync** - Cloud-based storage with Supabase backend
+### 🎯 Task Management
+- Create and organize tasks with priorities, categories, and stress levels
+- Set due dates and times with smart reminders
+- Track completion progress and productivity patterns
 
-## 🚀 Quick Start
+### 📊 Academic Hub
+- **Unified Academic Dashboard**: Manage both Canvas and StudentVue data in one place
+- **Grades Tracking**: View grades from both Canvas and StudentVue systems
+- **Assignment Management**: See upcoming assignments from all connected platforms
+- **Schedule Integration**: View class schedules and calendar events
+- **Attendance Tracking**: Monitor attendance records from StudentVue
+- **Calendar Events**: View Canvas calendar events and deadlines
 
-### Prerequisites
-- Node.js 18+ 
-- npm 8+
-- Supabase account
+### 😊 Mood Tracking
+- Daily mood logging with emoji-based interface
+- Mood trend analysis and insights
+- Streak tracking for consistent mood monitoring
 
-### Installation
+### 📝 Reflective Journaling
+- Daily reflection prompts and guided journaling
+- Private, secure journal entries
+- Journal streak tracking and motivation
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/yourusername/mindful-student.git
-cd mindful-student
-```
+### 📅 Interactive Calendar
+- Visual calendar interface with task integration
+- Date-specific task viewing
+- Academic event integration
 
-2. **Install dependencies**
-```bash
-npm install
-```
+### ⚙️ Smart Settings
+- Connect multiple academic platforms (Canvas, StudentVue)
+- Manage account connections and credentials
+- Customize your experience
 
-3. **Set up environment variables**
-```bash
-# Copy the example file
-cp .env.example .env
+## Academic Platform Integration
 
-# Edit .env with your Supabase credentials
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
-```
+### Canvas Integration
+- View courses and assignments
+- Access course materials and discussions
+- Track grades and progress
+- Calendar event synchronization
 
-4. **Set up Supabase database**
-- Go to your [Supabase Dashboard](https://supabase.com/dashboard)
-- Create a new project
-- Run the SQL setup script in your Supabase SQL editor (provided in repo)
+### StudentVue Integration
+- Access gradebook and transcripts
+- View class schedules
+- Track attendance records
+- Monitor assignment due dates
 
-5. **Start development server**
-```bash
-npm run dev
-```
+### Unified Experience
+- Single dashboard for all academic data
+- Cross-platform data comparison
+- Unified assignment tracking
+- Integrated calendar view
 
-## 📦 Deployment
+## Getting Started
 
-### Deploy to Vercel (Recommended)
+1. **Sign Up**: Create your free account
+2. **Connect Accounts**: Link your Canvas and/or StudentVue accounts in Settings
+3. **Start Organizing**: Create tasks, log your mood, and begin journaling
+4. **Stay Productive**: Use the unified academic dashboard to track all your academic progress
 
-1. **Install Vercel CLI**
-```bash
-npm i -g vercel
-```
+## Technology Stack
 
-2. **Deploy**
-```bash
-npm run deploy
-```
+- **Frontend**: Vanilla JavaScript with modern ES6+ features
+- **Styling**: Tailwind CSS with custom components
+- **Backend**: Supabase (PostgreSQL + Auth + Real-time)
+- **Charts**: Chart.js for data visualization
+- **Academic APIs**: Canvas API and StudentVue integration
 
-3. **Set environment variables in Vercel Dashboard**
-- Add your `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+## Installation
 
-### Deploy to Netlify
-
-1. **Install Netlify CLI**
-```bash
-npm i -g netlify-cli
-```
-
-2. **Deploy**
-```bash
-npm run deploy:netlify
-```
-
-3. **Set environment variables in Netlify Dashboard**
-
-### Deploy to GitHub Pages
-
-1. **Build the project**
-```bash
-npm run build
-```
-
-2. **Deploy the `dist` folder to GitHub Pages**
-
-## 🗄️ Database Schema
-
-The app uses these Supabase tables:
-
-- **users** - User profiles and authentication
-- **tasks** - Task management with priorities, categories, due dates
-- **feelings** - Mood tracking with ratings and comments
-- **journal_entries** - Daily journal entries with mood ratings
-
-## 🛠️ Built With
-
-- **Frontend**: Vanilla JavaScript, HTML5, CSS3
-- **Styling**: Tailwind CSS, Custom CSS animations
-- **Backend**: Supabase (PostgreSQL, Authentication, Storage)
-- **Build Tool**: Vite
-- **Charts**: Chart.js
-- **Fonts**: Google Fonts (Inter)
-
-## 📱 PWA Features
-
-- Installable on mobile and desktop
-- Offline-ready (basic functionality)
-- Native app-like experience
-- Push notifications (coming soon)
-
-## 🔧 Development
-
-### Project Structure
-```
-BusyBob/
-├── src/
-│   ├── components/          # UI components
-│   ├── lib/                # Supabase client
-│   ├── styles/             # CSS styles
-│   ├── utils/              # Helper functions
-│   └── main.js             # App entry point
-├── public/                 # Static assets
-├── fonts/                  # Custom fonts
-└── index.html              # Main HTML file
-```
-
-### Scripts
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run deploy` - Deploy to Vercel
-- `npm run deploy:netlify` - Deploy to Netlify
-
-## 🎨 Customization
-
-### Themes
-Edit `src/styles/main.css` to customize colors, fonts, and animations.
-
-### Components
-All components are modular and located in `src/components/`.
-
-### Database
-Modify `src/lib/supabase.js` to add new data models or API calls.
-
-## 📈 Performance
-
-- **Lighthouse Score**: 95+ (Performance, Accessibility, Best Practices, SEO)
-- **Bundle Size**: ~54KB (gzipped: ~14KB)
-- **Load Time**: <2s on 3G
-- **First Contentful Paint**: <1.5s
-
-## 🔒 Security
-
-- Row Level Security (RLS) enabled on all tables
-- Environment variables for sensitive data
-- HTTPS enforcement
-- XSS protection
-- CSRF protection via Supabase
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Design inspiration from modern productivity apps
-- Icons from Heroicons
-- Fonts from Google Fonts
-- Backend powered by Supabase
-
-## 📞 Support
-
-If you have any questions or need help:
-- Create an issue on GitHub
-- Email: support@mindful-student.app (if you set this up)
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up your Supabase project and configure environment variables
+4. Run the development server: `npm run dev`
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
+We welcome contributions! Please see our contributing guidelines for more details.
 
 ## License
 
 This project is licensed under the MIT License.
 
-## Acknowledgements
-
-- Timezone data provided by the [World Time API](http://worldtimeapi.org/).
-
 ---
 
-**Made with ❤️ for students who want to be more mindful and productive**
+**Made for students who hustle.** 🚀
+

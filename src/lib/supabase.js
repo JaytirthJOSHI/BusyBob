@@ -1,12 +1,24 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Handle both browser (Vite) and Node.js environments
+const getEnvVar = (key) => {
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+        return import.meta.env[key]
+    }
+    // For Node.js environment, try process.env
+    if (typeof process !== 'undefined' && process.env) {
+        return process.env[key]
+    }
+    return undefined
+}
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables. Check your .env file.')
-  console.log('VITE_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing')
-  console.log('VITE_SUPABASE_ANON_KEY:', supabaseKey ? 'Set' : 'Missing')
+const supabaseUrl = getEnvVar('VITE_SUPABASE_URL') || 'https://placeholder.supabase.co'
+const supabaseKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || 'placeholder-key'
+
+if (!getEnvVar('VITE_SUPABASE_URL') || !getEnvVar('VITE_SUPABASE_ANON_KEY')) {
+  console.warn('Missing Supabase environment variables. Using placeholder values.')
+  console.log('VITE_SUPABASE_URL:', getEnvVar('VITE_SUPABASE_URL') ? 'Set' : 'Missing')
+  console.log('VITE_SUPABASE_ANON_KEY:', getEnvVar('VITE_SUPABASE_ANON_KEY') ? 'Set' : 'Missing')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey)

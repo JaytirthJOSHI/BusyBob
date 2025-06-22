@@ -4,8 +4,7 @@ import { Chatbot } from './components/Chatbot.js'
 import { AuthPages } from './components/AuthPages.js'
 import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
-import { Grades } from './components/Grades.js'
-import { Canvas } from './components/Canvas.js'
+import { AcademicHub } from './components/AcademicHub.js'
 import { Settings } from './components/Settings.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 
@@ -20,8 +19,7 @@ let chatbot = null
 let navigation = null
 let authPages = null
 let landingPage = null
-let grades = null
-let canvas = null
+let academicHub = null
 let settings = null
 
 const moodManager = {
@@ -230,8 +228,7 @@ async function initializeApp() {
         authPages = new AuthPages()
         navigation = new Navigation()
         landingPage = new LandingPage()
-        grades = new Grades()
-        canvas = new Canvas()
+        academicHub = new AcademicHub()
         settings = new Settings()
         console.log('✅ Components created successfully')
         
@@ -418,6 +415,12 @@ function setupNavigationListeners() {
                 showPage(page)
             }
         }
+    })
+
+    // Settings navigation from components
+    document.addEventListener('showSettings', () => {
+        navigation.setActivePage('settings')
+        showPage('settings')
     })
 }
 
@@ -682,13 +685,9 @@ function showPage(pageName) {
         case 'journal':
             loadJournalData()
             break
-        case 'grades':
-            grades = new Grades()
-            grades.init()
-            break
-        case 'canvas':
-            if (canvas) {
-                canvas.init()
+        case 'academic-hub':
+            if (academicHub) {
+                academicHub.init()
             }
             break
         case 'settings':

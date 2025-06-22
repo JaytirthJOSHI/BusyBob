@@ -15,6 +15,14 @@ async function handleRequest(body) {
         };
     }
 
+    // Validate district URL format
+    if (!districtUrl.startsWith('http://') && !districtUrl.startsWith('https://')) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'Invalid district URL format. Must start with http:// or https://' }),
+        };
+    }
+
     let client;
     try {
         console.log('Attempting to login to StudentVue...');
@@ -22,9 +30,20 @@ async function handleRequest(body) {
         console.log('Successfully logged in to StudentVue');
     } catch (error) {
         console.error('StudentVue login failed:', { message: error.message, stack: error.stack });
+        
+        // Provide more specific error messages
+        let errorMessage = error.message;
+        if (error.message.includes('55816')) {
+            errorMessage = 'Invalid username or password. Please check your credentials.';
+        } else if (error.message.includes('network')) {
+            errorMessage = 'Network error. Please check your internet connection.';
+        } else if (error.message.includes('timeout')) {
+            errorMessage = 'Connection timeout. Please try again.';
+        }
+        
         return {
             statusCode: 401, // Unauthorized
-            body: JSON.stringify({ error: `StudentVue login failed: ${error.message}` }),
+            body: JSON.stringify({ error: `StudentVue login failed: ${errorMessage}` }),
         };
     }
         

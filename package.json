@@ -28,7 +28,12 @@
     "@kth/canvas-api": "^5.0.0-beta.7",
     "@supabase/supabase-js": "^2.47.10",
     "express": "^4.18.2",
-    "studentvue": "^2.0.4"
+    "node-fetch": "^3.3.2",
+    "studentvue": "^2.0.4",
+    "googleapis": "^133.0.0",
+    "@azure/msal-browser": "^3.7.0",
+    "@azure/msal-node": "^2.6.0",
+    "ical": "^0.8.0"
   },
   "devDependencies": {
     "vite": "^5.4.19"
