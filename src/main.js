@@ -352,9 +352,6 @@ async function initializeApp() {
         // Set up navigation listeners
         setupNavigationListeners()
         
-        // Set up OAuth listeners
-        setupOAuthListeners()
-        
         // Initialize calendar
         calendar = new Calendar('calendar-container', onDateSelect)
         
