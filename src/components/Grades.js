@@ -614,7 +614,7 @@ export class Grades {
                     <button class="view-assignments-btn w-full text-center text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline" data-course-name="${course.name}">
                         View Assignments
                     </button>
-                </div>
+                            </div>
             </div>
         `
     }
@@ -727,7 +727,7 @@ export class Grades {
         if (this.isConnected) {
             console.log('User is connected, setting up initial tab state');
             this.updateTab(activeTab); // Set the initial active tab
-        } else {
+                    } else {
             console.log('User is not connected, skipping tab setup');
         }
     }

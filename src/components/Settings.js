@@ -5,6 +5,8 @@ export class Settings {
     constructor() {
         this.studentVueConnected = false
         this.studentVueCredentials = null
+        this.canvasConnected = false
+        this.canvasCredentials = null
     }
 
     async init() {
@@ -12,7 +14,6 @@ export class Settings {
         await this.loadConnectedAccounts()
         this.render()
         this.setupEventListeners()
-        this.loadTimezones()
     }
 
     async loadConnectedAccounts() {
@@ -20,32 +21,40 @@ export class Settings {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) return
 
-            // Check if StudentVue credentials exist
-            const { data, error } = await supabase.from('studentvue_credentials')
+            // Check for StudentVue
+            const { data: studentVueData } = await supabase
+                .from('studentvue_credentials')
                 .select('district_url, username')
                 .eq('user_id', user.id)
                 .single()
 
-            if (error) {
-                if (error.code === 'PGRST116') {
-                    // No record found, which is fine
-                    this.studentVueConnected = false
-                    this.studentVueCredentials = null
-                } else {
-                    console.error('Error loading StudentVue credentials:', error)
+            this.studentVueConnected = !!studentVueData
+            if (studentVueData) {
+                this.studentVueCredentials = {
+                    districtUrl: studentVueData.district_url,
+                    username: studentVueData.username
                 }
-                return
             }
 
-            if (data) {
-                this.studentVueConnected = true
-                this.studentVueCredentials = {
-                    districtUrl: data.district_url,
-                    username: data.username
+            // Check for Canvas
+            const { data: canvasData } = await supabase
+                .from('canvas_credentials')
+                .select('canvas_url')
+                .eq('user_id', user.id)
+                .single()
+
+            this.canvasConnected = !!canvasData
+            if (canvasData) {
+                this.canvasCredentials = {
+                    canvasUrl: canvasData.canvas_url
                 }
             }
+
         } catch (error) {
-            console.error('Error loading connected accounts:', error)
+            // It's normal for queries to fail if no record is found (PGRST116), so we can often ignore those.
+            if (error.code !== 'PGRST116') {
+                console.error('Error loading connected accounts:', error)
+            }
         }
     }
 
@@ -95,64 +104,15 @@ export class Settings {
                         
                         <!-- StudentVue Connection -->
                         <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 class="font-medium text-gray-900 dark:text-white">StudentVue</h3>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                                            ${this.studentVueConnected ? 'Connected' : 'Connect your school account to view grades, assignments, and attendance'}
-                                        </p>
-                                        ${this.studentVueConnected ? `
-                                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                                Connected as: ${this.studentVueCredentials?.username || 'Unknown'}
-                                            </p>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    ${this.studentVueConnected ? `
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                            Connected
-                                        </span>
-                                        <button id="disconnect-studentvue" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium">
-                                            Disconnect
-                                        </button>
-                                    ` : `
-                                        <button id="connect-studentvue" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                                            Connect
-                                        </button>
-                                    `}
-                                </div>
-                            </div>
+                            ${this.renderStudentVueConnection()}
+                        </div>
+
+                        <!-- Canvas Connection -->
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+                            ${this.renderCanvasConnection()}
                         </div>
 
                         <!-- More connected accounts can be added here -->
-                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                                        <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 class="font-medium text-gray-900 dark:text-white">Canvas LMS</h3>
-                                        <p class="text-sm text-gray-500 dark:text-gray-400">Connect your Canvas account to sync assignments and grades</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                                        Coming Soon
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4 opacity-50">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-3">
@@ -249,28 +209,65 @@ export class Settings {
         `
     }
 
+    renderStudentVueConnection() {
+        return `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-gray-900 dark:text-white">StudentVue</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">${this.studentVueConnected ? `Connected as: ${this.studentVueCredentials.username}` : 'Connect your school account.'}</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    ${this.studentVueConnected ? `
+                        <button id="disconnect-studentvue" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium">Disconnect</button>
+                    ` : `
+                        <button id="connect-studentvue" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Connect</button>
+                    `}
+                </div>
+            </div>
+        `;
+    }
+
+    renderCanvasConnection() {
+        return `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m14-2v-2a4 4 0 00-4-4h-1m-4 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-gray-900 dark:text-white">Canvas LMS</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">${this.canvasConnected ? `Connected to: ${this.canvasCredentials.canvasUrl}` : 'Connect your Canvas account.'}</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    ${this.canvasConnected ? `
+                        <button id="disconnect-canvas" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium">Disconnect</button>
+                    ` : `
+                        <button id="connect-canvas" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Connect</button>
+                    `}
+                </div>
+            </div>
+        `;
+    }
+
     setupEventListeners() {
         const container = document.getElementById('settings-container')
         if (!container) return
 
+        container.addEventListener('click', (event) => {
+            if (event.target.id === 'connect-studentvue') this.showStudentVueConnectionModal();
+            if (event.target.id === 'disconnect-studentvue') this.disconnectStudentVue();
+            if (event.target.id === 'connect-canvas') this.showCanvasConnectionModal();
+            if (event.target.id === 'disconnect-canvas') this.disconnectCanvas();
+        });
+
         // Load user email
         this.loadUserEmail()
-
-        // Connect StudentVue button
-        const connectBtn = container.querySelector('#connect-studentvue')
-        if (connectBtn) {
-            connectBtn.addEventListener('click', () => {
-                this.showStudentVueConnectionModal()
-            })
-        }
-
-        // Disconnect StudentVue button
-        const disconnectBtn = container.querySelector('#disconnect-studentvue')
-        if (disconnectBtn) {
-            disconnectBtn.addEventListener('click', () => {
-                this.disconnectStudentVue()
-            })
-        }
 
         // Theme toggle
         const themeToggle = container.querySelector('#settings-theme-toggle')
@@ -320,260 +317,119 @@ export class Settings {
     }
 
     showStudentVueConnectionModal() {
-        const modal = document.createElement('div')
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
-        modal.innerHTML = `
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Connect StudentVue</h3>
-                        <button id="close-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
+        const modalId = 'studentvue-modal';
+        if (document.getElementById(modalId)) return;
+
+        const modalHtml = `
+            <div id="${modalId}" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Connect to StudentVue</h2>
+                        <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">&times;</button>
                     </div>
-                    
-                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                        <h4 class="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                            Connect to StudentVue
-                        </h4>
-                        <p class="text-blue-700 dark:text-blue-300 text-sm">
-                            Select your school district and enter your credentials to view your grades, assignments, and attendance.
-                        </p>
-                    </div>
-                    
-                    <form id="studentvue-form" class="space-y-4">
-                        <div class="space-y-2 p-4 border rounded-lg dark:border-gray-700">
-                            <label for="district-search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Find by District Name
-                            </label>
-                            <div class="relative">
-                                <input type="text" id="district-search" name="district-search"
-                                       placeholder="Start typing your district name..."
-                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                    <form id="studentvue-connection-form">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="district-search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">School District</label>
+                                <input type="text" id="district-search" placeholder="Search for your district..." class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600">
+                                <input type="hidden" id="district-url">
+                                <div id="district-results" class="mt-2 border border-gray-300 dark:border-gray-600 rounded-md max-h-40 overflow-y-auto"></div>
                             </div>
-
-                            <div class="flex items-center my-4">
-                                <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
-                                <span class="flex-shrink mx-4 text-gray-500 dark:text-gray-400 text-sm">OR</span>
-                                <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+                            <div>
+                                <label for="studentvue-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                                <input type="text" id="studentvue-username" class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600">
                             </div>
-
-                            <label for="zip-code-search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Find by ZIP Code
-                            </label>
-                            <div class="flex items-center gap-2">
-                                <input type="text" id="zip-code-search" name="zipCodeSearch" pattern="[0-9]{5}"
-                                       placeholder="e.g., 90210"
-                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
-                                <button type="button" id="find-by-zip-btn" class="px-3 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">Find</button>
+                            <div>
+                                <label for="studentvue-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                                <input type="password" id="studentvue-password" class="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:border-gray-600">
                             </div>
-                            
-                            <div id="district-results" class="relative z-10 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md mt-2 max-h-60 overflow-y-auto hidden"></div>
-
-                            <input type="hidden" id="district-url" name="districtUrl">
-                            <p id="selected-district" class="mt-2 text-sm text-gray-600 dark:text-gray-400 font-medium"></p>
-                            
-                            <p class="text-center text-xs text-gray-500 dark:text-gray-400 pt-2">
-                                Can't find your school? 
-                                <a href="mailto:support@busybob.com?subject=Missing%20School%20District" class="text-blue-500 hover:underline">
-                                    Let us know!
-                                </a>
-                            </p>
                         </div>
-
-                        <div class="space-y-2 p-4 border rounded-lg dark:border-gray-700">
-                            <label for="studentvue-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Username
-                            </label>
-                            <input type="text" id="studentvue-username" name="username" required
-                                   placeholder="Your StudentVue username"
-                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="space-y-2 p-4 border rounded-lg dark:border-gray-700">
-                            <label for="studentvue-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Password
-                            </label>
-                            <input type="password" id="studentvue-password" name="password" required
-                                   placeholder="Your StudentVue password"
-                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
-                        </div>
-
-                        <div class="flex justify-end space-x-3 pt-4">
-                            <button type="button" id="cancel-connect" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors">
-                                Cancel
-                            </button>
-                            <button type="submit" id="connect-studentvue-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
-                                Connect and Save
-                            </button>
+                        <div class="mt-6 flex justify-end">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Connect</button>
                         </div>
                     </form>
                 </div>
-            </div>
-        `
+            </div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-        document.body.appendChild(modal)
-
-        // Set up form functionality
-        this.setupConnectionForm(modal)
-
-        // Event listeners
-        modal.querySelector('#close-modal').addEventListener('click', () => {
-            document.body.removeChild(modal)
-        })
-
-        modal.querySelector('#cancel-connect').addEventListener('click', () => {
-            document.body.removeChild(modal)
-        })
-
-        // Close on backdrop click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal)
-            }
-        })
+        const modal = document.getElementById(modalId);
+        modal.querySelector('#close-modal-btn').addEventListener('click', () => modal.remove());
+        this.setupDistrictSearch(modal);
+        modal.querySelector('#studentvue-connection-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleStudentVueConnection(e.target, modal);
+        });
     }
+    
+    setupDistrictSearch(modal) {
+        const searchInput = modal.querySelector('#district-search');
+        const urlInput = modal.querySelector('#district-url');
+        const resultsContainer = modal.querySelector('#district-results');
 
-    setupConnectionForm(modal) {
-        const form = modal.querySelector('#studentvue-form')
-        const districtSearch = form.querySelector('#district-search')
-        const zipCodeSearch = form.querySelector('#zip-code-search')
-        const findByZipBtn = form.querySelector('#find-by-zip-btn')
-        const districtResults = form.querySelector('#district-results')
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase();
+            resultsContainer.innerHTML = '';
+            if (query.length < 3) return;
 
-        const displayResults = (filteredDistricts) => {
-            if (filteredDistricts.length > 0) {
-                districtResults.innerHTML = filteredDistricts.map(d => 
-                    `<div class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" data-url="${d.parentVueUrl}" data-name="${d.name}">${d.name} <span class='text-xs text-gray-500'>(${d.address})</span></div>`
-                ).join('')
-            } else {
-                districtResults.innerHTML = '<div class="p-2 text-gray-500">No districts found</div>'
-            }
-            districtResults.classList.remove('hidden')
-        }
-
-        districtSearch.addEventListener('input', () => {
-            const query = districtSearch.value.toLowerCase()
-            zipCodeSearch.value = '' // Clear other search
-            if (query.length < 3) {
-                districtResults.innerHTML = ''
-                districtResults.classList.add('hidden')
-                return
-            }
-            const filteredDistricts = districts.filter(d => d.name.toLowerCase().includes(query)).slice(0, 50)
-            displayResults(filteredDistricts)
-        })
-        
-        findByZipBtn.addEventListener('click', () => {
-            const zipCode = zipCodeSearch.value
-            districtSearch.value = '' // Clear other search
-            if (!/^\d{5}$/.test(zipCode)) {
-                this.showMessage('Please enter a valid 5-digit ZIP code.', 'error')
-                return
-            }
-            const filteredDistricts = districts.filter(d => d.address.includes(zipCode))
-            displayResults(filteredDistricts)
-        })
-
-        districtResults.addEventListener('click', (event) => {
-            const target = event.target.closest('[data-url]')
-            if (target) {
-                const url = target.dataset.url
-                const name = target.dataset.name
-                form.querySelector('#district-url').value = url
-                form.querySelector('#selected-district').textContent = `Selected: ${name}`
-                districtSearch.value = ''
-                zipCodeSearch.value = ''
-                districtResults.classList.add('hidden')
-            }
-        })
-
-        // Hide results when clicking outside
-        document.addEventListener('click', (event) => {
-            if (!form.contains(event.target)) {
-                districtResults.classList.add('hidden')
-            }
-        })
-
-        // Handle form submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault()
-            await this.handleStudentVueConnection(form, modal)
-        })
+            const filteredDistricts = districts.filter(d => d.name.toLowerCase().includes(query));
+            
+            filteredDistricts.forEach(d => {
+                const div = document.createElement('div');
+                div.textContent = d.name;
+                div.className = 'p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700';
+                div.onclick = () => {
+                    searchInput.value = d.name;
+                    urlInput.value = d.url;
+                    resultsContainer.innerHTML = '';
+                };
+                resultsContainer.appendChild(div);
+            });
+        });
     }
 
     async handleStudentVueConnection(form, modal) {
-        const districtUrl = form.querySelector('#district-url').value
-        const username = form.querySelector('#studentvue-username').value
-        const password = form.querySelector('#studentvue-password').value
+        const districtUrl = form.querySelector('#district-url').value;
+        const username = form.querySelector('#studentvue-username').value;
+        const password = form.querySelector('#studentvue-password').value;
+        const connectBtn = form.querySelector('button[type="submit"]');
 
-        if (!districtUrl) {
-            this.showMessage('Please select your school district from the list.', 'error')
-            return
-        }
-        if (!username || !password) {
-            this.showMessage('Please enter your username and password.', 'error')
-            return
-        }
-
-        const connectBtn = form.querySelector('#connect-studentvue-btn')
-        connectBtn.disabled = true
-        connectBtn.textContent = 'Connecting...'
+        connectBtn.disabled = true;
+        connectBtn.textContent = 'Connecting...';
 
         try {
-            // Import the Grades component to use its storeCredentials method
-            const { Grades } = await import('./Grades.js')
-            const gradesInstance = new Grades()
-            
-            // Store credentials
-            await gradesInstance.storeCredentials(districtUrl, username, password)
-            
-            // Update local state
-            this.studentVueConnected = true
-            this.studentVueCredentials = {
-                districtUrl: districtUrl,
-                username: username
-            }
-            
-            // Close modal and update UI
-            document.body.removeChild(modal)
-            this.showMessage('StudentVue connected successfully!', 'success')
-            this.render()
-            this.setupEventListeners()
-            
+            const { data: { user } } = await auth.getCurrentUser();
+            if (!user) throw new Error("User not authenticated.");
+
+            const { error } = await supabase.from('studentvue_credentials').upsert({
+                user_id: user.id,
+                district_url: districtUrl,
+                username: username,
+                password: password,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id' });
+
+            if (error) throw error;
+            this.showMessage('StudentVue connected successfully!', 'success');
+            modal.remove();
+            this.init();
         } catch (error) {
-            console.error('Error connecting StudentVue:', error)
-            this.showMessage(`Failed to connect StudentVue: ${error.message}`, 'error')
-        } finally {
-            connectBtn.disabled = false
-            connectBtn.textContent = 'Connect and Save'
+            this.showMessage(`Failed to connect StudentVue: ${error.message}`, 'error');
+            connectBtn.disabled = false;
+            connectBtn.textContent = 'Connect';
         }
     }
 
     async disconnectStudentVue() {
-        const confirmed = confirm('Are you sure you want to disconnect your StudentVue account? This will remove all stored credentials.')
-        if (!confirmed) return
-
+        if (!confirm('Are you sure you want to disconnect your StudentVue account?')) return;
         try {
-            const { data: { user } } = await auth.getCurrentUser()
-            if (!user) throw new Error('User not authenticated')
-
-            const { error } = await supabase.from('studentvue_credentials')
-                .delete()
-                .eq('user_id', user.id)
-
-            if (error) throw error
-
-            this.studentVueConnected = false
-            this.studentVueCredentials = null
-            this.showMessage('StudentVue account disconnected successfully', 'success')
-            this.render()
-            this.setupEventListeners()
+            const { data: { user } } = await auth.getCurrentUser();
+            if (!user) throw new Error("User not authenticated.");
+            const { error } = await supabase.from('studentvue_credentials').delete().eq('user_id', user.id);
+            if (error) throw error;
+            this.showMessage('StudentVue disconnected successfully.', 'success');
+            this.init();
         } catch (error) {
-            console.error('Error disconnecting StudentVue:', error)
-            this.showMessage('Failed to disconnect StudentVue account', 'error')
+            this.showMessage(`Failed to disconnect StudentVue: ${error.message}`, 'error');
         }
     }
 
@@ -634,5 +490,165 @@ export class Settings {
             console.error('Error loading timezones:', error);
             selector.innerHTML = '<option>Could not load timezones</option>';
         }
+    }
+
+    showCanvasConnectionModal() {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300';
+        modal.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md m-4 transform transition-all duration-300 scale-95 opacity-0" id="canvas-modal-content">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Connect to Canvas</h2>
+                    <button id="close-canvas-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                
+                <form id="canvas-connection-form">
+                    <!-- Step 1: Get URL -->
+                    <div id="canvas-step-1" class="step active">
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">First, enter any URL from your Canvas instance, like a link to a course or your dashboard.</p>
+                        <div class="form-group">
+                            <label for="canvas-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Canvas URL</label>
+                            <input type="url" id="canvas-url" name="canvas_url" required
+                                   placeholder="https://yourschool.instructure.com/courses/123"
+                                   class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <button type="button" id="canvas-next-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                                Next
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Get Token -->
+                    <div id="canvas-step-2" class="step" style="display: none;">
+                        <p class="text-gray-600 dark:text-gray-400 mb-4">Great! Now, open the link below to generate an access token.</p>
+                        <div class="mb-4 p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
+                             <a href="#" id="generated-settings-link" target="_blank" class="text-sm font-medium text-purple-600 dark:text-purple-400 hover:underline break-all">
+                                 Your settings link will appear here
+                             </a>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Click "+ New Access Token", give it a name like "BusyBob", and <strong class="text-gray-800 dark:text-gray-200">leave the expiration date blank</strong>. Then, copy the token and paste it below.</p>
+                        <div class="form-group">
+                            <label for="canvas-token" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Access Token</label>
+                            <input type="password" id="canvas-token" name="access_token" required
+                                   autocomplete="new-password"
+                                   placeholder="Paste your generated token here"
+                                   class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        </div>
+                         <div class="mt-6 flex justify-between items-center">
+                            <button type="button" id="canvas-back-btn" class="text-sm font-medium text-gray-600 dark:text-gray-400 hover:underline">Back</button>
+                            <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+                                Connect
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Animate modal in
+        setTimeout(() => {
+            document.getElementById('canvas-modal-content')?.classList.remove('scale-95', 'opacity-0');
+        }, 10);
+
+        // Event listeners
+        const step1 = modal.querySelector('#canvas-step-1');
+        const step2 = modal.querySelector('#canvas-step-2');
+
+        modal.querySelector('#close-canvas-modal').addEventListener('click', () => modal.remove());
+
+        modal.querySelector('#canvas-next-btn').addEventListener('click', () => {
+            const canvasUrlInput = modal.querySelector('#canvas-url');
+            const url = canvasUrlInput.value.trim();
+            if (!url) {
+                this.showMessage('Please enter a Canvas URL.', 'error');
+                return;
+            }
+            try {
+                const baseUrl = this.extractBaseUrl(url);
+                const settingsLink = `${baseUrl}/profile/settings#:~:text=Approved%20Integrations`;
+                modal.querySelector('#generated-settings-link').href = settingsLink;
+                modal.querySelector('#generated-settings-link').textContent = settingsLink;
+
+                step1.style.display = 'none';
+                step2.style.display = 'block';
+            } catch (e) {
+                this.showMessage('Please enter a valid Canvas URL.', 'error');
+            }
+        });
+
+        modal.querySelector('#canvas-back-btn').addEventListener('click', () => {
+            step2.style.display = 'none';
+            step1.style.display = 'block';
+        });
+
+        modal.querySelector('#canvas-connection-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleCanvasConnection(e.target, modal);
+        });
+    }
+
+    async handleCanvasConnection(form, modal) {
+        const formData = new FormData(form)
+        const canvasUrl = formData.get('canvas_url')
+        const accessToken = formData.get('access_token')
+
+        if (!canvasUrl || !accessToken) {
+            this.showMessage('Please provide both a Canvas URL and an access token.', 'error')
+            return
+        }
+
+        try {
+            const baseUrl = this.extractBaseUrl(canvasUrl)
+            const { data: { user } } = await auth.getCurrentUser()
+
+            const { error } = await supabase.from('canvas_credentials').upsert({
+                user_id: user.id,
+                canvas_url: baseUrl, // This is now correct
+                access_token: accessToken
+            })
+
+            if (error) throw error
+
+            this.showMessage('Successfully connected to Canvas!', 'success')
+            this.loadConnectedAccounts().then(() => this.render()) // Reload and re-render
+            modal.remove()
+
+        } catch (error) {
+            console.error('Error connecting to Canvas:', error)
+            this.showMessage(`Connection failed: ${error.message}`, 'error')
+        }
+    }
+
+    async disconnectCanvas() {
+        try {
+            const { data: { user } } = await auth.getCurrentUser()
+            if (!user) return
+
+            const { error } = await supabase
+                .from('canvas_credentials')
+                .delete()
+                .eq('user_id', user.id)
+            
+            if (error) throw error
+
+            this.showMessage('Disconnected from Canvas.', 'info')
+            this.loadConnectedAccounts().then(() => this.render()) // Reload and re-render
+
+        } catch (error) {
+            console.error('Error disconnecting from Canvas:', error)
+            this.showMessage(`Disconnection failed: ${error.message}`, 'error')
+        }
+    }
+
+    extractBaseUrl(url) {
+        const match = url.match(/https?:\/\/[^/]+/);
+        if (match) {
+            return match[0];
+        }
+        throw new Error('Invalid URL format');
     }
 }

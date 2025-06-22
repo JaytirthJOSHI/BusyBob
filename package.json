@@ -25,6 +25,7 @@
     "test": "echo 'Add tests later'"
   },
   "dependencies": {
+    "@kth/canvas-api": "^5.0.0-beta.7",
     "@supabase/supabase-js": "^2.47.10",
     "express": "^4.18.2",
     "studentvue": "^2.0.4"

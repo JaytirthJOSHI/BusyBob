@@ -5,6 +5,7 @@ import { AuthPages } from './components/AuthPages.js'
 import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
 import { Grades } from './components/Grades.js'
+import { Canvas } from './components/Canvas.js'
 import { Settings } from './components/Settings.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 
@@ -20,6 +21,7 @@ let navigation = null
 let authPages = null
 let landingPage = null
 let grades = null
+let canvas = null
 let settings = null
 
 const moodManager = {
@@ -229,6 +231,7 @@ async function initializeApp() {
         navigation = new Navigation()
         landingPage = new LandingPage()
         grades = new Grades()
+        canvas = new Canvas()
         settings = new Settings()
         console.log('✅ Components created successfully')
         
@@ -682,6 +685,11 @@ function showPage(pageName) {
         case 'grades':
             grades = new Grades()
             grades.init()
+            break
+        case 'canvas':
+            if (canvas) {
+                canvas.init()
+            }
             break
         case 'settings':
             if (settings) {

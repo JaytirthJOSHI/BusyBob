@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { router as studentVueRouter } from './api/studentvue.js';
+import { router as canvasRouter } from './api/canvas.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +16,7 @@ app.use(express.static('.'));
 
 // API Routes
 app.use('/api/studentvue', studentVueRouter);
+app.use('/api/canvas', canvasRouter);
 
 // Serve the main app
 app.get('*', (req, res) => {
