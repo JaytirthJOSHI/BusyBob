@@ -32,6 +32,13 @@ Busy BOB is the productivity powerhouse for busy students. Track tasks, monitor 
 - Date-specific task viewing
 - Academic event integration
 
+### 🎵 Music Integration
+- **Spotify Integration**: Connect your Spotify account for personalized music experiences
+- **Mood-Based Playlists**: Get playlist recommendations based on your current mood
+- **Focus Sessions**: Start timed focus sessions with adaptive music
+- **Music Analytics**: Track your listening patterns and productivity correlations
+- **Playback Controls**: Control Spotify directly from BusyBob
+
 ### ⚙️ Smart Settings
 - Connect multiple academic platforms (Canvas, StudentVue)
 - Manage account connections and credentials

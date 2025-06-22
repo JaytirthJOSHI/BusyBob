@@ -5,6 +5,7 @@ import { AuthPages } from './components/AuthPages.js'
 import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
 import { AcademicHub } from './components/AcademicHub.js'
+import { Music } from './components/Music.js'
 import { Settings } from './components/Settings.js'
 import { PrivacyPolicy } from './components/PrivacyPolicy.js'
 import { TermsOfService } from './components/TermsOfService.js'
@@ -22,6 +23,7 @@ let navigation = null
 let authPages = null
 let landingPage = null
 let academicHub = null
+let music = null
 let settings = null
 let privacyPolicy = null
 let termsOfService = null
@@ -230,15 +232,16 @@ async function initializeApp() {
             console.log(`📄 Direct access to ${page} detected`)
             
             // Initialize components needed for legal pages
-            console.log('📦 Creating components...')
-            authPages = new AuthPages()
-            navigation = new Navigation()
-            landingPage = new LandingPage()
-            academicHub = new AcademicHub()
-            calendar = new Calendar('calendar-container', onDateSelect)
-            settings = new Settings(calendar)
-            privacyPolicy = new PrivacyPolicy()
-            termsOfService = new TermsOfService()
+                    console.log('📦 Creating components...')
+        authPages = new AuthPages()
+        navigation = new Navigation()
+        landingPage = new LandingPage()
+        academicHub = new AcademicHub()
+        calendar = new Calendar('calendar-container', onDateSelect)
+        music = new Music()
+        settings = new Settings(calendar)
+        privacyPolicy = new PrivacyPolicy()
+        termsOfService = new TermsOfService()
             
             // Initialize theme
             console.log('🎨 Initializing theme...')
@@ -273,6 +276,7 @@ async function initializeApp() {
         navigation = new Navigation()
         landingPage = new LandingPage()
         academicHub = new AcademicHub()
+        music = new Music()
         settings = new Settings(calendar)
         privacyPolicy = new PrivacyPolicy()
         termsOfService = new TermsOfService()
@@ -282,6 +286,14 @@ async function initializeApp() {
         console.log('🌙 Setting up theme toggle...')
         document.getElementById('theme-toggle').addEventListener('click', theme.toggle)
         
+        // Check for Spotify auth completion
+        const urlParams = new URLSearchParams(window.location.search)
+        if (urlParams.get('spotify_auth') === 'success') {
+            console.log('🎵 Spotify auth detected, completing sign-in...')
+            await handleSpotifyAuthCompletion()
+            return
+        }
+
         // Check authentication state
         console.log('🔐 Checking authentication state...')
         const { data: { user } } = await auth.getCurrentUser()
@@ -339,6 +351,9 @@ async function initializeApp() {
         
         // Set up navigation listeners
         setupNavigationListeners()
+        
+        // Set up OAuth listeners
+        setupOAuthListeners()
         
         // Initialize calendar
         calendar = new Calendar('calendar-container', onDateSelect)
@@ -439,6 +454,8 @@ function setupFormListeners() {
             signOut()
         } else if (e.target.id === 'google-login' || e.target.id === 'google-signup') {
             handleGoogleAuth()
+        } else if (e.target.id === 'spotify-login' || e.target.id === 'spotify-signup') {
+            handleSpotifyAuth()
         }
     })
     
@@ -639,6 +656,80 @@ async function handleGoogleAuth() {
     }
 }
 
+async function handleSpotifyAuth() {
+    try {
+        console.log('🎵 Starting Spotify authentication...')
+        ui.showMessage('Redirecting to Spotify...', 'info')
+        
+        // Generate a random state for security
+        const state = Math.random().toString(36).substring(2, 15)
+        localStorage.setItem('spotify_auth_state', state)
+
+        const scope = 'user-read-email user-read-private user-read-playback-state user-modify-playback-state user-read-currently-playing streaming user-library-read user-top-read user-read-recently-played playlist-read-private'
+        
+        const authUrl = new URL('https://accounts.spotify.com/authorize')
+        authUrl.searchParams.append('response_type', 'code')
+        authUrl.searchParams.append('client_id', 'YOUR_SPOTIFY_CLIENT_ID') // This will be replaced with actual client ID from environment
+        authUrl.searchParams.append('scope', scope)
+        authUrl.searchParams.append('redirect_uri', `${window.location.origin}/auth/spotify/callback`)
+        authUrl.searchParams.append('state', state)
+        authUrl.searchParams.append('show_dialog', 'true') // Force reauth for sign-in vs integration
+
+        window.location.href = authUrl.toString()
+    } catch (error) {
+        console.error('❌ Error starting Spotify authentication:', error)
+        ui.showMessage('Failed to start Spotify authentication', 'error')
+    }
+}
+
+async function handleSpotifyAuthCompletion() {
+    try {
+        console.log('🎵 Completing Spotify authentication...')
+        ui.showMessage('Completing Spotify sign-in...', 'info')
+
+        // Get auth data from server
+        const response = await fetch('/api/spotify/auth-data')
+        if (!response.ok) {
+            throw new Error('Failed to get auth data from server')
+        }
+
+        const authData = await response.json()
+        console.log('🎵 Retrieved Spotify auth data:', authData.profile)
+
+        // Create or sign in user with Spotify data
+        const { data, error } = await auth.signInWithSpotify({
+            email: authData.profile.email,
+            name: authData.profile.display_name,
+            spotifyId: authData.profile.id,
+            accessToken: authData.access_token,
+            refreshToken: authData.refresh_token,
+            expiresAt: authData.expires_at
+        })
+
+        if (error) {
+            throw error
+        }
+
+        console.log('✅ Spotify authentication completed successfully!')
+        
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname)
+        
+        // Show success and redirect to main app
+        currentUser = data.user
+        ui.showMessage('Welcome to BusyBob! Your Spotify account is connected.', 'success')
+        showMainApp()
+
+    } catch (error) {
+        console.error('❌ Error completing Spotify authentication:', error)
+        ui.showMessage(`Spotify sign-in failed: ${error.message}`, 'error')
+        
+        // Clean up URL and redirect to landing page
+        window.history.replaceState({}, document.title, window.location.pathname)
+        showLandingPage()
+    }
+}
+
 // UI Navigation
 function showLandingPage() {
     console.log('🏠 Showing landing page...')
@@ -743,6 +834,11 @@ function showPage(pageName) {
         case 'academic-hub':
             if (academicHub) {
                 academicHub.init()
+            }
+            break
+        case 'music':
+            if (music) {
+                music.init()
             }
             break
         case 'settings':

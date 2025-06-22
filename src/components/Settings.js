@@ -10,6 +10,8 @@ export class Settings {
         this.canvasCredentials = null
         this.googleConnected = false
         this.outlookConnected = false
+        this.spotifyConnected = false
+        this.spotifyProfile = null
     }
 
     async init() {
@@ -50,6 +52,31 @@ export class Settings {
             if (canvasData) {
                 this.canvasCredentials = {
                     canvasUrl: canvasData.canvas_url
+                }
+            }
+
+            // Check for Spotify connection
+            const { data: spotifyData } = await supabase
+                .from('music_connections')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('provider', 'spotify')
+                .single()
+
+            this.spotifyConnected = !!spotifyData
+            if (spotifyData) {
+                // Try to get fresh Spotify profile
+                try {
+                    const profileResponse = await fetch('https://api.spotify.com/v1/me', {
+                        headers: {
+                            'Authorization': `Bearer ${spotifyData.access_token}`
+                        }
+                    })
+                    if (profileResponse.ok) {
+                        this.spotifyProfile = await profileResponse.json()
+                    }
+                } catch (profileError) {
+                    console.warn('Could not fetch Spotify profile:', profileError)
                 }
             }
 
@@ -129,6 +156,11 @@ export class Settings {
                         <!-- Outlook Connection -->
                         <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
                             ${this.renderOutlookConnection()}
+                        </div>
+
+                        <!-- Spotify Connection -->
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+                            ${this.renderSpotifyConnection()}
                         </div>
 
                         <!-- More connected accounts can be added here -->
@@ -395,6 +427,31 @@ export class Settings {
         }
     }
 
+    renderSpotifyConnection() {
+        return `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.5 14.5c-.2.3-.5.4-.8.4-.2 0-.4-.1-.5-.2-1.5-.9-3.4-1.1-5.6-.6-.3.1-.6-.1-.7-.4-.1-.3.1-.6.4-.7 2.5-.5 4.6-.3 6.4.7.3.2.4.6.2.8zm1.1-2.7c-.2.4-.6.5-1 .3-1.7-1-4.4-1.3-6.4-.7-.4.1-.8-.1-.9-.5-.1-.4.1-.8.5-.9 2.3-.7 5.4-.4 7.4.8.4.2.5.6.4 1zm.1-2.8c-2.1-1.2-5.5-1.3-7.5-.7-.5.1-1-.2-1.1-.7-.1-.5.2-1 .7-1.1 2.3-.7 6.1-.5 8.6.8.4.2.6.8.3 1.2-.2.4-.8.6-1.2.3z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-gray-900 dark:text-white">Spotify</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">${this.spotifyConnected ? `Connected as: ${this.spotifyProfile?.display_name || 'Spotify User'}` : 'Connect for music integration and playlists'}</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    ${this.spotifyConnected ? `
+                        <button id="disconnect-spotify" class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium">Disconnect</button>
+                    ` : `
+                        <button id="connect-spotify" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Connect</button>
+                    `}
+                </div>
+            </div>
+        `;
+    }
+
     setupEventListeners() {
         const container = document.getElementById('settings-container')
         if (!container) return
@@ -404,6 +461,8 @@ export class Settings {
             if (event.target.id === 'disconnect-studentvue') this.disconnectStudentVue();
             if (event.target.id === 'connect-canvas') this.showCanvasConnectionModal();
             if (event.target.id === 'disconnect-canvas') this.disconnectCanvas();
+            if (event.target.id === 'connect-spotify') this.connectSpotify();
+            if (event.target.id === 'disconnect-spotify') this.disconnectSpotify();
             if (event.target.id === 'privacy-policy-link') this.showPrivacyPolicy();
             if (event.target.id === 'terms-of-service-link') this.showTermsOfService();
         });
@@ -843,6 +902,61 @@ export class Settings {
                 this.showMessage('Outlook Calendar disconnected.', 'success');
                 await this.init(); // Re-initialize to update the view
             }
+        }
+    }
+
+    async connectSpotify() {
+        try {
+            console.log('🎵 Connecting to Spotify from settings...')
+            
+            // Generate a random state for security
+            const state = Math.random().toString(36).substring(2, 15)
+            localStorage.setItem('spotify_settings_state', state)
+
+            const scope = 'user-read-email user-read-private user-read-playback-state user-modify-playback-state user-read-currently-playing streaming user-library-read user-top-read user-read-recently-played playlist-read-private'
+            
+            const authUrl = new URL('https://accounts.spotify.com/authorize')
+            authUrl.searchParams.append('response_type', 'code')
+            authUrl.searchParams.append('client_id', 'YOUR_SPOTIFY_CLIENT_ID') // This will be replaced with actual client ID
+            authUrl.searchParams.append('scope', scope)
+            authUrl.searchParams.append('redirect_uri', `${window.location.origin}/auth/spotify/callback`)
+            authUrl.searchParams.append('state', state)
+            authUrl.searchParams.append('show_dialog', 'false') // Don't force reauth for integration
+
+            window.location.href = authUrl.toString()
+        } catch (error) {
+            console.error('❌ Error connecting to Spotify:', error)
+            this.showMessage('Failed to connect to Spotify', 'error')
+        }
+    }
+
+    async disconnectSpotify() {
+        try {
+            console.log('🎵 Disconnecting from Spotify...')
+            
+            const { data: { user } } = await auth.getCurrentUser()
+            if (!user) throw new Error('User not authenticated')
+
+            // Remove Spotify connection from database
+            const { error } = await supabase
+                .from('music_connections')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('provider', 'spotify')
+
+            if (error) throw error
+
+            // Update local state
+            this.spotifyConnected = false
+            this.spotifyProfile = null
+            
+            // Re-render the connected accounts section
+            this.init()
+
+            this.showMessage('Spotify disconnected successfully', 'success')
+        } catch (error) {
+            console.error('❌ Error disconnecting Spotify:', error)
+            this.showMessage('Failed to disconnect Spotify', 'error')
         }
     }
 }

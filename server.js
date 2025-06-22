@@ -199,6 +199,286 @@ app.get('/api/microsoft/calendar', async (req, res) => {
     }
 });
 
+// Spotify OAuth callback
+app.get('/auth/spotify/callback', async (req, res) => {
+    try {
+        const { code, state, error } = req.query;
+        
+        if (error) {
+            return res.redirect(`/?error=${error}`);
+        }
+
+        // Verify state parameter (stored in localStorage on client)
+        // For this implementation, we'll trust the state from the URL
+
+        // Exchange code for access token
+        const tokenResponse = await fetch('https://accounts.spotify.com/api/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': `Basic ${Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString('base64')}`
+            },
+            body: new URLSearchParams({
+                grant_type: 'authorization_code',
+                code: code,
+                redirect_uri: `${req.protocol}://${req.get('host')}/auth/spotify/callback`
+            })
+        });
+
+        const tokenData = await tokenResponse.json();
+        
+        if (tokenData.error) {
+            return res.redirect(`/?error=${tokenData.error}`);
+        }
+
+        // Get user profile from Spotify
+        const profileResponse = await fetch('https://api.spotify.com/v1/me', {
+            headers: {
+                'Authorization': `Bearer ${tokenData.access_token}`
+            }
+        });
+
+        const profile = await profileResponse.json();
+        
+        if (profile.error) {
+            return res.redirect(`/?error=profile_fetch_failed`);
+        }
+
+        // Store tokens temporarily in session for the client to retrieve
+        req.session.spotify_access_token = tokenData.access_token;
+        req.session.spotify_refresh_token = tokenData.refresh_token;
+        req.session.spotify_expires_at = Date.now() + (tokenData.expires_in * 1000);
+        req.session.spotify_profile = profile;
+
+        // Redirect to a success page where client can complete the auth flow
+        res.redirect(`/?spotify_auth=success&state=${state}`);
+    } catch (error) {
+        console.error('Spotify OAuth error:', error);
+        res.redirect(`/?error=oauth_failed`);
+    }
+});
+
+// Endpoint to get Spotify auth data from session
+app.get('/api/spotify/auth-data', (req, res) => {
+    try {
+        if (req.session.spotify_access_token && req.session.spotify_profile) {
+            const authData = {
+                access_token: req.session.spotify_access_token,
+                refresh_token: req.session.spotify_refresh_token,
+                expires_at: req.session.spotify_expires_at,
+                profile: req.session.spotify_profile
+            };
+
+            // Clear session data after retrieval
+            delete req.session.spotify_access_token;
+            delete req.session.spotify_refresh_token;
+            delete req.session.spotify_expires_at;
+            delete req.session.spotify_profile;
+
+            res.json(authData);
+        } else {
+            res.status(404).json({ error: 'No auth data found' });
+        }
+    } catch (error) {
+        console.error('Error retrieving Spotify auth data:', error);
+        res.status(500).json({ error: 'Failed to retrieve auth data' });
+    }
+});
+
+// Spotify API proxy endpoints
+app.get('/api/spotify/recommendations', async (req, res) => {
+    try {
+        const { seed_genres, target_energy, target_valence, limit = 20 } = req.query;
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+        
+        if (!accessToken) {
+            return res.status(401).json({ error: 'Access token required' });
+        }
+
+        const params = new URLSearchParams({
+            seed_genres,
+            target_energy,
+            target_valence,
+            limit: limit.toString()
+        });
+
+        const response = await fetch(`https://api.spotify.com/v1/recommendations?${params}`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('Spotify recommendations error:', error);
+        res.status(500).json({ error: 'Failed to get recommendations' });
+    }
+});
+
+app.get('/api/spotify/me', async (req, res) => {
+    try {
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+        
+        if (!accessToken) {
+            return res.status(401).json({ error: 'Access token required' });
+        }
+
+        const response = await fetch('https://api.spotify.com/v1/me', {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('Spotify user profile error:', error);
+        res.status(500).json({ error: 'Failed to get user profile' });
+    }
+});
+
+app.get('/api/spotify/player', async (req, res) => {
+    try {
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+        
+        if (!accessToken) {
+            return res.status(401).json({ error: 'Access token required' });
+        }
+
+        const response = await fetch('https://api.spotify.com/v1/me/player', {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        if (response.status === 204) {
+            return res.json({ is_playing: false });
+        }
+
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('Spotify player error:', error);
+        res.status(500).json({ error: 'Failed to get player state' });
+    }
+});
+
+app.put('/api/spotify/player/play', async (req, res) => {
+    try {
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+        const { uris, device_id } = req.body;
+        
+        if (!accessToken) {
+            return res.status(401).json({ error: 'Access token required' });
+        }
+
+        const url = device_id ? 
+            `https://api.spotify.com/v1/me/player/play?device_id=${device_id}` :
+            'https://api.spotify.com/v1/me/player/play';
+
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ uris })
+        });
+
+        if (response.status === 204) {
+            res.json({ success: true });
+        } else {
+            const data = await response.json();
+            res.status(response.status).json(data);
+        }
+    } catch (error) {
+        console.error('Spotify play error:', error);
+        res.status(500).json({ error: 'Failed to play track' });
+    }
+});
+
+app.put('/api/spotify/player/pause', async (req, res) => {
+    try {
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+        
+        if (!accessToken) {
+            return res.status(401).json({ error: 'Access token required' });
+        }
+
+        const response = await fetch('https://api.spotify.com/v1/me/player/pause', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        if (response.status === 204) {
+            res.json({ success: true });
+        } else {
+            const data = await response.json();
+            res.status(response.status).json(data);
+        }
+    } catch (error) {
+        console.error('Spotify pause error:', error);
+        res.status(500).json({ error: 'Failed to pause playback' });
+    }
+});
+
+app.post('/api/spotify/player/next', async (req, res) => {
+    try {
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+        
+        if (!accessToken) {
+            return res.status(401).json({ error: 'Access token required' });
+        }
+
+        const response = await fetch('https://api.spotify.com/v1/me/player/next', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        if (response.status === 204) {
+            res.json({ success: true });
+        } else {
+            const data = await response.json();
+            res.status(response.status).json(data);
+        }
+    } catch (error) {
+        console.error('Spotify next error:', error);
+        res.status(500).json({ error: 'Failed to skip to next track' });
+    }
+});
+
+app.post('/api/spotify/player/previous', async (req, res) => {
+    try {
+        const accessToken = req.headers.authorization?.replace('Bearer ', '');
+        
+        if (!accessToken) {
+            return res.status(401).json({ error: 'Access token required' });
+        }
+
+        const response = await fetch('https://api.spotify.com/v1/me/player/previous', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        if (response.status === 204) {
+            res.json({ success: true });
+        } else {
+            const data = await response.json();
+            res.status(response.status).json(data);
+        }
+    } catch (error) {
+        console.error('Spotify previous error:', error);
+        res.status(500).json({ error: 'Failed to skip to previous track' });
+    }
+});
+
 // Google token refresh endpoint
 app.post('/api/google/refresh', async (req, res) => {
     try {
