@@ -2,11 +2,14 @@ import { auth, supabase } from '../lib/supabase.js'
 import districts from '../lib/districts.js'
 
 export class Settings {
-    constructor() {
+    constructor(calendar) {
+        this.calendar = calendar; // Pass the calendar instance
         this.studentVueConnected = false
         this.studentVueCredentials = null
         this.canvasConnected = false
         this.canvasCredentials = null
+        this.googleConnected = false
+        this.outlookConnected = false
     }
 
     async init() {
@@ -48,6 +51,12 @@ export class Settings {
                 this.canvasCredentials = {
                     canvasUrl: canvasData.canvas_url
                 }
+            }
+
+            // Check for Google and Outlook from the Calendar component's state
+            if (this.calendar) {
+                this.googleConnected = this.calendar.connectedCalendars.some(c => c.type === 'google');
+                this.outlookConnected = this.calendar.connectedCalendars.some(c => c.type === 'outlook');
             }
 
         } catch (error) {
@@ -110,6 +119,16 @@ export class Settings {
                         <!-- Canvas Connection -->
                         <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
                             ${this.renderCanvasConnection()}
+                        </div>
+
+                        <!-- Google Connection -->
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+                            ${this.renderGoogleConnection()}
+                        </div>
+
+                        <!-- Outlook Connection -->
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+                            ${this.renderOutlookConnection()}
                         </div>
 
                         <!-- More connected accounts can be added here -->
@@ -234,6 +253,10 @@ export class Settings {
                 </div>
             </div>
         `
+
+        this.loadUserEmail();
+        this.loadTimezones();
+        this.updateGradesToggleVisual();
     }
 
     renderStudentVueConnection() {
@@ -280,6 +303,96 @@ export class Settings {
                 </div>
             </div>
         `;
+    }
+
+    renderGoogleConnection() {
+        if (this.googleConnected) {
+            return `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"></path>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"></path>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"></path>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-900 dark:text-white">Google Calendar</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Sync your Google Calendar events.</p>
+                        </div>
+                    </div>
+                    <button id="disconnect-google-btn" class="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">
+                        Remove
+                    </button>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                           <svg class="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"></path>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"></path>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"></path>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-900 dark:text-white">Google Calendar</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Sync your Google Calendar events.</p>
+                        </div>
+                    </div>
+                    <button id="connect-google-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Connect
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    renderOutlookConnection() {
+        if (this.outlookConnected) {
+            return `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                               <path d="M21.59 12.794a.996.996 0 0 0-.857-.457H20V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5.337H3.267a.996.996 0 0 0-.857.457A1 1 0 0 0 2.5 14v4a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-4a1 1 0 0 0-.41-1.206zM7 7h10v5H7V7z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-900 dark:text-white">Outlook Calendar</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Sync your Outlook Calendar events.</p>
+                        </div>
+                    </div>
+                    <button id="disconnect-outlook-btn" class="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">
+                        Remove
+                    </button>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                               <path d="M21.59 12.794a.996.996 0 0 0-.857-.457H20V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5.337H3.267a.996.996 0 0 0-.857.457A1 1 0 0 0 2.5 14v4a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-4a1 1 0 0 0-.41-1.206zM7 7h10v5H7V7z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-900 dark:text-white">Outlook Calendar</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Sync your Outlook Calendar events.</p>
+                        </div>
+                    </div>
+                    <button id="connect-outlook-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Connect
+                    </button>
+                </div>
+            `;
+        }
     }
 
     setupEventListeners() {
@@ -329,6 +442,14 @@ export class Settings {
                 window.dispatchEvent(new Event('settingsChange'));
             });
         }
+
+        // Google Calendar listeners
+        document.getElementById('connect-google-btn')?.addEventListener('click', () => this.connectGoogle())
+        document.getElementById('disconnect-google-btn')?.addEventListener('click', () => this.disconnectGoogle())
+
+        // Outlook Calendar listeners
+        document.getElementById('connect-outlook-btn')?.addEventListener('click', () => this.connectOutlook())
+        document.getElementById('disconnect-outlook-btn')?.addEventListener('click', () => this.disconnectOutlook())
     }
 
     async loadUserEmail() {
@@ -689,6 +810,40 @@ export class Settings {
     showTermsOfService() {
         // Navigate to terms of service page
         document.dispatchEvent(new CustomEvent('pageChange', { detail: { page: 'terms-of-service' } }));
+    }
+
+    async connectGoogle() {
+        if (this.calendar) {
+            this.calendar.addGoogleCalendar();
+        }
+    }
+
+    async disconnectGoogle() {
+        if (this.calendar) {
+            const googleCalendar = this.calendar.connectedCalendars.find(c => c.type === 'google');
+            if (googleCalendar) {
+                this.calendar.removeCalendar(googleCalendar.id);
+                this.showMessage('Google Calendar disconnected.', 'success');
+                await this.init(); // Re-initialize to update the view
+            }
+        }
+    }
+
+    async connectOutlook() {
+        if (this.calendar) {
+            this.calendar.addOutlookCalendar();
+        }
+    }
+
+    async disconnectOutlook() {
+        if (this.calendar) {
+            const outlookCalendar = this.calendar.connectedCalendars.find(c => c.type === 'outlook');
+            if (outlookCalendar) {
+                this.calendar.removeCalendar(outlookCalendar.id);
+                this.showMessage('Outlook Calendar disconnected.', 'success');
+                await this.init(); // Re-initialize to update the view
+            }
+        }
     }
 }
 

@@ -271,7 +271,7 @@ async function initializeApp() {
         navigation = new Navigation()
         landingPage = new LandingPage()
         academicHub = new AcademicHub()
-        settings = new Settings()
+        settings = new Settings(calendar)
         privacyPolicy = new PrivacyPolicy()
         termsOfService = new TermsOfService()
         console.log('✅ Components created successfully')
