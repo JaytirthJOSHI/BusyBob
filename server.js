@@ -44,7 +44,7 @@ app.get('/auth/google/callback', async (req, res) => {
                 client_secret: GOOGLE_CLIENT_SECRET,
                 code,
                 grant_type: 'authorization_code',
-                redirect_uri: `${req.protocol}://${req.get('host')}/auth/google/callback`,
+                redirect_uri: 'https://busybob.site/auth/google/callback',
             }),
         });
 
@@ -68,10 +68,10 @@ app.get('/auth/google/callback', async (req, res) => {
                             type: 'GOOGLE_AUTH_SUCCESS',
                             accessToken: '${tokens.access_token}',
                             refreshToken: '${tokens.refresh_token || ''}'
-                        }, '${req.protocol}://${req.get('host')}');
+                        }, 'https://busybob.site');
                         window.close();
                     } else {
-                        window.location.href = '/';
+                        window.location.href = 'https://busybob.site';
                     }
                 </script>
                 <p>Connecting to Google Calendar...</p>
@@ -106,7 +106,7 @@ app.get('/auth/microsoft/callback', async (req, res) => {
                 client_secret: MICROSOFT_CLIENT_SECRET,
                 code,
                 grant_type: 'authorization_code',
-                redirect_uri: `${req.protocol}://${req.get('host')}/auth/microsoft/callback`,
+                redirect_uri: 'https://busybob.site/auth/microsoft/callback',
             }),
         });
 
@@ -129,10 +129,10 @@ app.get('/auth/microsoft/callback', async (req, res) => {
                         window.opener.postMessage({
                             type: 'OUTLOOK_AUTH_SUCCESS',
                             accessToken: '${tokens.access_token}'
-                        }, '${req.protocol}://${req.get('host')}');
+                        }, 'https://busybob.site');
                         window.close();
                     } else {
-                        window.location.href = '/';
+                        window.location.href = 'https://busybob.site';
                     }
                 </script>
                 <p>Connecting to Outlook Calendar...</p>

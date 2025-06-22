@@ -9,34 +9,33 @@ This guide will help you set up Google Calendar and Outlook Calendar integration
 - **Multiple Calendar Support**: Connect multiple calendars and view them together
 - **Modern UI**: Beautiful calendar interface with month/week/day views
 - **Event Indicators**: Visual indicators for events on calendar days
-- **Demo Mode**: Test the functionality without setting up OAuth credentials
+- **Existing Google OAuth**: Leverages your existing Google sign-in setup
 
-## Demo Mode
+## Google Calendar Integration
 
-The calendar integration includes a demo mode that allows you to test the functionality without setting up OAuth credentials. In demo mode:
+BusyBob already has Google OAuth set up for user authentication. The calendar integration extends this to include calendar access:
 
-1. Click the settings gear icon in the calendar header
-2. Click "Google Calendar" or "Outlook Calendar" to add demo calendars
-3. Demo events will be added to show how the integration works
-4. You can toggle calendars on/off and remove them
+1. **Automatic Integration**: If you're already signed in with Google, the calendar integration will use your existing session
+2. **Additional Scopes**: When connecting your calendar, you'll be prompted to grant calendar read access
+3. **Seamless Experience**: No need for separate OAuth setup - it uses your existing Google account
 
 ## Setting Up OAuth Credentials
 
 ### Google Calendar Setup
 
+Since you already have Google OAuth working, you just need to ensure your Google Cloud Console project has the Calendar API enabled:
+
 1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the Google Calendar API
-4. Go to "Credentials" and create an OAuth 2.0 Client ID
-5. Set the authorized redirect URI to: `http://localhost:3000/auth/google/callback`
-6. Copy the Client ID and Client Secret
+2. Select your existing project (the one used for busybob.site)
+3. Enable the Google Calendar API if not already enabled
+4. Ensure your OAuth consent screen includes the calendar scope: `https://www.googleapis.com/auth/calendar.readonly`
 
 ### Microsoft Outlook Setup
 
 1. Go to the [Microsoft Azure Portal](https://portal.azure.com/)
 2. Register a new application
 3. Add the Microsoft Graph API permission: `Calendars.Read`
-4. Set the redirect URI to: `http://localhost:3000/auth/microsoft/callback`
+4. Set the redirect URI to: `https://busybob.site/auth/microsoft/callback`
 5. Copy the Client ID and Client Secret
 
 ## Environment Variables
@@ -44,8 +43,11 @@ The calendar integration includes a demo mode that allows you to test the functi
 Create a `.env` file in your project root with the following variables:
 
 ```env
+# Google OAuth (already configured for busybob.site)
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Microsoft OAuth (for Outlook integration)
 MICROSOFT_CLIENT_ID=your-microsoft-client-id
 MICROSOFT_CLIENT_SECRET=your-microsoft-client-secret
 ```
@@ -62,17 +64,27 @@ npm install
 npm run dev
 ```
 
-3. Open your browser and navigate to `http://localhost:3000`
+3. Open your browser and navigate to `https://busybob.site`
 
 ## Usage
 
-### Connecting Calendars
+### Connecting Google Calendar
 
 1. Navigate to the Calendar page in BusyBob
 2. Click the settings gear icon in the calendar header
-3. Click "Google Calendar" or "Outlook Calendar" to connect
-4. Complete the OAuth flow in the popup window
-5. Your calendar events will appear on the calendar
+3. Click "Google Calendar" to connect
+4. If you're already signed in with Google, it will use your existing session
+5. If not, you'll be prompted to sign in with Google
+6. Grant calendar access when prompted
+7. Your Google Calendar events will appear on the calendar
+
+### Connecting Outlook Calendar
+
+1. Navigate to the Calendar page in BusyBob
+2. Click the settings gear icon in the calendar header
+3. Click "Outlook Calendar" to connect
+4. Complete the Microsoft OAuth flow
+5. Your Outlook Calendar events will appear on the calendar
 
 ### Calendar Management
 
@@ -103,22 +115,26 @@ The server provides the following endpoints for calendar integration:
 - Access tokens are stored locally in the browser
 - Refresh tokens are used to automatically renew access
 - All API calls are proxied through the server for security
+- Google integration leverages your existing Supabase OAuth setup
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **"Failed to connect Google Calendar"**
-   - Check that your OAuth credentials are correct
-   - Ensure the redirect URI matches exactly
-   - Verify the Google Calendar API is enabled
+1. **"Please sign in with Google first"**
+   - Make sure you're signed in with Google in BusyBob
+   - Try signing out and signing back in with Google
 
-2. **"Failed to connect Outlook Calendar"**
+2. **"Failed to connect Google Calendar"**
+   - Check that the Google Calendar API is enabled in your Google Cloud Console
+   - Ensure the calendar scope is included in your OAuth consent screen
+
+3. **"Failed to connect Outlook Calendar"**
    - Check that your Azure app registration is correct
    - Ensure the Microsoft Graph API permission is granted
-   - Verify the redirect URI matches exactly
+   - Verify the redirect URI matches exactly: `https://busybob.site/auth/microsoft/callback`
 
-3. **Events not showing**
+4. **Events not showing**
    - Check that the calendar is enabled in settings
    - Verify the access token hasn't expired
    - Check the browser console for error messages

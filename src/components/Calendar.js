@@ -1,3 +1,5 @@
+import { supabase } from '../lib/supabase.js'
+
 export class Calendar {
   constructor(containerId, onDateSelect) {
     this.container = document.getElementById(containerId)
@@ -44,60 +46,88 @@ export class Calendar {
 
   async addGoogleCalendar() {
     try {
-      // Demo mode - show how it would work
-      if (!this.isDemoMode()) {
-        // Google Calendar OAuth flow
-        const clientId = 'YOUR_GOOGLE_CLIENT_ID' // Replace with actual client ID
-        const scope = 'https://www.googleapis.com/auth/calendar.readonly'
-        const redirectUri = window.location.origin + '/auth/google/callback'
+      // Use existing Google OAuth from Supabase
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        this.showMessage('Please sign in first', 'error')
+        return
+      }
+
+      // Check if user already has Google OAuth
+      if (user.app_metadata?.provider === 'google') {
+        // User is already signed in with Google, we can use their access token
+        const { data, error } = await supabase.auth.getSession()
         
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code&access_type=offline`
+        if (error || !data.session) {
+          this.showMessage('Please sign in with Google first', 'error')
+          return
+        }
+
+        // Get the access token from the session
+        const accessToken = data.session.provider_token
         
-        // Open popup for OAuth
-        const popup = window.open(authUrl, 'googleAuth', 'width=500,height=600')
-        
-        // Handle the OAuth callback
-        window.addEventListener('message', async (event) => {
-          if (event.origin !== window.location.origin) return
-          
-          if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
-            const { accessToken, refreshToken } = event.data
-            
-            const newCalendar = {
-              id: `google_${Date.now()}`,
-              name: 'Google Calendar',
-              type: 'google',
-              accessToken,
-              refreshToken,
-              color: '#4285F4',
-              enabled: true
+        if (!accessToken) {
+          // Request additional scopes for calendar access
+          const { data: oauthData, error: oauthError } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: 'https://busybob.site',
+              queryParams: {
+                access_type: 'offline',
+                prompt: 'consent',
+                scope: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'
+              },
             }
-            
-            this.connectedCalendars.push(newCalendar)
-            await this.saveConnectedCalendars()
-            await this.loadEvents()
-            this.render()
-            
-            popup.close()
+          })
+          
+          if (oauthError) {
+            this.showMessage('Failed to get calendar access', 'error')
+            return
           }
-        })
-      } else {
-        // Demo mode - add mock Google Calendar
+          
+          this.showMessage('Please complete the Google authorization for calendar access', 'info')
+          return
+        }
+
+        // Add Google Calendar with existing token
         const newCalendar = {
           id: `google_${Date.now()}`,
-          name: 'Google Calendar (Demo)',
+          name: 'Google Calendar',
           type: 'google',
+          accessToken,
           color: '#4285F4',
           enabled: true,
-          isDemo: true
+          userId: user.id
         }
         
         this.connectedCalendars.push(newCalendar)
         await this.saveConnectedCalendars()
-        await this.loadDemoEvents()
+        await this.loadEvents()
         this.render()
         
-        this.showMessage('Google Calendar connected in demo mode!', 'success')
+        this.showMessage('Google Calendar connected successfully!', 'success')
+        
+      } else {
+        // User is not signed in with Google, prompt them to sign in
+        this.showMessage('Please sign in with Google to connect your calendar', 'info')
+        
+        // Redirect to Google sign-in
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: 'https://busybob.site',
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent',
+              scope: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'
+            },
+          }
+        })
+        
+        if (error) {
+          this.showMessage('Failed to initiate Google sign-in', 'error')
+        }
       }
       
     } catch (error) {
