@@ -6,10 +6,12 @@ import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
 import { AcademicHub } from './components/AcademicHub.js'
 import { Music } from './components/Music.js'
+import { AINotes } from './components/AINotes.js'
 import { Settings } from './components/Settings.js'
 import { PrivacyPolicy } from './components/PrivacyPolicy.js'
 import { TermsOfService } from './components/TermsOfService.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
+import { kidMode } from './utils/kid-mode.js'
 
 console.log('🚀 Main.js loaded - starting initialization...')
 
@@ -24,6 +26,7 @@ let authPages = null
 let landingPage = null
 let academicHub = null
 let music = null
+let aiNotes = null
 let settings = null
 let privacyPolicy = null
 let termsOfService = null
@@ -239,6 +242,7 @@ async function initializeApp() {
         academicHub = new AcademicHub()
         calendar = new Calendar('calendar-container', onDateSelect)
         music = new Music()
+        aiNotes = new AINotes()
         settings = new Settings(calendar)
         privacyPolicy = new PrivacyPolicy()
         termsOfService = new TermsOfService()
@@ -277,6 +281,7 @@ async function initializeApp() {
         landingPage = new LandingPage()
         academicHub = new AcademicHub()
         music = new Music()
+        aiNotes = new AINotes()
         settings = new Settings(calendar)
         privacyPolicy = new PrivacyPolicy()
         termsOfService = new TermsOfService()
@@ -301,6 +306,12 @@ async function initializeApp() {
         if (user) {
             console.log('👤 User is authenticated, showing main app')
             currentUser = user
+            
+            // Initialize Kid Mode
+            console.log('🛡️ Initializing Kid Mode...')
+            await kidMode.init()
+            await applyKidModeStyles()
+            
             showMainApp()
         } else {
             console.log('🏠 No user found, showing landing page')
@@ -308,10 +319,16 @@ async function initializeApp() {
         }
 
         // Set up auth state listener
-        auth.onAuthStateChange((event, session) => {
+        auth.onAuthStateChange(async (event, session) => {
             console.log('Auth state change:', event, session)
             if (event === 'SIGNED_IN' && session) {
                 currentUser = session.user
+                
+                // Initialize Kid Mode for new session
+                console.log('🛡️ Initializing Kid Mode for new session...')
+                await kidMode.init()
+                await applyKidModeStyles()
+                
                 // Don't auto-redirect - let user choose when to enter the app
                 console.log('User signed in:', currentUser.email)
             } else if (event === 'SIGNED_OUT') {
@@ -836,6 +853,11 @@ function showPage(pageName) {
         case 'music':
             if (music) {
                 music.init()
+            }
+            break
+        case 'ai-notes':
+            if (aiNotes) {
+                aiNotes.init()
             }
             break
         case 'settings':
@@ -1402,8 +1424,145 @@ function updateLiveClock() {
 // Listen for timezone changes from settings
 window.addEventListener('timezoneChange', updateLiveClock);
 
+// Kid Mode Functions
+async function applyKidModeStyles() {
+    if (!kidMode.isEnabled) return
+    
+    console.log('🎨 Applying Kid Mode styles...')
+    
+    // Add Kid Mode styles to the page
+    const existingStyles = document.getElementById('kid-mode-styles')
+    if (existingStyles) {
+        existingStyles.remove()
+    }
+    
+    const styleSheet = document.createElement('style')
+    styleSheet.id = 'kid-mode-styles'
+    styleSheet.textContent = kidMode.getKidModeStyles()
+    document.head.appendChild(styleSheet)
+    
+    // Add Kid Mode indicator
+    const existingIndicator = document.querySelector('.kid-mode-indicator')
+    if (existingIndicator) {
+        existingIndicator.remove()
+    }
+    
+    const indicatorHtml = kidMode.renderKidModeIndicator()
+    if (indicatorHtml) {
+        document.body.insertAdjacentHTML('afterbegin', indicatorHtml)
+    }
+    
+    // Apply Kid Mode class to body
+    document.body.classList.add('kid-mode-active')
+    
+    // Restrict certain features
+    applyKidModeRestrictions()
+    
+    // Initialize content filtering observer
+    initKidModeObserver()
+    
+    console.log('✅ Kid Mode styles applied successfully')
+}
+
+function applyKidModeRestrictions() {
+    if (!kidMode.isEnabled) return
+    
+    console.log('🚫 Applying Kid Mode restrictions...')
+    
+    // Hide Spotify integration if restricted
+    if (kidMode.isFeatureRestricted('spotify_integration')) {
+        const musicTab = document.querySelector('[data-page="music"]')
+        if (musicTab) {
+            musicTab.style.display = 'none'
+        }
+    }
+    
+    // Remove external links
+    if (kidMode.isFeatureRestricted('external_links')) {
+        const externalLinks = document.querySelectorAll('a[href*="http"]:not([href*="' + window.location.hostname + '"])')
+        externalLinks.forEach(link => {
+            link.setAttribute('href', '#')
+            link.setAttribute('title', 'External links are disabled in Kid Mode')
+            link.style.opacity = '0.5'
+            link.style.pointerEvents = 'none'
+        })
+    }
+    
+    // Restrict file upload inputs
+    if (kidMode.isFeatureRestricted('file_uploads')) {
+        const fileInputs = document.querySelectorAll('input[type="file"]')
+        fileInputs.forEach(input => {
+            input.disabled = true
+            input.style.opacity = '0.5'
+        })
+    }
+    
+    // Hide advanced settings
+    if (kidMode.isFeatureRestricted('advanced_settings')) {
+        const advancedSettings = document.querySelectorAll('.advanced-setting, .danger-zone')
+        advancedSettings.forEach(setting => {
+            setting.style.display = 'none'
+        })
+    }
+    
+    console.log('✅ Kid Mode restrictions applied')
+}
+
+// Apply content filtering
+function applyKidModeContentFiltering() {
+    if (!kidMode.isEnabled) return
+    
+    // Filter content in real-time
+    const contentElements = document.querySelectorAll('p, div, span, h1, h2, h3, h4, h5, h6')
+    contentElements.forEach(element => {
+        if (element.textContent) {
+            element.textContent = kidMode.sanitizeContent(element.textContent)
+        }
+    })
+}
+
+// Initialize Kid Mode content filtering observer
+function initKidModeObserver() {
+    if (!kidMode.isEnabled) return
+    
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        // Apply restrictions to new elements
+                        if (kidMode.isFeatureRestricted('external_links')) {
+                            const newLinks = node.querySelectorAll?.('a[href*="http"]:not([href*="' + window.location.hostname + '"])')
+                            newLinks?.forEach(link => {
+                                link.setAttribute('href', '#')
+                                link.setAttribute('title', 'External links are disabled in Kid Mode')
+                                link.style.opacity = '0.5'
+                                link.style.pointerEvents = 'none'
+                            })
+                        }
+                        
+                        // Apply content filtering
+                        if (node.textContent) {
+                            node.textContent = kidMode.sanitizeContent(node.textContent)
+                        }
+                    }
+                })
+            }
+        })
+    })
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    })
+}
+
 // Make functions globally available for onclick handlers
 window.toggleTask = toggleTask
 window.deleteTask = deleteTask
 window.deleteJournalEntry = deleteJournalEntry
 window.loadHomeData = loadHomeData
+
+// Global Kid Mode functions
+window.kidMode = kidMode
+window.applyKidModeStyles = applyKidModeStyles

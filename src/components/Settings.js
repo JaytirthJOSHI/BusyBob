@@ -1,5 +1,6 @@
 import { auth, supabase } from '../lib/supabase.js'
 import districts from '../lib/districts.js'
+import { kidMode } from '../utils/kid-mode.js'
 
 export class Settings {
     constructor(calendar) {
@@ -12,11 +13,13 @@ export class Settings {
         this.outlookConnected = false
         this.spotifyConnected = false
         this.spotifyProfile = null
+        this.kidModeSettings = null
     }
 
     async init() {
         console.log('Initializing Settings component...')
         await this.loadConnectedAccounts()
+        await this.loadKidModeSettings()
         this.render()
         this.setupEventListeners()
     }
@@ -91,6 +94,20 @@ export class Settings {
             if (error.code !== 'PGRST116') {
                 console.error('Error loading connected accounts:', error)
             }
+        }
+    }
+
+    async loadKidModeSettings() {
+        try {
+            await kidMode.init()
+            this.kidModeSettings = {
+                enabled: kidMode.isEnabled,
+                userAge: kidMode.userAge,
+                dateOfBirth: kidMode.dateOfBirth,
+                settings: kidMode.settings
+            }
+        } catch (error) {
+            console.error('Error loading Kid Mode settings:', error)
         }
     }
 
@@ -182,6 +199,15 @@ export class Settings {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Kid Mode Settings -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                    <div class="p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">🛡️ Kid Mode</h2>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">Safe mode for users under 13 with restricted features and parental controls.</p>
+                        ${this.renderKidModeSettings()}
                     </div>
                 </div>
 
@@ -452,6 +478,118 @@ export class Settings {
         `;
     }
 
+    renderKidModeSettings() {
+        const settings = this.kidModeSettings || {}
+        const isEnabled = settings.enabled || false
+        const userAge = settings.userAge
+        const dateOfBirth = settings.dateOfBirth
+
+        return `
+            <div class="space-y-6">
+                <!-- Date of Birth Section -->
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-medium text-gray-900 dark:text-white">Date of Birth</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Required to enable Kid Mode (under 13 only)</p>
+                        </div>
+                        ${userAge !== null ? `<span class="text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">Age: ${userAge}</span>` : ''}
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <input 
+                            type="date" 
+                            id="kid-mode-dob" 
+                            class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            value="${dateOfBirth || ''}"
+                            max="${new Date().toISOString().split('T')[0]}"
+                        >
+                        <button 
+                            id="save-dob-btn" 
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kid Mode Toggle Section -->
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 ${isEnabled ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' : ''}">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-medium text-gray-900 dark:text-white flex items-center">
+                                Kid Mode 
+                                ${isEnabled ? '<span class="ml-2 text-green-600 dark:text-green-400">✓ Active</span>' : ''}
+                            </h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                ${isEnabled ? 'Safe browsing with restricted features' : 'Enable safe mode for users under 13'}
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            ${isEnabled ? `
+                                <button 
+                                    id="disable-kid-mode-btn" 
+                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
+                                >
+                                    Disable
+                                </button>
+                            ` : `
+                                <button 
+                                    id="enable-kid-mode-btn" 
+                                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                                    ${!dateOfBirth || (userAge && userAge >= 13) ? 'disabled' : ''}
+                                >
+                                    Enable
+                                </button>
+                            `}
+                        </div>
+                    </div>
+
+                    ${isEnabled ? `
+                        <div class="mt-4 p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <h4 class="font-medium text-green-800 dark:text-green-200 mb-2">Active Restrictions:</h4>
+                            <ul class="text-sm text-green-700 dark:text-green-300 space-y-1">
+                                <li>• Music streaming disabled</li>
+                                <li>• External links removed</li>
+                                <li>• File uploads restricted</li>
+                                <li>• Simplified interface</li>
+                                <li>• Content filtering active</li>
+                            </ul>
+                        </div>
+                    ` : ''}
+
+                    ${!dateOfBirth ? `
+                        <div class="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                            <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                                <strong>Note:</strong> Please set your date of birth above to enable Kid Mode.
+                            </p>
+                        </div>
+                    ` : userAge && userAge >= 13 ? `
+                        <div class="mt-4 p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                            <p class="text-sm text-blue-800 dark:text-blue-200">
+                                <strong>Note:</strong> Kid Mode is only available for users under 13 years old.
+                            </p>
+                        </div>
+                    ` : ''}
+                </div>
+
+                ${isEnabled ? `
+                    <!-- Auto-disable Info -->
+                    <div class="border border-blue-200 dark:border-blue-700 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/20">
+                        <div class="flex items-start space-x-3">
+                            <div class="text-blue-600 dark:text-blue-400 mt-0.5">ℹ️</div>
+                            <div>
+                                <h4 class="font-medium text-blue-800 dark:text-blue-200">Auto-disable Information</h4>
+                                <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                                    Kid Mode will automatically turn off when you turn 13. You can also disable it manually using the admin code (0013).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `
+    }
+
     setupEventListeners() {
         const container = document.getElementById('settings-container')
         if (!container) return
@@ -465,6 +603,11 @@ export class Settings {
             if (event.target.id === 'disconnect-spotify') this.disconnectSpotify();
             if (event.target.id === 'privacy-policy-link') this.showPrivacyPolicy();
             if (event.target.id === 'terms-of-service-link') this.showTermsOfService();
+            
+            // Kid Mode event listeners
+            if (event.target.id === 'save-dob-btn') this.saveDateOfBirth();
+            if (event.target.id === 'enable-kid-mode-btn') this.enableKidMode();
+            if (event.target.id === 'disable-kid-mode-btn') this.showDisableKidModeModal();
         });
 
         // Load user email
@@ -957,6 +1100,163 @@ export class Settings {
         } catch (error) {
             console.error('❌ Error disconnecting Spotify:', error)
             this.showMessage('Failed to disconnect Spotify', 'error')
+        }
+    }
+
+    // Kid Mode Methods
+    async saveDateOfBirth() {
+        const dobInput = document.getElementById('kid-mode-dob')
+        if (!dobInput) return
+
+        const dateOfBirth = dobInput.value
+        if (!dateOfBirth) {
+            this.showMessage('Please select your date of birth', 'error')
+            return
+        }
+
+        try {
+            await kidMode.setDateOfBirth(dateOfBirth)
+            await this.loadKidModeSettings()
+            this.render()
+            this.showMessage('Date of birth saved successfully', 'success')
+        } catch (error) {
+            console.error('Error saving date of birth:', error)
+            this.showMessage('Failed to save date of birth: ' + error.message, 'error')
+        }
+    }
+
+    async enableKidMode() {
+        const dobInput = document.getElementById('kid-mode-dob')
+        if (!dobInput || !dobInput.value) {
+            this.showMessage('Please set your date of birth first', 'error')
+            return
+        }
+
+        try {
+            await kidMode.enableKidMode(dobInput.value)
+            await this.loadKidModeSettings()
+            this.render()
+            this.showMessage('Kid Mode enabled successfully', 'success')
+            
+            // Reload the page to apply kid mode styling
+            setTimeout(() => {
+                window.location.reload()
+            }, 1500)
+        } catch (error) {
+            console.error('Error enabling Kid Mode:', error)
+            this.showMessage('Failed to enable Kid Mode: ' + error.message, 'error')
+        }
+    }
+
+    showDisableKidModeModal() {
+        const modalId = 'disable-kid-mode-modal'
+        if (document.getElementById(modalId)) return
+
+        const modalHtml = `
+            <div id="${modalId}" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">🔒 Disable Kid Mode</h2>
+                        <button id="close-disable-modal-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-2xl">&times;</button>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="text-gray-700 dark:text-gray-300 mb-4">
+                            To disable Kid Mode, please enter the admin code:
+                        </p>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label for="admin-code-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Admin Code
+                                </label>
+                                <input 
+                                    type="password" 
+                                    id="admin-code-input" 
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center text-lg font-mono"
+                                    placeholder="Enter 4-digit code"
+                                    maxlength="4"
+                                >
+                            </div>
+                            
+                            <div class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3">
+                                <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                                    <strong>Warning:</strong> Disabling Kid Mode will remove all safety restrictions and give access to all features.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button 
+                            id="cancel-disable-btn" 
+                            class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg text-sm font-medium"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            id="confirm-disable-btn" 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
+                        >
+                            Disable Kid Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml)
+        
+        const modal = document.getElementById(modalId)
+        const adminCodeInput = modal.querySelector('#admin-code-input')
+        
+        // Focus on the input
+        adminCodeInput.focus()
+        
+        // Event listeners
+        modal.querySelector('#close-disable-modal-btn').addEventListener('click', () => modal.remove())
+        modal.querySelector('#cancel-disable-btn').addEventListener('click', () => modal.remove())
+        
+        modal.querySelector('#confirm-disable-btn').addEventListener('click', () => {
+            this.disableKidMode(adminCodeInput.value)
+            modal.remove()
+        })
+        
+        // Enter key support
+        adminCodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.disableKidMode(adminCodeInput.value)
+                modal.remove()
+            }
+        })
+        
+        // Close modal on outside click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove()
+            }
+        })
+    }
+
+    async disableKidMode(adminCode) {
+        if (!adminCode) {
+            this.showMessage('Please enter the admin code', 'error')
+            return
+        }
+
+        try {
+            await kidMode.disableKidMode(adminCode)
+            await this.loadKidModeSettings()
+            this.render()
+            this.showMessage('Kid Mode disabled successfully', 'success')
+            
+            // Reload the page to remove kid mode styling
+            setTimeout(() => {
+                window.location.reload()
+            }, 1500)
+        } catch (error) {
+            console.error('Error disabling Kid Mode:', error)
+            this.showMessage(error.message, 'error')
         }
     }
 }
