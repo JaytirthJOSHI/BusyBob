@@ -1,4 +1,5 @@
-import { auth, db } from './lib/supabase.js'
+import { auth, supabase } from './lib/supabase.js'
+import { db } from './lib/offline-db.js'
 import { Calendar } from './components/Calendar.js'
 import { Chatbot } from './components/Chatbot.js'
 import { AuthPages } from './components/AuthPages.js'
@@ -12,6 +13,7 @@ import { PrivacyPolicy } from './components/PrivacyPolicy.js'
 import { TermsOfService } from './components/TermsOfService.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 import { kidMode } from './utils/kid-mode.js'
+import { offlineStatus } from './components/OfflineStatus.js'
 
 console.log('🚀 Main.js loaded - starting initialization...')
 
@@ -636,8 +638,18 @@ async function handleSignup(event) {
 
 async function signOut() {
     try {
+        console.log('🚪 Signing out user...')
+        
+        // Clear offline data first
+        await db.clearUserData()
+        console.log('🧹 Cleared offline user data')
+        
         await auth.signOut()
         currentUser = null
+        
+        // Clear application state
+        tasks = []
+        journalEntries = []
         
         // Remove chatbot when user signs out
         if (chatbot) {
@@ -648,8 +660,22 @@ async function signOut() {
             chatbot = null
         }
         
+        // Remove kid mode indicators and styles
+        const kidModeIndicator = document.querySelector('.kid-mode-indicator')
+        if (kidModeIndicator) kidModeIndicator.remove()
+        
+        const kidModeStyles = document.getElementById('kid-mode-styles')
+        if (kidModeStyles) kidModeStyles.remove()
+        
+        document.body.classList.remove('kid-mode-active')
+        
+        // Remove offline status indicator
+        offlineStatus.destroy()
+        
         showLandingPage()
-        ui.showMessage('Signed out successfully', 'success')
+        ui.showMessage('Signed out successfully - all offline data cleared', 'success')
+        
+        console.log('✅ User signed out successfully with data cleanup')
     } catch (error) {
         console.error('Error signing out:', error)
         ui.showMessage('Error signing out', 'error')
@@ -806,6 +832,10 @@ function showMainApp() {
         console.log('🤖 Initializing chatbot for authenticated user...')
         chatbot = new Chatbot()
     }
+    
+    // Initialize offline status indicator
+    offlineStatus.init()
+    console.log('📱 Offline status indicator initialized')
     
     // Load data and show home page
     loadAllData()
