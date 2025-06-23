@@ -1,7 +1,7 @@
 import { auth, supabase } from './lib/supabase.js'
 import { db } from './lib/offline-db.js'
 import { Calendar } from './components/Calendar.js'
-import { Chatbot } from './components/Chatbot.js'
+import { AIAgent } from './components/AIAgent.js'
 import { AuthPages } from './components/AuthPages.js'
 import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
@@ -22,7 +22,7 @@ let currentUser = null
 let tasks = []
 let journalEntries = []
 let calendar = null
-let chatbot = null
+let aiAgent = null
 let navigation = null
 let authPages = null
 let landingPage = null
@@ -335,14 +335,6 @@ async function initializeApp() {
                 console.log('User signed in:', currentUser.email)
             } else if (event === 'SIGNED_OUT') {
                 currentUser = null
-                // Remove chatbot when user signs out
-                if (chatbot) {
-                    const chatbotToggle = document.getElementById('chatbot-toggle')
-                    const chatbotWindow = document.getElementById('chatbot-window')
-                    if (chatbotToggle) chatbotToggle.remove()
-                    if (chatbotWindow) chatbotWindow.remove()
-                    chatbot = null
-                }
                 showLandingPage()
             }
         })
@@ -651,13 +643,13 @@ async function signOut() {
         tasks = []
         journalEntries = []
         
-        // Remove chatbot when user signs out
-        if (chatbot) {
-            const chatbotToggle = document.getElementById('chatbot-toggle')
-            const chatbotWindow = document.getElementById('chatbot-window')
-            if (chatbotToggle) chatbotToggle.remove()
-            if (chatbotWindow) chatbotWindow.remove()
-            chatbot = null
+        // Remove AI agent when user signs out
+        if (aiAgent) {
+            const aiAgentToggle = document.getElementById('ai-agent-toggle')
+            const aiAgentWindow = document.getElementById('ai-agent-window')
+            if (aiAgentToggle) aiAgentToggle.remove()
+            if (aiAgentWindow) aiAgentWindow.remove()
+            aiAgent = null
         }
         
         // Remove kid mode indicators and styles
@@ -786,11 +778,11 @@ function showLandingPage() {
         return
     }
     
-    // Clean up any existing chatbot elements
-    const existingChatbotToggle = document.getElementById('chatbot-toggle')
-    const existingChatbotWindow = document.getElementById('chatbot-window')
-    if (existingChatbotToggle) existingChatbotToggle.remove()
-    if (existingChatbotWindow) existingChatbotWindow.remove()
+    // Clean up any existing AI elements
+    const existingAIToggle = document.getElementById('ai-agent-toggle')
+    const existingAIWindow = document.getElementById('ai-agent-window')
+    if (existingAIToggle) existingAIToggle.remove()
+    if (existingAIWindow) existingAIWindow.remove()
     
     authContainer.classList.remove('hidden')
     mainApp.classList.add('hidden')
@@ -827,10 +819,10 @@ function showMainApp() {
         document.getElementById('welcome-name').textContent = userName.split(' ')[0]
     }
     
-    // Initialize chatbot only when showing main app
-    if (!chatbot) {
-        console.log('🤖 Initializing chatbot for authenticated user...')
-        chatbot = new Chatbot()
+    // Initialize AI agent only when showing main app
+    if (!aiAgent) {
+        console.log('🧠 Initializing AI agent for authenticated user...')
+        aiAgent = new AIAgent()
     }
     
     // Initialize offline status indicator

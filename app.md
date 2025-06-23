@@ -100,7 +100,7 @@ BusyBob is a comprehensive student productivity platform that combines academic 
   - Mood correlation
   - Writing frequency
 
-### 8. AI Chatbot
+### 8. AI Agent
 - **Smart Assistant** for productivity
 - **Task Creation** via natural language
 - **Academic Help** and guidance

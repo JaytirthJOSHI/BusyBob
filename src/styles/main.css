@@ -10,6 +10,42 @@
     min-width: 250px;
 }
 
+/* AI Agent specific styles */
+#ai-agent-toggle {
+    z-index: 60 !important;
+}
+
+#ai-agent-window {
+    z-index: 60 !important;
+}
+
+/* Prevent text overflow in AI Agent */
+#ai-agent-messages {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+#ai-agent-messages .message {
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Ensure AI Agent doesn't overlap with navigation on mobile */
+@media (max-width: 768px) {
+    #ai-agent-toggle {
+        bottom: 5rem !important; /* Move above mobile nav */
+    }
+    
+    #ai-agent-window {
+        bottom: 7rem !important; /* Move above mobile nav */
+        width: calc(100vw - 2rem) !important;
+        right: 1rem !important;
+        left: 1rem !important;
+        max-width: none !important;
+    }
+}
+
 /* Calendar specific styles */
 .calendar-day {
     min-height: 3rem;

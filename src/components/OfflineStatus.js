@@ -24,7 +24,7 @@ export class OfflineStatus {
             this.isOnline = false
             this.updateStatus()
             this.showTemporaryMessage('📱 You\'re offline - changes will sync when reconnected', 5000)
-        })
+        }) 
     }
 
     render() {
