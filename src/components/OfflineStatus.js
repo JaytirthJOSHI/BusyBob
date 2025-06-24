@@ -183,4 +183,4 @@ export class OfflineStatus {
 }
 
 // Global instance
-export const offlineStatus = new OfflineStatus() 
+export const offlineStatus = new OfflineStatus()

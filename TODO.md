@@ -34,4 +34,4 @@ This file tracks planned features and improvements for the Busy BOB application.
 -   [ ] **Advanced AI Features:**
     -   [ ] Integrate a more powerful AI model.
     -   [ ] Implement syllabus upload for automatic task creation.
-    -   [ ] Add a note summarization tool. 
+    -   [ ] Add a note summarization tool.

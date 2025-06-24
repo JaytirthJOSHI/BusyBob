@@ -440,4 +440,4 @@ export const db = {
 }
 
 // Initialize database
-db.init() 
+db.init()

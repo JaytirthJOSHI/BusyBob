@@ -1108,4 +1108,4 @@ export class Canvas {
             return url; // Return original if we can't parse it
         }
     }
-} 
+}

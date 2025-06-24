@@ -13,6 +13,7 @@ export class AIAgent {
     ]
     this.isTyping = false
     this.pendingActions = []
+    this.initialized = false
     
     // Integration data
     this.studentVueData = null
@@ -22,13 +23,25 @@ export class AIAgent {
     this.userMoods = []
     this.userJournalEntries = []
     
-    this.init()
+    // Initialize with delay to ensure DOM is ready
+    setTimeout(() => {
+      this.init()
+    }, 100)
   }
 
   async init() {
-    await this.loadIntegrationData()
-    this.createAIAgentHTML()
-    this.attachEventListeners()
+    try {
+      if (this.initialized) return
+      
+      console.log('🧠 Initializing AI Agent...')
+      await this.loadIntegrationData()
+      this.createAIAgentHTML()
+      this.attachEventListeners()
+      this.initialized = true
+      console.log('✅ AI Agent initialized successfully')
+    } catch (error) {
+      console.error('❌ Error initializing AI Agent:', error)
+    }
   }
 
   async loadIntegrationData() {
@@ -165,18 +178,24 @@ export class AIAgent {
   }
 
   createAIAgentHTML() {
+    // Check if AI Agent already exists
+    if (document.getElementById('ai-agent-toggle')) {
+      console.log('AI Agent already exists, skipping creation')
+      return
+    }
+
     const aiAgentHTML = `
       <!-- AI Agent Toggle Button -->
-      <button id="ai-agent-toggle" class="fixed bottom-6 right-6 z-[60] w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 flex items-center justify-center">
-        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <button id="ai-agent-toggle" class="ai-agent-toggle">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
         </svg>
       </button>
 
       <!-- AI Agent Window -->
-      <div id="ai-agent-window" class="fixed bottom-24 right-6 z-[60] w-96 max-w-[calc(100vw-3rem)] h-[32rem] max-h-[calc(100vh-8rem)] bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 transform transition-all duration-300 scale-0 origin-bottom-right hidden">
+      <div id="ai-agent-window" class="ai-agent-window">
         <!-- Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div class="ai-agent-header">
           <div class="flex items-center space-x-3">
             <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
               <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,12 +215,12 @@ export class AIAgent {
         </div>
 
         <!-- Messages -->
-        <div id="ai-agent-messages" class="flex-1 p-4 overflow-y-auto space-y-3 min-h-0" style="height: calc(100% - 140px);">
+        <div id="ai-agent-messages" class="ai-agent-messages">
           <!-- Messages will be added here -->
         </div>
 
         <!-- Pending Actions -->
-        <div id="pending-actions" class="px-4 pb-2 hidden flex-shrink-0">
+        <div id="pending-actions" class="ai-agent-pending-actions">
           <div class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
             <div class="flex items-center space-x-2 mb-2">
               <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,7 +235,7 @@ export class AIAgent {
         </div>
 
         <!-- Input -->
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div class="ai-agent-input-container">
           <div class="flex space-x-2">
             <input 
               type="text" 
@@ -237,8 +256,14 @@ export class AIAgent {
       </div>
     `
 
-    document.body.insertAdjacentHTML('beforeend', aiAgentHTML)
-    this.renderMessages()
+    // Insert HTML safely
+    try {
+      document.body.insertAdjacentHTML('beforeend', aiAgentHTML)
+      this.renderMessages()
+      console.log('✅ AI Agent HTML created successfully')
+    } catch (error) {
+      console.error('❌ Error creating AI Agent HTML:', error)
+    }
   }
 
   attachEventListeners() {
@@ -277,11 +302,7 @@ export class AIAgent {
       this.closeAIAgent()
     } else {
       this.isOpen = true
-      window.classList.remove('hidden')
-      setTimeout(() => {
-        window.classList.remove('scale-0')
-        window.classList.add('scale-100')
-      }, 10)
+      window.classList.add('show')
       
       // Focus input
       setTimeout(() => {
@@ -294,12 +315,7 @@ export class AIAgent {
     const window = document.getElementById('ai-agent-window')
     
     this.isOpen = false
-    window.classList.remove('scale-100')
-    window.classList.add('scale-0')
-    
-    setTimeout(() => {
-      window.classList.add('hidden')
-    }, 300)
+    window.classList.remove('show')
   }
 
   async sendMessage() {
@@ -1045,11 +1061,11 @@ Remember: All actions require human approval before execution. Only suggest acti
     if (!container || !list) return
     
     if (this.pendingActions.length === 0) {
-      container.classList.add('hidden')
+      container.classList.remove('show')
       return
     }
     
-    container.classList.remove('hidden')
+    container.classList.add('show')
     list.innerHTML = this.pendingActions.map(action => `
       <div class="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg p-3 border border-yellow-200 dark:border-yellow-800">
         <div class="flex-1">

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS ai_conversations (
 );
 
 -- Table for AI-generated insights and recommendations
-CREATE TABLE IF NOT EXISTS ai_insights (
+CREATE TABLE IF NOT EXISTS ai_insights ( 
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     insight_type VARCHAR(50) NOT NULL, -- 'productivity', 'mood_pattern', 'study_recommendation', etc.

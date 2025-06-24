@@ -347,4 +347,4 @@ export class KidMode {
 }
 
 // Global instance
-export const kidMode = new KidMode() 
+export const kidMode = new KidMode()

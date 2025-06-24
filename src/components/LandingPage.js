@@ -313,6 +313,4 @@ export class LandingPage {
             })
         }
     }
-} 
-
-
+}

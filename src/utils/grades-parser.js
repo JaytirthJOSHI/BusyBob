@@ -172,4 +172,4 @@ export function parseSchedule(scheduleData) {
         console.error('Error parsing schedule:', error);
         throw new Error('There was an error parsing your schedule data.');
     }
-} 
+}

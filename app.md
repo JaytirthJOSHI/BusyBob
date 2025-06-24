@@ -442,4 +442,4 @@ MICROSOFT_CLIENT_SECRET=your_microsoft_client_secret
 - **Beta Testing**: TestFlight/Internal Testing
 - **CI/CD**: Automated builds and testing
 
-This documentation provides the complete technical foundation needed to build a mobile version of BusyBob while maintaining feature parity with the web application. 
+This documentation provides the complete technical foundation needed to build a mobile version of BusyBob while maintaining feature parity with the web application.

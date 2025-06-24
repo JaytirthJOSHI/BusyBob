@@ -11,12 +11,166 @@
 }
 
 /* AI Agent specific styles */
+.ai-agent-toggle {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 1000;
+    width: 4rem;
+    height: 4rem;
+    background: linear-gradient(135deg, rgb(168 85 247) 0%, rgb(236 72 153) 100%);
+    border-radius: 50%;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+}
+
+.ai-agent-toggle:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: scale(1.1);
+    background: linear-gradient(135deg, rgb(147 51 234) 0%, rgb(219 39 119) 100%);
+}
+
+.ai-agent-window {
+    position: fixed;
+    bottom: 6rem;
+    right: 1.5rem;
+    z-index: 1000;
+    width: 24rem;
+    max-width: calc(100vw - 3rem);
+    height: 32rem;
+    max-height: calc(100vh - 8rem);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transform: scale(0);
+    transform-origin: bottom right;
+    transition: all 0.3s ease;
+    display: none;
+    flex-direction: column;
+}
+
+.dark .ai-agent-window {
+    background: rgba(31, 41, 55, 0.95);
+}
+
+.ai-agent-window.show {
+    display: flex;
+    transform: scale(1);
+}
+
+.ai-agent-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+    flex-shrink: 0;
+}
+
+.dark .ai-agent-header {
+    border-bottom-color: rgba(75, 85, 99, 0.5);
+}
+
+.ai-agent-messages {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.ai-agent-messages .message {
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.ai-agent-pending-actions {
+    padding: 0 1rem 0.5rem;
+    flex-shrink: 0;
+    display: none;
+}
+
+.ai-agent-pending-actions.show {
+    display: block;
+}
+
+.ai-agent-input-container {
+    padding: 1rem;
+    border-top: 1px solid rgba(229, 231, 235, 0.5);
+    flex-shrink: 0;
+}
+
+.dark .ai-agent-input-container {
+    border-top-color: rgba(75, 85, 99, 0.5);
+}
+
+/* Mobile responsive adjustments for AI Agent */
+@media (max-width: 768px) {
+    .ai-agent-toggle {
+        bottom: 6rem;
+        right: 1rem;
+        width: 3.5rem;
+        height: 3.5rem;
+    }
+    
+    .ai-agent-window {
+        bottom: 8rem;
+        right: 1rem;
+        left: 1rem;
+        width: auto;
+        max-width: none;
+        height: 28rem;
+    }
+    
+    .ai-agent-window.show {
+        transform: scale(1);
+        transform-origin: bottom center;
+    }
+}
+
+@media (max-width: 480px) {
+    .ai-agent-toggle {
+        bottom: 5.5rem;
+        width: 3rem;
+        height: 3rem;
+    }
+    
+    .ai-agent-toggle svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+    
+    .ai-agent-window {
+        bottom: 7.5rem;
+        height: 24rem;
+    }
+}
+
+/* Ensure AI Agent doesn't interfere with other elements */
+.ai-agent-toggle,
+.ai-agent-window {
+    pointer-events: auto;
+}
+
+/* Legacy support - keep old selectors for compatibility */
 #ai-agent-toggle {
-    z-index: 60 !important;
+    z-index: 1000 !important;
 }
 
 #ai-agent-window {
-    z-index: 60 !important;
+    z-index: 1000 !important;
 }
 
 /* Prevent text overflow in AI Agent */
@@ -29,21 +183,6 @@
     max-width: 100%;
     white-space: pre-wrap;
     word-break: break-word;
-}
-
-/* Ensure AI Agent doesn't overlap with navigation on mobile */
-@media (max-width: 768px) {
-    #ai-agent-toggle {
-        bottom: 5rem !important; /* Move above mobile nav */
-    }
-    
-    #ai-agent-window {
-        bottom: 7rem !important; /* Move above mobile nav */
-        width: calc(100vw - 2rem) !important;
-        right: 1rem !important;
-        left: 1rem !important;
-        max-width: none !important;
-    }
 }
 
 /* Calendar specific styles */

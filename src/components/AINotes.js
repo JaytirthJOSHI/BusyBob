@@ -615,4 +615,4 @@ export class AINotes {
             this.render();
         }, 300);
     }
-} 
+}

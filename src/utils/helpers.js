@@ -230,4 +230,4 @@ export const validation = {
   required(value) {
     return value && value.trim().length > 0
   }
-} 
+}

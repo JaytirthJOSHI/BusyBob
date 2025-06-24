@@ -185,4 +185,4 @@ export class TermsOfService {
       </div>
     `
   }
-} 
+}
