@@ -1,15 +1,6 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        main: './index.html'
-      }
-    }
-  },
   server: {
     port: 3000,
     proxy: {
@@ -35,6 +26,9 @@ export default defineConfig({
   },
   define: {
     global: 'globalThis'
-  },
-  assetsInclude: ['**/*.html']
+  }
 })
+
+
+
+
