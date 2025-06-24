@@ -1,6 +1,7 @@
 import { auth, supabase } from '../lib/supabase.js'
 import districts from '../lib/districts.js'
 import { kidMode } from '../utils/kid-mode.js'
+import { db } from '../lib/offline-db.js'
 
 export class Settings {
     constructor(calendar) {
@@ -211,6 +212,79 @@ export class Settings {
                     </div>
                 </div>
 
+                <!-- Interface Customization -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                    <div class="p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Interface Customization</h2>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">Customize which tabs and sections are visible in your app.</p>
+                        
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">Visible Tabs</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" id="tab-home" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">🏠 Home</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" id="tab-tasks" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">✓ Tasks</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" id="tab-calendar" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">📅 Calendar</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" id="tab-journal" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">📔 Journal</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" id="tab-academic-hub" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">🎓 Academic Hub</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" id="tab-music" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">🎵 Music</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" id="tab-ai-notes" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">🤖 AI Notes</span>
+                                </label>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">Home Page Sections</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <label class="flex items-center space-x-3">
+                                        <input type="checkbox" id="section-upcoming-tasks" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">Upcoming Tasks</span>
+                                    </label>
+                                    <label class="flex items-center space-x-3">
+                                        <input type="checkbox" id="section-mood-logging" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">Mood Logging</span>
+                                    </label>
+                                    <label class="flex items-center space-x-3">
+                                        <input type="checkbox" id="section-pomodoro-widget" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">Pomodoro Widget</span>
+                                    </label>
+                                    <label class="flex items-center space-x-3">
+                                        <input type="checkbox" id="section-statistics" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">Statistics</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <button id="save-interface-settings" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                    Save Interface Settings
+                                </button>
+                                <button id="reset-interface-settings" class="ml-3 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                    Reset to Default
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Preferences -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
                     <div class="p-6">
@@ -309,12 +383,24 @@ export class Settings {
                         </div>
                     </div>
                 </div>
+
+                <!-- Offline Storage Status -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                    <div class="p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Offline Storage Status</h2>
+                        <div id="offline-storage-status">
+                            Loading storage information...
+                        </div>
+                    </div>
+                </div>
             </div>
         `
 
         this.loadUserEmail();
         this.loadTimezones();
         this.updateGradesToggleVisual();
+        this.loadOfflineStorageStatus();
+        this.loadInterfaceSettings();
     }
 
     renderStudentVueConnection() {
@@ -652,6 +738,10 @@ export class Settings {
         // Outlook Calendar listeners
         document.getElementById('connect-outlook-btn')?.addEventListener('click', () => this.connectOutlook())
         document.getElementById('disconnect-outlook-btn')?.addEventListener('click', () => this.disconnectOutlook())
+        
+        // Interface customization listeners
+        document.getElementById('save-interface-settings')?.addEventListener('click', () => this.saveInterfaceSettings())
+        document.getElementById('reset-interface-settings')?.addEventListener('click', () => this.resetInterfaceSettings())
     }
 
     async loadUserEmail() {
@@ -1239,24 +1329,280 @@ export class Settings {
     }
 
     async disableKidMode(adminCode) {
-        if (!adminCode) {
-            this.showMessage('Please enter the admin code', 'error')
-            return
-        }
-
         try {
-            await kidMode.disableKidMode(adminCode)
-            await this.loadKidModeSettings()
+            // Validate admin code
+            if (adminCode !== '1337') {
+                throw new Error('Invalid admin code')
+            }
+
+            // Disable Kid Mode
+            await kidMode.disableKidMode()
+            this.kidModeSettings.enabled = false
+
+            // Update UI
             this.render()
             this.showMessage('Kid Mode disabled successfully', 'success')
-            
-            // Reload the page to remove kid mode styling
-            setTimeout(() => {
-                window.location.reload()
-            }, 1500)
+
         } catch (error) {
             console.error('Error disabling Kid Mode:', error)
-            this.showMessage(error.message, 'error')
+            this.showMessage(error.message || 'Failed to disable Kid Mode', 'error')
+        }
+    }
+
+    async loadOfflineStorageStatus() {
+        try {
+            const status = await db.getStatus()
+            const diagnostics = await db.getDiagnostics()
+            
+            const statusContainer = document.getElementById('offline-storage-status')
+            if (!statusContainer) return
+
+            const formatBytes = (bytes) => {
+                if (bytes === 0) return '0 B'
+                const k = 1024
+                const sizes = ['B', 'KB', 'MB', 'GB']
+                const i = Math.floor(Math.log(bytes) / Math.log(k))
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+            }
+
+            const connectionStatus = status.isOnline ? 
+                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Online</span>' :
+                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Offline</span>'
+
+            const syncStatus = status.syncQueueLength > 0 ?
+                `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">${status.syncQueueLength} pending</span>` :
+                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Synced</span>'
+
+            statusContainer.innerHTML = `
+                <div class="space-y-4">
+                    <!-- Connection and Sync Status -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Connection</span>
+                                ${connectionStatus}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Sync Status</span>
+                                ${syncStatus}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Storage Usage -->
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Storage Usage</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">${status.storage.percentage}% used</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mb-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: ${status.storage.percentage}%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                            <span>${formatBytes(status.storage.used)} used</span>
+                            <span>${formatBytes(status.storage.maxSize)} total</span>
+                        </div>
+                    </div>
+
+                    <!-- Performance Info -->
+                    ${status.performance.averageOperationTime > 0 ? `
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Average Operation Time</span>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">${status.performance.averageOperationTime}ms</span>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Actions -->
+                    <div class="flex space-x-3">
+                        ${status.syncQueueLength > 0 && status.isOnline ? `
+                            <button id="force-sync-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                Sync Now
+                            </button>
+                        ` : ''}
+                        <button id="clear-offline-data-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                            Clear Offline Data
+                        </button>
+                        <button id="refresh-storage-status-btn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600">
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+            `
+
+            // Setup action handlers
+            this.setupOfflineStorageActions()
+
+        } catch (error) {
+            console.error('Error loading offline storage status:', error)
+            const statusContainer = document.getElementById('offline-storage-status')
+            if (statusContainer) {
+                statusContainer.innerHTML = `
+                    <div class="text-red-600 dark:text-red-400 text-sm">
+                        Failed to load storage status: ${error.message}
+                    </div>
+                `
+            }
+        }
+    }
+
+    setupOfflineStorageActions() {
+        const forceSyncBtn = document.getElementById('force-sync-btn')
+        if (forceSyncBtn) {
+            forceSyncBtn.addEventListener('click', async () => {
+                try {
+                    forceSyncBtn.disabled = true
+                    forceSyncBtn.textContent = 'Syncing...'
+                    
+                    await db.syncOfflineData()
+                    await this.loadOfflineStorageStatus() // Refresh status
+                    
+                    this.showMessage('Sync completed successfully', 'success')
+                } catch (error) {
+                    console.error('Manual sync failed:', error)
+                    this.showMessage('Sync failed: ' + error.message, 'error')
+                } finally {
+                    if (forceSyncBtn) {
+                        forceSyncBtn.disabled = false
+                        forceSyncBtn.textContent = 'Sync Now'
+                    }
+                }
+            })
+        }
+
+        const clearDataBtn = document.getElementById('clear-offline-data-btn')
+        if (clearDataBtn) {
+            clearDataBtn.addEventListener('click', async () => {
+                if (confirm('Are you sure you want to clear all offline data? This action cannot be undone.')) {
+                    try {
+                        clearDataBtn.disabled = true
+                        clearDataBtn.textContent = 'Clearing...'
+                        
+                        await db.clearCurrentUserData()
+                        await this.loadOfflineStorageStatus() // Refresh status
+                        
+                        this.showMessage('Offline data cleared successfully', 'success')
+                    } catch (error) {
+                        console.error('Failed to clear offline data:', error)
+                        this.showMessage('Failed to clear data: ' + error.message, 'error')
+                    } finally {
+                        if (clearDataBtn) {
+                            clearDataBtn.disabled = false
+                            clearDataBtn.textContent = 'Clear Offline Data'
+                        }
+                    }
+                }
+            })
+        }
+
+        const refreshBtn = document.getElementById('refresh-storage-status-btn')
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadOfflineStorageStatus()
+            })
+        }
+    }
+
+    saveInterfaceSettings() {
+        const settings = {
+            visibleTabs: {
+                home: document.getElementById('tab-home')?.checked ?? true,
+                tasks: document.getElementById('tab-tasks')?.checked ?? true,
+                calendar: document.getElementById('tab-calendar')?.checked ?? true,
+                journal: document.getElementById('tab-journal')?.checked ?? true,
+                academicHub: document.getElementById('tab-academic-hub')?.checked ?? true,
+                music: document.getElementById('tab-music')?.checked ?? true,
+                aiNotes: document.getElementById('tab-ai-notes')?.checked ?? true
+            },
+            visibleSections: {
+                upcomingTasks: document.getElementById('section-upcoming-tasks')?.checked ?? true,
+                moodLogging: document.getElementById('section-mood-logging')?.checked ?? true,
+                pomodoroWidget: document.getElementById('section-pomodoro-widget')?.checked ?? true,
+                statistics: document.getElementById('section-statistics')?.checked ?? true
+            }
+        }
+
+        localStorage.setItem('interfaceSettings', JSON.stringify(settings))
+        this.showMessage('Interface settings saved successfully!', 'success')
+        
+        // Apply the settings immediately
+        this.applyInterfaceSettings(settings)
+        
+        // Dispatch event to update navigation
+        window.dispatchEvent(new CustomEvent('interfaceSettingsChanged', { detail: settings }))
+    }
+
+    resetInterfaceSettings() {
+        const defaultSettings = {
+            visibleTabs: {
+                home: true,
+                tasks: true,
+                calendar: true,
+                journal: true,
+                academicHub: true,
+                music: true,
+                aiNotes: true
+            },
+            visibleSections: {
+                upcomingTasks: true,
+                moodLogging: true,
+                pomodoroWidget: true,
+                statistics: true
+            }
+        }
+
+        localStorage.setItem('interfaceSettings', JSON.stringify(defaultSettings))
+        
+        // Update checkboxes
+        Object.entries(defaultSettings.visibleTabs).forEach(([tab, visible]) => {
+            const checkbox = document.getElementById(`tab-${tab.replace(/([A-Z])/g, '-$1').toLowerCase()}`)
+            if (checkbox) checkbox.checked = visible
+        })
+        
+        Object.entries(defaultSettings.visibleSections).forEach(([section, visible]) => {
+            const checkbox = document.getElementById(`section-${section.replace(/([A-Z])/g, '-$1').toLowerCase()}`)
+            if (checkbox) checkbox.checked = visible
+        })
+
+        this.showMessage('Interface settings reset to default!', 'success')
+        this.applyInterfaceSettings(defaultSettings)
+        window.dispatchEvent(new CustomEvent('interfaceSettingsChanged', { detail: defaultSettings }))
+    }
+
+    applyInterfaceSettings(settings) {
+        // Hide/show home page sections
+        Object.entries(settings.visibleSections).forEach(([section, visible]) => {
+            const sectionElement = document.querySelector(`[data-section="${section}"]`)
+            if (sectionElement) {
+                sectionElement.style.display = visible ? 'block' : 'none'
+            }
+        })
+    }
+
+    loadInterfaceSettings() {
+        try {
+            const saved = localStorage.getItem('interfaceSettings')
+            if (saved) {
+                const settings = JSON.parse(saved)
+                
+                // Update checkboxes based on saved settings
+                Object.entries(settings.visibleTabs || {}).forEach(([tab, visible]) => {
+                    const checkbox = document.getElementById(`tab-${tab.replace(/([A-Z])/g, '-$1').toLowerCase()}`)
+                    if (checkbox) checkbox.checked = visible
+                })
+                
+                Object.entries(settings.visibleSections || {}).forEach(([section, visible]) => {
+                    const checkbox = document.getElementById(`section-${section.replace(/([A-Z])/g, '-$1').toLowerCase()}`)
+                    if (checkbox) checkbox.checked = visible
+                })
+
+                this.applyInterfaceSettings(settings)
+            }
+        } catch (error) {
+            console.error('Error loading interface settings:', error)
         }
     }
 }

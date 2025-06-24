@@ -1,4 +1,5 @@
 /* Main stylesheet for Mindful Student app */
+@import './enhanced-agent.css';
 
 /* Flash messages */
 .flash-message {
@@ -1368,6 +1369,10 @@
     padding: 3rem;
     color: rgb(107 114 128);
 }
+
+/* Import additional component styles */
+@import url('./enhanced-agent.css');
+@import url('./pomodoro-timer.css');
 
 /* Modal and Help Styles */
 .help-modal {

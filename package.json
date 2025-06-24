@@ -6,7 +6,7 @@
   "description": "🎓 Ultimate student productivity platform with Canvas & StudentVue integration, mood tracking, AI assistant, and Spotify focus music. Free productivity app for busy students.",
   "keywords": [
     "student-productivity",
-    "canvas-integration", 
+    "canvas-integration",
     "studentvue",
     "academic-planner",
     "task-management",
@@ -32,6 +32,7 @@
     "dev": "vite",
     "start": "node server.js",
     "dev:server": "node server.js",
+    "dev:full": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "npm run build && npx vercel --prod",
@@ -40,17 +41,19 @@
     "test": "echo 'Add tests later'"
   },
   "dependencies": {
+    "@azure/msal-browser": "^3.7.0",
+    "@azure/msal-node": "^2.6.0",
     "@kth/canvas-api": "^5.0.0-beta.7",
     "@supabase/supabase-js": "^2.47.10",
     "express": "^4.18.2",
-    "node-fetch": "^3.3.2",
-    "studentvue": "^2.0.4",
+    "express-session": "^1.18.1",
     "googleapis": "^133.0.0",
-    "@azure/msal-browser": "^3.7.0",
-    "@azure/msal-node": "^2.6.0",
-    "ical": "^0.8.0"
+    "ical": "^0.8.0",
+    "node-fetch": "^3.3.2",
+    "studentvue": "^2.0.4"
   },
   "devDependencies": {
+    "concurrently": "^9.2.0",
     "vite": "^5.4.19"
   },
   "engines": {

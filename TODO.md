@@ -1,3 +1,5 @@
+# Dev Log
+
 # Busy BOB - To-Do List
 
 This file tracks planned features and improvements for the Busy BOB application.

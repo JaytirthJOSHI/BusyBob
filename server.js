@@ -1,4 +1,5 @@
 import express from 'express';
+import session from 'express-session';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { router as studentVueRouter } from './api/studentvue.js';
@@ -20,6 +21,14 @@ const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET || 'your-mic
 // Middleware
 app.use(express.json());
 app.use(express.static('.'));
+
+// Session middleware for storing Spotify tokens temporarily
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-super-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false, maxAge: 10 * 60 * 1000 } // 10 minutes, not secure for localhost
+}));
 
 // API Routes
 app.use('/api/studentvue', studentVueRouter);

@@ -1,7 +1,9 @@
 import { auth, supabase } from './lib/supabase.js'
 import { db } from './lib/offline-db.js'
 import { Calendar } from './components/Calendar.js'
-import { AIAgent } from './components/AIAgent.js'
+import { EnhancedAIAgent } from './components/EnhancedAIAgent.js'
+import { PomodoroTimer } from './components/PomodoroTimer.js'
+import { PointsSystem } from './components/PointsSystem.js'
 import { AuthPages } from './components/AuthPages.js'
 import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
@@ -23,6 +25,8 @@ let tasks = []
 let journalEntries = []
 let calendar = null
 let aiAgent = null
+let pomodoroTimer = null
+let pointsSystem = null
 let navigation = null
 let authPages = null
 let landingPage = null
@@ -66,6 +70,16 @@ const moodManager = {
             await this.load() // Reload all feelings
             this.ui.render()
             ui.showMessage("Mood logged successfully!", "success")
+
+            // Award points for mood logging
+            if (window.pointsSystem) {
+                try {
+                    const points = window.pointsSystem.getPointValue('moodLogged')
+                    await window.pointsSystem.awardPoints(points, 'Mood logged', 'mood')
+                } catch (pointsError) {
+                    console.error('Error awarding points for mood:', pointsError)
+                }
+            }
 
             if (window.loadHomeData) window.loadHomeData()
             
@@ -288,6 +302,33 @@ async function initializeApp() {
         privacyPolicy = new PrivacyPolicy()
         termsOfService = new TermsOfService()
         console.log('✅ Components created successfully')
+        
+        // Initialize gamification systems
+        console.log('🎮 Initializing gamification systems...')
+        try {
+            pointsSystem = new PointsSystem()
+            await pointsSystem.init()
+            window.pointsSystem = pointsSystem
+            console.log('✅ Points System initialized')
+
+            pomodoroTimer = new PomodoroTimer()
+            await pomodoroTimer.init()
+            window.pomodoroTimer = pomodoroTimer
+            console.log('✅ Pomodoro Timer initialized')
+        } catch (gameError) {
+            console.error('❌ Error initializing gamification systems:', gameError)
+        }
+        
+        // Initialize Enhanced AI Agent
+        console.log('🤖 Initializing Enhanced AI Agent...')
+        try {
+            aiAgent = new EnhancedAIAgent()
+            await aiAgent.init()
+            window.enhancedAI = aiAgent
+            console.log('✅ Enhanced AI Agent initialized')
+        } catch (aiError) {
+            console.error('❌ Error initializing AI Agent:', aiError)
+        }
         
         // Set up theme toggle
         console.log('🌙 Setting up theme toggle...')
@@ -661,8 +702,7 @@ async function signOut() {
         
         document.body.classList.remove('kid-mode-active')
         
-        // Remove offline status indicator
-        offlineStatus.destroy()
+        // Offline status is only shown in Settings, no need to destroy
         
         showLandingPage()
         ui.showMessage('Signed out successfully - all offline data cleared', 'success')
@@ -819,15 +859,15 @@ function showMainApp() {
         document.getElementById('welcome-name').textContent = userName.split(' ')[0]
     }
     
-    // Initialize AI agent only when showing main app
+    // Initialize Enhanced AI agent only when showing main app
     if (!aiAgent) {
-        console.log('🧠 Initializing AI agent for authenticated user...')
-        aiAgent = new AIAgent()
+        console.log('🚀 Initializing Enhanced AI Agent system for authenticated user...')
+        aiAgent = new EnhancedAIAgent()
+        window.enhancedAI = aiAgent // Make globally available for debugging/extensions
     }
     
-    // Initialize offline status indicator in compact mode to avoid UI conflicts
-    offlineStatus.init('compact')
-    console.log('📱 Offline status indicator initialized in compact mode')
+    // Offline status indicator will be shown only in Settings page
+    console.log('📱 Offline status available in Settings')
     
     // Load data and show home page
     loadAllData()
@@ -851,6 +891,11 @@ function showPage(pageName) {
     // Update navigation active state
     if (navigation) {
         navigation.setActivePage(pageName)
+    }
+    
+    // Control points widget visibility
+    if (window.pointsSystem) {
+        window.pointsSystem.showInSection(pageName)
     }
     
     // Load page-specific data
@@ -1255,6 +1300,25 @@ async function handleReflectionSubmit(event) {
         // Always create a new entry
         await db.addJournalEntry(content)
         
+        // Award points for journal entry
+        if (window.pointsSystem) {
+            try {
+                const wordCount = content.trim().split(/\s+/).length
+                let points = window.pointsSystem.getPointValue('journalEntry')
+                let reason = 'Journal entry created'
+                
+                // Bonus points for longer entries
+                if (wordCount >= 50) {
+                    points = window.pointsSystem.getPointValue('longJournalEntry')
+                    reason = 'Long journal entry created'
+                }
+                
+                await window.pointsSystem.awardPoints(points, reason, 'journal')
+            } catch (pointsError) {
+                console.error('Error awarding points for journal:', pointsError)
+            }
+        }
+        
         ui.showMessage('Reflection saved!', 'success')
         await loadJournalData() // Reload all journal data to update streak and views
         
@@ -1295,6 +1359,47 @@ async function toggleTask(taskId) {
         
         // Refresh home data
         loadHomeData();
+        
+        // Award points for task completion
+        if (updatedTask.completed && window.pointsSystem) {
+            try {
+                const now = new Date()
+                const currentHour = now.getHours()
+                let points = window.pointsSystem.getPointValue('taskCompleted')
+                let reason = 'Task completed'
+                
+                // Bonus points for early completion
+                if (task.due_date) {
+                    const dueDate = new Date(task.due_date)
+                    if (now < dueDate) {
+                        points = window.pointsSystem.getPointValue('taskCompletedEarly')
+                        reason = 'Task completed early'
+                    }
+                }
+                
+                // Bonus points for urgent tasks
+                if (task.priority === 'high') {
+                    points = window.pointsSystem.getPointValue('urgentTaskCompleted')
+                    reason = 'Urgent task completed'
+                }
+                
+                // Early bird bonus
+                if (currentHour < 9) {
+                    points += 10
+                    reason += ' (Early Bird bonus!)'
+                }
+                
+                // Night owl bonus  
+                if (currentHour >= 21) {
+                    points += 10
+                    reason += ' (Night Owl bonus!)'
+                }
+                
+                await window.pointsSystem.awardPoints(points, reason, 'tasks')
+            } catch (pointsError) {
+                console.error('Error awarding points:', pointsError)
+            }
+        }
         
         // Show feedback
         if (updatedTask.completed) {
