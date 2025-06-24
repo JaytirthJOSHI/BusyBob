@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { router as studentVueRouter } from './api/studentvue.js';
 import { router as canvasRouter } from './api/canvas.js';
+import { jobs_v3p1beta1 } from 'googleapis';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -1,0 +1,90 @@
+{
+  "name": "BusyBob - Ultimate Student Productivity Platform",
+  "short_name": "BusyBob",
+  "description": "The productivity powerhouse for busy students. Track tasks, monitor mood, manage academic data, and boost productivity with Canvas, StudentVue, and Spotify integration.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-US",
+  "categories": ["productivity", "education", "lifestyle", "utilities"],
+  "keywords": [
+    "student productivity",
+    "task management", 
+    "academic planner",
+    "mood tracking",
+    "study organization",
+    "college productivity",
+    "student life",
+    "Canvas integration",
+    "StudentVue",
+    "Spotify study music",
+    "AI assistant",
+    "student wellness"
+  ],
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg", 
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "BusyBob Dashboard - Desktop View"
+    },
+    {
+      "src": "/screenshot-mobile.png", 
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "BusyBob Mobile Interface"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Task",
+      "short_name": "New Task",
+      "description": "Quickly add a new task",
+      "url": "/#tasks",
+      "icons": [{"src": "/icon-192.svg", "sizes": "192x192"}]
+    },
+    {
+      "name": "Academic Hub",
+      "short_name": "Grades",
+      "description": "Check grades and assignments",
+      "url": "/#academic-hub", 
+      "icons": [{"src": "/icon-192.svg", "sizes": "192x192"}]
+    },
+    {
+      "name": "Mood Log",
+      "short_name": "Mood",
+      "description": "Log daily mood",
+      "url": "/#home",
+      "icons": [{"src": "/icon-192.svg", "sizes": "192x192"}]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+} 

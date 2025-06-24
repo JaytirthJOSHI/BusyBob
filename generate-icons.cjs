@@ -108,4 +108,4 @@ if (require.main === module) {
   generateIcons();
 }
 
-module.exports = { generateIcons, createSimpleIcon }; 
+module.exports = { generateIcons, createSimpleIcon };

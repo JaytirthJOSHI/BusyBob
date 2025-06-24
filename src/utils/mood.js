@@ -207,4 +207,4 @@ const moodManager = {
     }
 }
 
-export { moodManager } 
+export { moodManager }

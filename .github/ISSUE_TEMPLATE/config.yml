@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔒 Security Vulnerability
+    url: mailto:security@busybob.app?subject=SECURITY%20VULNERABILITY%20-%20BusyBob
+    about: Report security issues privately via email (DO NOT create public issues)
+  - name: 🎓 Educational Partnership
+    url: mailto:education@busybob.app?subject=Educational%20Partnership%20Inquiry
+    about: Inquiries from schools, districts, or educational organizations
+  - name: 📧 General Support
+    url: mailto:support@busybob.app?subject=BusyBob%20Support%20Request
+    about: General questions, account issues, or technical support
+  - name: 💬 Community Discussions
+    url: https://github.com/JaytirthJOSHI/BusyBob/discussions
+    about: Join community discussions about features, ideas, and best practices
+  - name: 📚 Documentation
+    url: https://github.com/JaytirthJOSHI/BusyBob/wiki
+    about: Check our documentation and user guides first 

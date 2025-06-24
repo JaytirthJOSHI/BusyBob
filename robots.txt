@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Block access to private/sensitive areas
+Disallow: /api/
+Disallow: /src/
+Disallow: /debug.html
+Disallow: /test-*.html
+Disallow: /*.json
+Disallow: /server.js
+Disallow: /vite.config.js
+
+# Allow specific important files
+Allow: /manifest.json
+Allow: /favicon.svg
+Allow: /icon-*.svg
+Allow: /og-image.png
+
+# Sitemap location
+Sitemap: https://busybob.site/sitemap.xml
+
+# Crawl delay (optional - be friendly to crawlers)
+Crawl-delay: 1

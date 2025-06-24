@@ -37,7 +37,10 @@ export class PrivacyPolicy {
               </svg>
             </button>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Privacy Policy</h1>
-            <p class="text-sm text-blue-600 dark:text-blue-400 font-medium">✅ Direct URL access working</p>
+            <div class="flex items-center gap-2">
+              <p class="text-sm text-blue-600 dark:text-blue-400 font-medium">✅ Direct URL access working</p>
+              <a href="/privacy-policy.html" target="_blank" class="text-sm text-purple-600 hover:text-purple-800 underline">View Full Policy</a>
+            </div>
           </div>
           
           <div class="prose prose-gray dark:prose-invert max-w-none">

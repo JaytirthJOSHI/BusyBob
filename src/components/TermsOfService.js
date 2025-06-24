@@ -37,6 +37,9 @@ export class TermsOfService {
               </svg>
             </button>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Terms of Service</h1>
+            <div class="mt-2">
+              <a href="/terms-of-service.html" target="_blank" class="text-sm text-purple-600 hover:text-purple-800 underline">View Full Terms</a>
+            </div>
           </div>
           
           <div class="prose prose-gray dark:prose-invert max-w-none">

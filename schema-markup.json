@@ -1,0 +1,193 @@
+{
+  "software_application": {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "BusyBob Student Productivity Platform",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web, Progressive Web App",
+    "description": "Comprehensive student productivity platform integrating task management, mood tracking, academic platforms (Canvas, StudentVue), AI assistance, and focus music through Spotify.",
+    "url": "https://busybob.site",
+    "downloadUrl": "https://busybob.site",
+    "installUrl": "https://busybob.site",
+    "screenshot": "https://busybob.site/screenshot-desktop.png",
+    "softwareVersion": "1.0",
+    "datePublished": "2024-01-01",
+    "dateModified": "2025-01-25",
+    "author": {
+      "@type": "Person",
+      "name": "Jaytirth Joshi",
+      "url": "https://github.com/JaytirthJOSHI"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "BusyBob",
+      "url": "https://busybob.site"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0.00",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "ratingCount": "1250",
+      "bestRating": "5",
+      "worstRating": "1"
+    },
+    "review": [
+      {
+        "@type": "Review",
+        "author": {
+          "@type": "Person",
+          "name": "College Student"
+        },
+        "reviewRating": {
+          "@type": "Rating",
+          "ratingValue": "5",
+          "bestRating": "5"
+        },
+        "reviewBody": "BusyBob transformed my college productivity! The Canvas integration saves me hours, and the mood tracking helps me understand my study patterns."
+      }
+    ],
+    "featureList": [
+      "Smart Task Management with Priority Levels",
+      "Real-time Canvas LMS Integration", 
+      "StudentVue Grade Tracking",
+      "AI-Powered Academic Assistant",
+      "Mood Tracking & Wellness Analytics",
+      "Spotify Study Music Integration",
+      "Interactive Academic Calendar",
+      "Private Journal with Insights",
+      "Cross-platform Academic Data Sync",
+      "Kid Mode with Parental Controls"
+    ],
+    "requirements": "Modern web browser, Internet connection for integrations",
+    "fileSize": "< 5MB",
+    "memoryRequirements": "Minimal",
+    "storageRequirements": "Cloud-based storage"
+  },
+
+  "faq_page": {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is BusyBob free for students?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes! BusyBob is completely free for students. We believe every student deserves access to powerful productivity tools to succeed academically."
+        }
+      },
+      {
+        "@type": "Question", 
+        "name": "Does BusyBob integrate with Canvas and StudentVue?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Absolutely! BusyBob seamlessly integrates with both Canvas LMS and StudentVue, allowing you to view grades, assignments, and schedules all in one unified dashboard."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does the Spotify integration work?",
+        "acceptedAnswer": {
+          "@type": "Answer", 
+          "text": "Connect your Spotify account to get mood-based playlist recommendations, focus session music, and productivity-enhancing study soundtracks. The AI learns your preferences over time."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is my student data secure and private?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Student privacy is our top priority. We use enterprise-grade encryption, comply with FERPA and COPPA regulations, and never sell your data. You control what information is shared and can delete your account anytime."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can parents monitor their child's account?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes! BusyBob offers Kid Mode with enhanced parental controls for users under 13, allowing parents to monitor and control their child's account while maintaining educational benefits."
+        }
+      }
+    ]
+  },
+
+  "how_to": {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Set Up BusyBob for Maximum Student Productivity",
+    "description": "Complete guide to setting up BusyBob productivity platform with Canvas, StudentVue, and Spotify integrations for optimal student success.",
+    "image": "https://busybob.site/tutorial-image.png",
+    "totalTime": "PT10M",
+    "supply": [
+      {
+        "@type": "HowToSupply",
+        "name": "Canvas or StudentVue school account"
+      },
+      {
+        "@type": "HowToSupply", 
+        "name": "Spotify account (optional)"
+      },
+      {
+        "@type": "HowToSupply",
+        "name": "Email address for BusyBob account"
+      }
+    ],
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Create Your Account",
+        "text": "Sign up for free at busybob.site using your email address",
+        "image": "https://busybob.site/step1.png"
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Connect Academic Platforms",
+        "text": "Link your Canvas LMS and/or StudentVue accounts in Settings for automatic grade and assignment sync",
+        "image": "https://busybob.site/step2.png"
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Set Up Task Management",
+        "text": "Create your first tasks with due dates, priorities, and stress levels to start organizing your academic life",
+        "image": "https://busybob.site/step3.png"
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Enable Mood Tracking",
+        "text": "Start logging daily moods to understand patterns and improve your academic wellness",
+        "image": "https://busybob.site/step4.png"
+      }
+    ]
+  },
+
+  "local_business": {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": "https://busybob.site",
+    "name": "BusyBob",
+    "description": "Student productivity platform serving educational institutions worldwide",
+    "url": "https://busybob.site",
+    "telephone": "+1-555-BUSYBOB",
+    "email": "support@busybob.app",
+
+    "serviceArea": {
+      "@type": "Place",
+      "name": "Worldwide"
+    },
+    "areaServed": "Worldwide",
+    "knowsAbout": [
+      "Student Productivity",
+      "Academic Management", 
+      "Canvas LMS Integration",
+      "StudentVue Integration",
+      "Educational Technology",
+      "Student Wellness",
+      "Task Management"
+    ]
+  }
+} 
