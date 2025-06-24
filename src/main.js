@@ -825,9 +825,9 @@ function showMainApp() {
         aiAgent = new AIAgent()
     }
     
-    // Initialize offline status indicator
-    offlineStatus.init()
-    console.log('📱 Offline status indicator initialized')
+    // Initialize offline status indicator in compact mode to avoid UI conflicts
+    offlineStatus.init('compact')
+    console.log('📱 Offline status indicator initialized in compact mode')
     
     // Load data and show home page
     loadAllData()

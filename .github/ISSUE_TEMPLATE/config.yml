@@ -9,9 +9,9 @@ contact_links:
   - name: 📧 General Support
     url: mailto:support@busybob.app?subject=BusyBob%20Support%20Request
     about: General questions, account issues, or technical support
-  - name: 💬 Community Discussions
-    url: https://github.com/JaytirthJOSHI/BusyBob/discussions
-    about: Join community discussions about features, ideas, and best practices
+  - name: 💬 Community Questions
+    url: https://github.com/JaytirthJOSHI/BusyBob/issues?q=is%3Aissue+label%3Aquestion
+    about: Browse existing questions or ask new ones using the question label
   - name: 📚 Documentation
-    url: https://github.com/JaytirthJOSHI/BusyBob/wiki
-    about: Check our documentation and user guides first 
+    url: https://github.com/JaytirthJOSHI/BusyBob#readme
+    about: Check our README and documentation first 

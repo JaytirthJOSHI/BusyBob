@@ -5,38 +5,113 @@ export class OfflineStatus {
         this.isOnline = navigator.onLine
         this.statusElement = null
         this.syncQueueCount = 0
+        this.isMinimized = false
+        this.position = 'bottom-left' // Options: 'bottom-left', 'top-left', 'top-right', 'bottom-right', 'compact'
     }
 
-    init() {
+    init(position = 'compact') {
+        this.position = position
         this.render()
         this.setupEventListeners()
         this.startStatusUpdates()
     }
 
+    getPositionClasses() {
+        switch (this.position) {
+            case 'top-left':
+                return 'fixed top-4 left-4 z-50'
+            case 'top-right':
+                return 'fixed top-4 right-4 z-50'
+            case 'bottom-right':
+                return 'fixed bottom-4 right-20 z-50' // Leave space for AI toggle
+            case 'compact':
+                return 'fixed top-4 right-4 z-50' // Compact in top-right
+            case 'bottom-left':
+            default:
+                return 'fixed bottom-20 left-4 z-50' // Moved up to avoid navigation
+        }
+    }
+
+    getCompactStyle() {
+        if (this.position === 'compact') {
+            return `
+                /* Compact mode styles */
+                #offline-status.compact {
+                    transition: all 0.3s ease;
+                }
+                
+                #offline-status.compact .status-content {
+                    min-width: auto;
+                    padding: 0.5rem;
+                }
+                
+                #offline-status.compact.minimized .status-details {
+                    display: none;
+                }
+                
+                #offline-status.compact.minimized {
+                    cursor: pointer;
+                }
+                
+                #offline-status.compact:not(.minimized) .connection-indicator-only {
+                    display: none;
+                }
+                
+                #offline-status.compact.minimized .connection-indicator-only {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 2rem;
+                    height: 2rem;
+                }
+            `
+        }
+        return ''
+    }
+
     setupEventListeners() {
         window.addEventListener('online', () => {
             this.isOnline = true
-            this.updateStatus()
+            this.updateStatus().catch(console.error)
             this.showTemporaryMessage('🌐 Back online - syncing data...', 3000)
         })
 
         window.addEventListener('offline', () => {
             this.isOnline = false
-            this.updateStatus()
+            this.updateStatus().catch(console.error)
             this.showTemporaryMessage('📱 You\'re offline - changes will sync when reconnected', 5000)
         }) 
     }
 
     render() {
         // Create status indicator
+        const positionClasses = this.getPositionClasses()
+        const compactClass = this.position === 'compact' ? 'compact' : ''
+        const minimizedClass = this.isMinimized ? 'minimized' : ''
+        
         const statusHtml = `
-            <div id="offline-status" class="fixed bottom-4 left-4 z-50 transition-all duration-300">
-                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 min-w-[200px]">
-                    <div class="flex items-center space-x-2">
-                        <div id="connection-indicator" class="w-3 h-3 rounded-full"></div>
-                        <div>
-                            <div id="connection-status" class="text-sm font-medium"></div>
-                            <div id="sync-status" class="text-xs text-gray-500 dark:text-gray-400"></div>
+            <div id="offline-status" class="${positionClasses} ${compactClass} ${minimizedClass} transition-all duration-300">
+                <div class="status-content bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 min-w-[200px]">
+                    <!-- Compact indicator (shown when minimized) -->
+                    <div class="connection-indicator-only">
+                        <div id="connection-indicator-compact" class="w-3 h-3 rounded-full"></div>
+                    </div>
+                    
+                    <!-- Full status details -->
+                    <div class="status-details">
+                        <div class="flex items-center space-x-2">
+                            <div id="connection-indicator" class="w-3 h-3 rounded-full"></div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <div id="connection-status" class="text-sm font-medium"></div>
+                                    ${this.position === 'compact' ? `
+                                        <button id="minimize-status" class="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ml-2">
+                                            −
+                                        </button>
+                                    ` : ''}
+                                </div>
+                                <div id="sync-status" class="text-xs text-gray-500 dark:text-gray-400"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -78,6 +153,31 @@ export class OfflineStatus {
                     opacity: 1 !important;
                     transform: translateY(0) !important;
                 }
+                
+                ${this.getCompactStyle()}
+                
+                /* Responsive adjustments */
+                @media (max-width: 768px) {
+                    #offline-status {
+                        position: fixed !important;
+                        top: 1rem !important;
+                        left: 1rem !important;
+                        right: 1rem !important;
+                        bottom: auto !important;
+                        width: auto !important;
+                    }
+                    
+                    #offline-status .status-content {
+                        min-width: auto;
+                        width: 100%;
+                    }
+                    
+                    #offline-status.compact.minimized {
+                        width: 3rem;
+                        right: 1rem;
+                        left: auto;
+                    }
+                }
             </style>
         `
 
@@ -87,42 +187,146 @@ export class OfflineStatus {
         }
 
         this.statusElement = document.getElementById('offline-status')
-        this.updateStatus()
+        this.setupCompactHandlers()
+        this.updateStatus().catch(console.error)
     }
 
-    updateStatus() {
+    setupCompactHandlers() {
+        if (this.position === 'compact') {
+            const minimizeBtn = document.getElementById('minimize-status')
+            const statusElement = this.statusElement
+            
+            if (minimizeBtn) {
+                minimizeBtn.addEventListener('click', () => {
+                    this.toggleMinimized()
+                })
+            }
+            
+            if (statusElement) {
+                statusElement.addEventListener('click', (e) => {
+                    if (this.isMinimized && !e.target.closest('button')) {
+                        this.toggleMinimized()
+                    }
+                })
+            }
+        }
+    }
+
+    toggleMinimized() {
+        this.isMinimized = !this.isMinimized
+        if (this.statusElement) {
+            this.statusElement.classList.toggle('minimized', this.isMinimized)
+            
+            const minimizeBtn = document.getElementById('minimize-status')
+            if (minimizeBtn) {
+                minimizeBtn.textContent = this.isMinimized ? '+' : '−'
+                minimizeBtn.title = this.isMinimized ? 'Expand status' : 'Minimize status'
+            }
+        }
+    }
+
+    // Method to change position dynamically
+    changePosition(newPosition) {
+        if (this.statusElement) {
+            // Remove old position classes
+            const oldClasses = this.getPositionClasses().split(' ')
+            this.statusElement.classList.remove(...oldClasses)
+            
+            // Update position and apply new classes
+            this.position = newPosition
+            const newClasses = this.getPositionClasses().split(' ')
+            this.statusElement.classList.add(...newClasses)
+            
+            // Update compact mode
+            if (newPosition === 'compact') {
+                this.statusElement.classList.add('compact')
+                this.setupCompactHandlers()
+            } else {
+                this.statusElement.classList.remove('compact', 'minimized')
+                this.isMinimized = false
+            }
+            
+            console.log(`📱 Offline status moved to: ${newPosition}`)
+        }
+    }
+
+    // Convenience methods for common positions
+    moveToTopRight() {
+        this.changePosition('top-right')
+    }
+
+    moveToTopLeft() {
+        this.changePosition('top-left')
+    }
+
+    moveToBottomLeft() {
+        this.changePosition('bottom-left')
+    }
+
+    moveToBottomRight() {
+        this.changePosition('bottom-right')
+    }
+
+    enableCompactMode() {
+        this.changePosition('compact')
+    }
+
+    async updateStatus() {
         if (!this.statusElement) return
 
         const indicator = document.getElementById('connection-indicator')
+        const indicatorCompact = document.getElementById('connection-indicator-compact')
         const statusText = document.getElementById('connection-status')
         const syncText = document.getElementById('sync-status')
 
         if (!indicator || !statusText || !syncText) return
 
-        const dbStatus = db.getStatus()
+        const dbStatus = await db.getStatus()
         this.syncQueueCount = dbStatus.offlineStatus?.syncQueueLength || 0
 
-        // Update connection indicator
-        indicator.className = 'w-3 h-3 rounded-full'
+        // Update connection indicators
+        const indicatorClass = 'w-3 h-3 rounded-full'
+        indicator.className = indicatorClass
+        if (indicatorCompact) {
+            indicatorCompact.className = indicatorClass
+        }
+        
+        let statusClass = ''
+        let statusTextContent = ''
+        let syncTextContent = ''
         
         if (this.isOnline) {
             if (this.syncQueueCount > 0) {
-                indicator.classList.add('status-syncing')
-                statusText.textContent = 'Syncing...'
-                syncText.textContent = `${this.syncQueueCount} items pending`
+                statusClass = 'status-syncing'
+                statusTextContent = 'Syncing...'
+                syncTextContent = `${this.syncQueueCount} items pending`
             } else {
-                indicator.classList.add('status-online')
-                statusText.textContent = 'Online'
-                syncText.textContent = 'All data synced'
+                statusClass = 'status-online'
+                statusTextContent = 'Online'
+                syncTextContent = 'All data synced'
             }
         } else {
-            indicator.classList.add('status-offline')
-            statusText.textContent = 'Offline'
+            statusClass = 'status-offline'
+            statusTextContent = 'Offline'
             if (this.syncQueueCount > 0) {
-                syncText.textContent = `${this.syncQueueCount} changes to sync`
+                syncTextContent = `${this.syncQueueCount} changes to sync`
             } else {
-                syncText.textContent = 'Changes will sync when online'
+                syncTextContent = 'Changes will sync when online'
             }
+        }
+        
+        // Apply status class to both indicators
+        indicator.classList.add(statusClass)
+        if (indicatorCompact) {
+            indicatorCompact.classList.add(statusClass)
+        }
+        
+        statusText.textContent = statusTextContent
+        syncText.textContent = syncTextContent
+        
+        // Update title for compact mode
+        if (this.position === 'compact' && this.statusElement) {
+            this.statusElement.title = `${statusTextContent} - ${syncTextContent}`
         }
     }
 
@@ -141,7 +345,7 @@ export class OfflineStatus {
     startStatusUpdates() {
         // Update status every 5 seconds
         setInterval(() => {
-            this.updateStatus()
+            this.updateStatus().catch(console.error)
         }, 5000)
     }
 
@@ -170,7 +374,7 @@ export class OfflineStatus {
             this.showTemporaryMessage('🔄 Syncing now...', 2000)
             try {
                 await db.syncOfflineData()
-                this.updateStatus()
+                await this.updateStatus()
                 this.showTemporaryMessage('✅ Sync complete!', 2000)
             } catch (error) {
                 console.error('Manual sync failed:', error)
