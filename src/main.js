@@ -258,17 +258,17 @@ async function initializeApp() {
             console.log(`📄 Direct access to ${page} detected`)
 
             // Initialize components needed for legal pages
-                    console.log('📦 Creating components...')
-        authPages = new AuthPages()
-        navigation = new Navigation()
-        landingPage = new LandingPage()
-        academicHub = new AcademicHub()
-        calendar = new Calendar('calendar-container', onDateSelect)
-        music = new Music()
-        aiNotes = new AINotes()
-        settings = new Settings(calendar)
-        privacyPolicy = new PrivacyPolicy()
-        termsOfService = new TermsOfService()
+            console.log('📦 Creating components...')
+            authPages = new AuthPages()
+            navigation = new Navigation()
+            landingPage = new LandingPage()
+            academicHub = new AcademicHub()
+            calendar = new Calendar('calendar-container', onDateSelect)
+            music = new Music()
+            aiNotes = new AINotes()
+            settings = new Settings(calendar)
+            privacyPolicy = new PrivacyPolicy()
+            termsOfService = new TermsOfService()
 
             // Initialize theme
             console.log('🎨 Initializing theme...')
@@ -372,6 +372,14 @@ async function initializeApp() {
                 console.log('💾 Initializing offline database for existing user...')
                 await db.ensureUser()
                 console.log('✅ Offline database initialized for existing user')
+                
+                // Test database connection
+                const dbTest = await db.testDatabaseConnection()
+                if (dbTest) {
+                    console.log('✅ Database connection test passed')
+                } else {
+                    console.warn('⚠️ Database connection test failed')
+                }
             } catch (dbError) {
                 console.error('❌ Error initializing offline database for existing user:', dbError)
             }
@@ -411,6 +419,14 @@ async function initializeApp() {
                     console.log('💾 Initializing offline database for new sign-in...')
                     await db.ensureUser()
                     console.log('✅ Offline database initialized for new sign-in')
+                    
+                    // Test database connection
+                    const dbTest = await db.testDatabaseConnection()
+                    if (dbTest) {
+                        console.log('✅ Database connection test passed')
+                    } else {
+                        console.warn('⚠️ Database connection test failed')
+                    }
                 } catch (dbError) {
                     console.error('❌ Error initializing offline database for new sign-in:', dbError)
                 }
@@ -453,8 +469,6 @@ async function initializeApp() {
 
         // Set up form listeners
         setupFormListeners()
-
-        // Set up navigation listeners
         setupNavigationListeners()
 
         // Initialize calendar
@@ -473,9 +487,12 @@ async function initializeApp() {
             const demoEmail = 'demo@busybob.com'
             const demoPassword = 'busybobdemo'
             try {
+                console.log('🎮 Starting demo login...')
+                
                 // Try to sign in
                 const { data, error } = await auth.signIn(demoEmail, demoPassword)
                 if (error && error.message.includes('Invalid login credentials')) {
+                    console.log('📝 Demo user not found, creating...')
                     // If user doesn't exist, sign up
                     const { error: signupError } = await auth.signUp(demoEmail, demoPassword, 'Demo User')
                     if (signupError) throw signupError
@@ -485,14 +502,21 @@ async function initializeApp() {
                     throw error
                 }
 
-                // Get the session for demo user
-                const { data: { session } } = await auth.getSession()
+                console.log('✅ Demo login successful')
 
                 // Initialize offline database for demo user
                 try {
                     console.log('💾 Initializing offline database for demo user...')
                     await db.ensureUser()
                     console.log('✅ Offline database initialized for demo user')
+                    
+                    // Test database connection
+                    const dbTest = await db.testDatabaseConnection()
+                    if (dbTest) {
+                        console.log('✅ Database connection test passed')
+                    } else {
+                        console.warn('⚠️ Database connection test failed')
+                    }
                 } catch (dbError) {
                     console.error('❌ Error initializing offline database for demo user:', dbError)
                 }
@@ -515,7 +539,7 @@ async function initializeApp() {
                 }, 1000)
 
             } catch (err) {
-                console.error('Demo login error:', err)
+                console.error('❌ Demo login error:', err)
                 ui.showMessage('Demo login failed: ' + err.message, 'error')
             }
         })
@@ -570,26 +594,14 @@ async function initializeApp() {
             }
         }
 
+        // Add global database testing functions
+        window.testDatabaseConnection = db.testDatabaseConnection
+        window.testAllDatabaseOperations = db.testAllOperations
+        window.getDatabaseStatus = db.getStatus
+
     } catch (error) {
         console.error('❌ Error during app initialization:', error)
-        // Show error message to user
-        document.body.innerHTML = `
-            <div class="min-h-screen bg-red-50 flex items-center justify-center p-4">
-                <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-                    <div class="text-red-600 text-center mb-4">
-                        <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                        </svg>
-                        <h2 class="text-xl font-bold text-gray-900">Oops! Something went wrong</h2>
-                        <p class="text-gray-600 mt-2">There was an error loading the app. Please refresh the page and try again.</p>
-                        <p class="text-sm text-gray-500 mt-4">Error: ${error.message}</p>
-                        <button onclick="window.location.reload()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                            Refresh Page
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `
+        ui.showMessage('Failed to initialize app. Please refresh the page.', 'error')
     }
 }
 
@@ -663,22 +675,14 @@ async function handleLogin(event) {
     const password = document.getElementById('login-password').value
 
     try {
+        console.log('🔐 Attempting login...')
         const { data, error } = await auth.signIn(email, password)
         if (error) throw error
 
-        // Refresh offline storage session after successful login
-        if (window.offlineStorage && data.session) {
-            try {
-                await window.offlineStorage.refreshSessionFromApp(data.session.access_token)
-                console.log('🔄 Offline storage session refreshed after login')
-            } catch (refreshError) {
-                console.warn('Failed to refresh offline storage session after login:', refreshError)
-            }
-        }
-
+        console.log('✅ Login successful')
         showSignInSuccess()
     } catch (error) {
-        console.error('Login error:', error)
+        console.error('❌ Login error:', error)
         ui.showMessage('Login failed: ' + error.message, 'error')
     }
 }
@@ -740,12 +744,14 @@ async function handleSignup(event) {
     const name = document.getElementById('signup-name').value
 
     try {
+        console.log('📝 Attempting signup...')
         const { data, error } = await auth.signUp(email, password, name)
         if (error) throw error
 
+        console.log('✅ Signup successful')
         showSignInSuccess()
     } catch (error) {
-        console.error('Signup error:', error)
+        console.error('❌ Signup error:', error)
         ui.showMessage('Signup failed: ' + error.message, 'error')
     }
 }
@@ -930,46 +936,54 @@ function showAuthPages(page = 'login') {
 }
 
 async function showMainApp() {
-    document.getElementById('auth-container').classList.add('hidden')
-    document.getElementById('main-app').classList.remove('hidden')
-
-    // Update user info
-    if (currentUser) {
-        const userName = currentUser.user_metadata?.name || currentUser.email
-        document.getElementById('user-name').textContent = userName
-        document.getElementById('welcome-name').textContent = userName.split(' ')[0]
-    }
-
-    // 🔒 SECURITY: Ensure secure user initialization
     try {
-        await db.ensureUser()
-        console.log('✅ User database initialized securely')
+        console.log('🏠 Showing main app...')
+        
+        // Hide auth container and show main app
+        const authContainer = document.getElementById('auth-container')
+        const mainApp = document.getElementById('main-app')
+        
+        if (authContainer) {
+            authContainer.classList.add('hidden')
+        }
+        
+        if (mainApp) {
+            mainApp.classList.remove('hidden')
+        }
+        
+        // Update user info
+        if (currentUser) {
+            const userName = currentUser.user_metadata?.name || currentUser.email
+            const userNameElement = document.getElementById('user-name')
+            const welcomeNameElement = document.getElementById('welcome-name')
+            
+            if (userNameElement) {
+                userNameElement.textContent = userName
+            }
+            
+            if (welcomeNameElement) {
+                welcomeNameElement.textContent = userName.split(' ')[0]
+            }
+        }
+
+        // Initialize calendar if not already done
+        if (!calendar) {
+            console.log('📅 Initializing calendar...')
+            calendar = new Calendar('calendar-container', onDateSelect)
+        }
+
+        // Load all data
+        console.log('📊 Loading all application data...')
+        await loadAllData()
+
+        // Show home page by default
+        showPage('home')
+
+        console.log('✅ Main app displayed successfully')
     } catch (error) {
-        console.error('❌ Failed to initialize user securely:', error)
-        ui.showMessage('Security initialization failed. Please sign out and back in.', 'error')
-        return
+        console.error('❌ Error showing main app:', error)
+        ui.showMessage('Failed to load main app', 'error')
     }
-
-    // Initialize Enhanced AI agent only when showing main app
-    if (!aiAgent) {
-        console.log('🚀 Initializing Enhanced AI Agent system for authenticated user...')
-        aiAgent = new EnhancedAIAgent()
-        window.enhancedAI = aiAgent // Make globally available for debugging/extensions
-    }
-
-    // Initialize Agentic AI system
-    if (!agenticAI) {
-        console.log('🤖 Initializing Agentic AI system for authenticated user...')
-        agenticAI = new BusyBobAgenticAI()
-        window.agenticAI = agenticAI // Make globally available for debugging/extensions
-    }
-
-    // Offline status indicator will be shown only in Settings page
-    console.log('📱 Offline status available in Settings')
-
-    // Load data and show home page
-    await loadAllData()
-    showPage('home')
 }
 
 function showPage(pageName) {
@@ -1059,31 +1073,29 @@ function showPage(pageName) {
 // Data loading functions
 async function loadAllData() {
     try {
-        console.log('🔄 Starting to load all data...')
-
-        await moodManager.init()
-
-        const results = await Promise.allSettled([
-            loadTasks(),
-            loadJournalData()
-        ])
-
-        // Check for any failures
-        const failures = results.filter(result => result.status === 'rejected')
-        if (failures.length > 0) {
-            console.error('Some data loading failed:', failures)
-            failures.forEach(failure => {
-                console.error('Data loading error:', failure.reason)
-            })
-        }
-
-        console.log('✅ Data loading completed')
+        console.log('📊 Loading all application data...')
+        
+        // Load tasks
+        console.log('📋 Loading tasks...')
+        await loadTasks()
+        
+        // Load journal data
+        console.log('📔 Loading journal data...')
+        await loadJournalData()
+        
+        // Load mood data
+        console.log('😊 Loading mood data...')
+        await moodManager.load()
+        
+        // Load home data and charts
+        console.log('🏠 Loading home data...')
         loadHomeData()
         loadCharts()
-
+        
+        console.log('✅ All data loaded successfully')
     } catch (error) {
-        console.error('❌ Error in loadAllData:', error)
-        ui.showMessage('Error loading data. Please refresh the page.', 'error')
+        console.error('❌ Error loading all data:', error)
+        ui.showMessage('Failed to load some data. Please refresh the page.', 'error')
     }
 }
 
@@ -1202,19 +1214,26 @@ function loadUpcomingTasks() {
 
 async function loadTasks() {
     try {
+        console.log('📋 Loading tasks from database...')
         const { data, error } = await db.getTasks()
-        if (error) throw error
-
+        
+        if (error) {
+            console.error('❌ Error loading tasks:', error)
+            ui.showMessage('Failed to load tasks', 'error')
+            return
+        }
+        
         tasks = data || []
+        console.log(`✅ Loaded ${tasks.length} tasks`)
         renderTasks()
-
+        
         // Update calendar with tasks
         if (calendar) {
             calendar.setTasks(tasks)
         }
     } catch (error) {
-        console.error('Error loading tasks:', error)
-        ui.showMessage('Error loading tasks', 'error')
+        console.error('❌ Error in loadTasks:', error)
+        ui.showMessage('Failed to load tasks', 'error')
     }
 }
 
@@ -1309,17 +1328,25 @@ function createCalendarTaskHTML(task) {
 
 async function loadJournalData() {
     try {
+        console.log('📔 Loading journal data from database...')
         const { data, error } = await db.getJournalEntries()
-        if (error) throw error
+        
+        if (error) {
+            console.error('❌ Error loading journal data:', error)
+            ui.showMessage('Failed to load journal entries', 'error')
+            return
+        }
+        
         journalEntries = data || []
-
-        renderPastJournalEntries()
+        console.log(`✅ Loaded ${journalEntries.length} journal entries`)
+        
         renderTodaysReflection()
+        renderPastJournalEntries()
         calculateAndRenderStreak()
         setupJournalListeners()
     } catch (error) {
-        console.error('Error loading journal entries:', error)
-        ui.showMessage('Error loading journal entries', 'error')
+        console.error('❌ Error in loadJournalData:', error)
+        ui.showMessage('Failed to load journal entries', 'error')
     }
 }
 
@@ -1957,7 +1984,7 @@ window.openTool = function(toolId) {
     }
 }
 
-// Cleanup function for development widgets
+// Cleanup function for development widgets.
 window.cleanupDevelopmentWidgets = function() {
     if (window.developmentMetricsInterval) {
         clearInterval(window.developmentMetricsInterval)

@@ -452,7 +452,6 @@ export class Settings {
         this.loadUserEmail();
         this.loadTimezones();
         this.updateGradesToggleVisual();
-        this.loadOfflineStorageStatus();
         this.loadInterfaceSettings();
     }
 
