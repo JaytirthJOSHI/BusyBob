@@ -17,6 +17,10 @@ import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils
 import { kidMode } from './utils/kid-mode.js'
 import { offlineStatus } from './components/OfflineStatus.js'
 import { MultiAgentSystem, MultiAgentWidgets } from './components/MultiAgentSystem.js'
+// Import agentic AI system
+import './agentic-ai/agents.js'
+import './agentic-ai/agentic-ai.js'
+import './styles/agentic-ai.css'
 
 console.log('🚀 Main.js loaded - starting initialization...')
 
@@ -331,6 +335,13 @@ async function initializeApp() {
             console.log('✅ Enhanced AI Agent initialized')
         } catch (aiError) {
             console.error('❌ Error initializing AI Agent:', aiError)
+        }
+
+        // Initialize Agentic AI system
+        if (!agenticAI) {
+            console.log('🤖 Initializing Agentic AI system for authenticated user...')
+            agenticAI = new BusyBobAgenticAI()
+            window.agenticAI = agenticAI // Make globally available for debugging/extensions
         }
 
         // Expose database globally for debugging
@@ -1070,6 +1081,13 @@ async function showMainApp() {
         window.enhancedAI = aiAgent // Make globally available for debugging/extensions
     }
 
+    // Initialize Agentic AI system
+    if (!agenticAI) {
+        console.log('🤖 Initializing Agentic AI system for authenticated user...')
+        agenticAI = new BusyBobAgenticAI()
+        window.agenticAI = agenticAI // Make globally available for debugging/extensions
+    }
+
     // Offline status indicator will be shown only in Settings page
     console.log('📱 Offline status available in Settings')
 
@@ -1134,6 +1152,14 @@ function showPage(pageName) {
         case 'ai-notes':
             if (aiNotes) {
                 aiNotes.init()
+            }
+            break
+        case 'agentic-ai':
+            if (agenticAI) {
+                // Initialize the agentic AI component if not already done
+                if (!window.agenticAIComponent) {
+                    window.agenticAIComponent = new AgenticAIComponent('agenticAI')
+                }
             }
             break
         case 'settings':
