@@ -212,80 +212,166 @@
             <!-- Home Page -->
             <div id="home-page" class="page-content page-transition">
                 <div class="container mx-auto px-4 py-4 sm:py-6">
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-                        <!-- Welcome Section -->
-                        <div class="lg:col-span-3 mb-8">
-                            <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg p-6 sm:p-8 text-white card-hover">
-                                <h2 class="text-2xl sm:text-3xl font-bold mb-2">Welcome back, <span id="welcome-name"></span>!</h2>
-                                <p class="text-blue-100 mb-4 text-sm sm:text-base" id="current-date"></p>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6">
-                                    <div class="bg-white/20 rounded-lg p-3 sm:p-4 backdrop-blur-sm">
-                                        <div class="text-xl sm:text-2xl font-bold" id="tasks-count">0</div>
-                                        <div class="text-xs sm:text-sm text-blue-100">Pending Tasks</div>
+                    <!-- iOS-style Header -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Good <span id="greeting-time">morning</span>, <span id="welcome-name">User</span></h1>
+                                <p class="text-gray-500 dark:text-gray-400 text-sm sm:text-base" id="current-date">Today</p>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- iOS-style Widget Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        
+                        <!-- Quick Stats Widget -->
+                        <div class="md:col-span-2 lg:col-span-1">
+                            <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6 card-hover">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Today's Overview</h3>
+                                    <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                        </svg>
                                     </div>
-                                    <div class="bg-white/20 rounded-lg p-3 sm:p-4 backdrop-blur-sm">
-                                        <div class="text-xl sm:text-2xl font-bold" id="mood-average">-</div>
-                                        <div class="text-xs sm:text-sm text-blue-100">Average Mood</div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-gray-900 dark:text-white" id="tasks-count">0</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Tasks</div>
                                     </div>
-                                    <div class="bg-white/20 rounded-lg p-3 sm:p-4 backdrop-blur-sm">
-                                        <div class="text-xl sm:text-2xl font-bold" id="streak-count">0</div>
-                                        <div class="text-xs sm:text-sm text-blue-100">Day Streak</div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-gray-900 dark:text-white" id="mood-average">-</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Mood</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-gray-900 dark:text-white" id="streak-count">0</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Streak</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Quick Actions -->
-                        <div class="lg:col-span-1">
-                            <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-white/20 card-hover">
-                                <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">Quick Actions</h3>
-                                <div class="space-y-2 sm:space-y-3">
-                                    <button data-page="tasks" class="quick-action-btn w-full p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors text-left">
-                                        <div class="font-medium text-sm sm:text-base">Add New Task</div>
-                                        <div class="text-xs opacity-75">Create a new task with deadline</div>
-                                    </button>
-                                    <button data-page="journal" class="quick-action-btn w-full p-3 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors text-left">
-                                        <div class="font-medium text-sm sm:text-base">Write Journal</div>
-                                        <div class="text-xs opacity-75">Reflect on your day</div>
-                                    </button>
+                        <!-- Mood Widget -->
+                        <div class="md:col-span-2 lg:col-span-1">
+                            <div class="bg-gradient-to-br from-pink-500 to-rose-600 rounded-3xl shadow-xl p-6 text-white card-hover">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold">How are you feeling?</h3>
+                                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-white/20 card-hover">
-                                <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">How are you feeling?</h3>
-                                <div id="mood-logging-section">
+                                <div id="mood-logging-section" class="space-y-3">
                                     <!-- Mood logging UI will be injected here -->
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Analytics Section -->
-                        <div class="lg:col-span-2 space-y-4 sm:space-y-6">
-                            <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-white/20 card-hover">
-                                <h3 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 sm:mb-4">Mood Trend</h3>
-                                <div class="h-40 sm:h-48">
+                        <!-- Quick Actions Widget -->
+                        <div class="md:col-span-2 lg:col-span-1">
+                            <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6 card-hover">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
+                                    <div class="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <button data-page="tasks" class="quick-action-btn w-full p-4 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-2xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all duration-200 text-left group">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold text-sm">Add New Task</div>
+                                                <div class="text-xs opacity-75">Create a new task</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button data-page="journal" class="quick-action-btn w-full p-4 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-2xl hover:bg-green-100 dark:hover:bg-green-900/50 transition-all duration-200 text-left group">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold text-sm">Write Journal</div>
+                                                <div class="text-xs opacity-75">Reflect on your day</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upcoming Tasks Widget -->
+                        <div class="md:col-span-2 lg:col-span-2">
+                            <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6 card-hover">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Upcoming Tasks</h3>
+                                    <div class="w-8 h-8 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div id="upcoming-tasks" class="space-y-3">
+                                    <!-- Upcoming tasks will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mood Trend Widget -->
+                        <div class="md:col-span-2 lg:col-span-2">
+                            <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6 card-hover">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Mood Trend</h3>
+                                    <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="h-48">
                                     <canvas id="moodChart"></canvas>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                                <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-white/20 card-hover">
-                                    <h3 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 sm:mb-4">Task Completion</h3>
-                                    <div class="h-32 sm:h-40">
-                                        <canvas id="taskChart"></canvas>
+                        <!-- Task Completion Widget -->
+                        <div class="md:col-span-2 lg:col-span-1">
+                            <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-6 card-hover">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Task Completion</h3>
+                                    <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
                                     </div>
                                 </div>
-
-                                <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-white/20 card-hover">
-                                    <h3 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3 sm:mb-4">Upcoming Tasks</h3>
-                                    <div id="upcoming-tasks" class="space-y-2">
-                                        <!-- Upcoming tasks will be loaded here -->
-                                    </div>
+                                <div class="h-40">
+                                    <canvas id="taskChart"></canvas>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Development Features Section -->
-                        <div class="lg:col-span-3" id="development-widgets-container">
+                        <div class="md:col-span-2 lg:col-span-3" id="development-widgets-container">
                             <!-- Development widgets will be loaded here -->
                         </div>
                     </div>

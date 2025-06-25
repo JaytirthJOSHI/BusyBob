@@ -134,11 +134,11 @@ const moodManager = {
 
         renderLoggingForm() {
             return `
-                <div class="space-y-3">
+                <div class="space-y-4">
                     <div class="flex justify-around">
                         ${[1, 2, 3, 4, 5].map(rating => this.renderMoodButton(rating)).join('')}
                     </div>
-                    <button id="save-mood-btn" class="w-full btn-gradient text-white py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm" disabled>
+                    <button id="save-mood-btn" class="w-full bg-white/20 backdrop-blur-sm text-white py-3 px-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-white/50 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200" disabled>
                         Save Mood
                     </button>
                 </div>
@@ -148,7 +148,7 @@ const moodManager = {
         renderMoodButton(rating) {
             const emojis = ['😞', '😕', '😐', '🙂', '😄']
             return `
-                <button data-rating="${rating}" class="mood-btn h-12 w-12 rounded-full flex items-center justify-center text-2xl transition-transform transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-800">
+                <button data-rating="${rating}" class="mood-btn w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-all duration-200 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50 bg-white/10 backdrop-blur-sm hover:bg-white/20">
                     ${emojis[rating-1]}
                 </button>
             `
@@ -158,9 +158,10 @@ const moodManager = {
             const emojis = ['😞', '😕', '😐', '🙂', '😄']
             return `
                 <div class="text-center">
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Today's Mood:</p>
-                    <div class="text-5xl my-2">${emojis[feeling.rating - 1]}</div>
-                    <p class="font-semibold text-gray-800 dark:text-gray-200">You felt ${this.getRatingText(feeling.rating)}</p>
+                    <p class="text-sm text-white/80 mb-3">Today's Mood:</p>
+                    <div class="text-6xl mb-3">${emojis[feeling.rating - 1]}</div>
+                    <p class="font-semibold text-white text-lg">You felt ${this.getRatingText(feeling.rating)}</p>
+                    <p class="text-white/60 text-sm mt-2">Thanks for checking in!</p>
                 </div>
             `
         },
@@ -1188,6 +1189,9 @@ function loadHomeData() {
     // Update current date
     document.getElementById('current-date').textContent = dateUtils.getCurrentDate()
 
+    // Update greeting time
+    updateGreetingTime()
+
     // Update task count
     const pendingTasks = tasks.filter(task => !task.completed)
     document.getElementById('tasks-count').textContent = pendingTasks.length
@@ -1210,6 +1214,24 @@ function loadHomeData() {
 
     // Load development widgets
     loadDevelopmentWidgets()
+}
+
+function updateGreetingTime() {
+    const hour = new Date().getHours()
+    let greeting = 'morning'
+    
+    if (hour >= 12 && hour < 17) {
+        greeting = 'afternoon'
+    } else if (hour >= 17 && hour < 22) {
+        greeting = 'evening'
+    } else if (hour >= 22 || hour < 5) {
+        greeting = 'night'
+    }
+    
+    const greetingElement = document.getElementById('greeting-time')
+    if (greetingElement) {
+        greetingElement.textContent = greeting
+    }
 }
 
 function loadDevelopmentWidgets() {
@@ -1248,19 +1270,32 @@ function loadUpcomingTasks() {
 
     upcomingContainer.innerHTML = upcoming.length > 0
         ? upcoming.map(task => `
-        <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div class="flex items-center justify-between p-4 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-gray-600/20 hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200">
                 <div class="flex-1">
-                    <div class="font-medium text-sm text-gray-900 dark:text-white">${task.title}</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                    <div class="font-semibold text-sm text-gray-900 dark:text-white">${task.title}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         ${dateUtils.formatDateTime(task.due_date, task.due_time)}
                     </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs px-3 py-1 rounded-full ${taskUtils.getPriorityColor(task.priority)} font-medium">
+                        ${task.priority}
+                    </span>
+                    <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                </div>
             </div>
-                <div class="text-xs px-2 py-1 rounded-full ${taskUtils.getPriorityColor(task.priority)}">
-                    ${task.priority}
+        `).join('')
+        : `
+            <div class="text-center py-8">
+                <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                </div>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">No upcoming tasks</p>
+                <p class="text-gray-400 dark:text-gray-500 text-xs mt-1">Add some tasks to get started!</p>
             </div>
-        </div>
-    `).join('')
-        : '<p class="text-gray-500 dark:text-gray-400 text-sm">No upcoming tasks</p>'
+        `
 }
 
 async function loadTasks() {
