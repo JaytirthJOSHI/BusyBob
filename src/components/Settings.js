@@ -273,6 +273,29 @@ export class Settings {
                                 </div>
                             </div>
                             
+                            <div class="mt-6">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">🛠️ Toolbox Tools</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Choose which tools appear in your toolbox</p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <label class="flex items-center space-x-3">
+                                        <input type="checkbox" id="toolbox-academic-hub" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">📚 Academic Hub</span>
+                                    </label>
+                                    <label class="flex items-center space-x-3">
+                                        <input type="checkbox" id="toolbox-ai-notes" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">🤖 AI Notes</span>
+                                    </label>
+                                    <label class="flex items-center space-x-3">
+                                        <input type="checkbox" id="toolbox-music" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">🎵 Music Player</span>
+                                    </label>
+                                    <label class="flex items-center space-x-3">
+                                        <input type="checkbox" id="toolbox-dev-tools" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">🔧 Development Tools</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
                             <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <button id="save-interface-settings" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                                     Save Interface Settings
@@ -742,6 +765,28 @@ export class Settings {
         // Interface customization listeners
         document.getElementById('save-interface-settings')?.addEventListener('click', () => this.saveInterfaceSettings())
         document.getElementById('reset-interface-settings')?.addEventListener('click', () => this.resetInterfaceSettings())
+        
+        // Toolbox settings
+        document.getElementById('toolbox-academic-hub')?.addEventListener('change', (e) => {
+            if (window.toolbox) {
+                window.toolbox.setToolVisibility('academic-hub', e.target.checked)
+            }
+        })
+        document.getElementById('toolbox-ai-notes')?.addEventListener('change', (e) => {
+            if (window.toolbox) {
+                window.toolbox.setToolVisibility('ai-notes', e.target.checked)
+            }
+        })
+        document.getElementById('toolbox-music')?.addEventListener('change', (e) => {
+            if (window.toolbox) {
+                window.toolbox.setToolVisibility('music', e.target.checked)
+            }
+        })
+        document.getElementById('toolbox-dev-tools')?.addEventListener('change', (e) => {
+            if (window.toolbox) {
+                window.toolbox.setToolVisibility('dev-tools', e.target.checked)
+            }
+        })
     }
 
     async loadUserEmail() {
@@ -1507,99 +1552,148 @@ export class Settings {
     }
 
     saveInterfaceSettings() {
-        const settings = {
-            visibleTabs: {
+        try {
+            const settings = {
+                // Tab visibility
                 home: document.getElementById('tab-home')?.checked ?? true,
                 tasks: document.getElementById('tab-tasks')?.checked ?? true,
                 calendar: document.getElementById('tab-calendar')?.checked ?? true,
                 journal: document.getElementById('tab-journal')?.checked ?? true,
                 academicHub: document.getElementById('tab-academic-hub')?.checked ?? true,
                 music: document.getElementById('tab-music')?.checked ?? true,
-                aiNotes: document.getElementById('tab-ai-notes')?.checked ?? true
-            },
-            visibleSections: {
+                aiNotes: document.getElementById('tab-ai-notes')?.checked ?? true,
+                
+                // Home page sections
                 upcomingTasks: document.getElementById('section-upcoming-tasks')?.checked ?? true,
                 moodLogging: document.getElementById('section-mood-logging')?.checked ?? true,
                 pomodoroWidget: document.getElementById('section-pomodoro-widget')?.checked ?? true,
-                statistics: document.getElementById('section-statistics')?.checked ?? true
+                statistics: document.getElementById('section-statistics')?.checked ?? true,
+                
+                // Toolbox settings
+                toolboxAcademicHub: document.getElementById('toolbox-academic-hub')?.checked ?? true,
+                toolboxAiNotes: document.getElementById('toolbox-ai-notes')?.checked ?? true,
+                toolboxMusic: document.getElementById('toolbox-music')?.checked ?? true,
+                toolboxDevTools: document.getElementById('toolbox-dev-tools')?.checked ?? true
             }
+            
+            localStorage.setItem('interface-settings', JSON.stringify(settings))
+            
+            // Apply settings immediately
+            this.applyInterfaceSettings(settings)
+            
+            // Update toolbox visibility
+            if (window.toolbox) {
+                window.toolbox.setToolVisibility('academic-hub', settings.toolboxAcademicHub)
+                window.toolbox.setToolVisibility('ai-notes', settings.toolboxAiNotes)
+                window.toolbox.setToolVisibility('music', settings.toolboxMusic)
+                window.toolbox.setToolVisibility('dev-tools', settings.toolboxDevTools)
+            }
+            
+            this.showMessage('Interface settings saved successfully!', 'success')
+        } catch (error) {
+            console.error('Error saving interface settings:', error)
+            this.showMessage('Error saving settings. Please try again.', 'error')
         }
-
-        localStorage.setItem('interfaceSettings', JSON.stringify(settings))
-        this.showMessage('Interface settings saved successfully!', 'success')
-        
-        // Apply the settings immediately
-        this.applyInterfaceSettings(settings)
-        
-        // Dispatch event to update navigation
-        window.dispatchEvent(new CustomEvent('interfaceSettingsChanged', { detail: settings }))
     }
 
     resetInterfaceSettings() {
-        const defaultSettings = {
-            visibleTabs: {
+        try {
+            // Reset to default values
+            const defaultSettings = {
+                // Tab visibility - all enabled by default
                 home: true,
                 tasks: true,
                 calendar: true,
                 journal: true,
                 academicHub: true,
                 music: true,
-                aiNotes: true
-            },
-            visibleSections: {
+                aiNotes: true,
+                
+                // Home page sections - all enabled by default
                 upcomingTasks: true,
                 moodLogging: true,
                 pomodoroWidget: true,
-                statistics: true
+                statistics: true,
+                
+                // Toolbox settings - all enabled by default
+                toolboxAcademicHub: true,
+                toolboxAiNotes: true,
+                toolboxMusic: true,
+                toolboxDevTools: true
             }
+            
+            let el;
+            el = document.getElementById('tab-home'); if (el) el.checked = defaultSettings.home;
+            el = document.getElementById('tab-tasks'); if (el) el.checked = defaultSettings.tasks;
+            el = document.getElementById('tab-calendar'); if (el) el.checked = defaultSettings.calendar;
+            el = document.getElementById('tab-journal'); if (el) el.checked = defaultSettings.journal;
+            el = document.getElementById('tab-academic-hub'); if (el) el.checked = defaultSettings.academicHub;
+            el = document.getElementById('tab-music'); if (el) el.checked = defaultSettings.music;
+            el = document.getElementById('tab-ai-notes'); if (el) el.checked = defaultSettings.aiNotes;
+            el = document.getElementById('section-upcoming-tasks'); if (el) el.checked = defaultSettings.upcomingTasks;
+            el = document.getElementById('section-mood-logging'); if (el) el.checked = defaultSettings.moodLogging;
+            el = document.getElementById('section-pomodoro-widget'); if (el) el.checked = defaultSettings.pomodoroWidget;
+            el = document.getElementById('section-statistics'); if (el) el.checked = defaultSettings.statistics;
+            el = document.getElementById('toolbox-academic-hub'); if (el) el.checked = defaultSettings.toolboxAcademicHub;
+            el = document.getElementById('toolbox-ai-notes'); if (el) el.checked = defaultSettings.toolboxAiNotes;
+            el = document.getElementById('toolbox-music'); if (el) el.checked = defaultSettings.toolboxMusic;
+            el = document.getElementById('toolbox-dev-tools'); if (el) el.checked = defaultSettings.toolboxDevTools;
+            
+            // Save and apply
+            localStorage.setItem('interface-settings', JSON.stringify(defaultSettings))
+            this.applyInterfaceSettings(defaultSettings)
+            
+            // Reset toolbox visibility
+            if (window.toolbox) {
+                window.toolbox.toolVisibility = {
+                    'academic-hub': true,
+                    'ai-notes': true,
+                    'music': true,
+                    'dev-tools': true
+                }
+                window.toolbox.saveToolVisibility()
+                window.toolbox.updateToolVisibility()
+            }
+            
+            this.showMessage('Interface settings reset to default!', 'success')
+        } catch (error) {
+            console.error('Error resetting interface settings:', error)
+            this.showMessage('Error resetting settings. Please try again.', 'error')
         }
-
-        localStorage.setItem('interfaceSettings', JSON.stringify(defaultSettings))
-        
-        // Update checkboxes
-        Object.entries(defaultSettings.visibleTabs).forEach(([tab, visible]) => {
-            const checkbox = document.getElementById(`tab-${tab.replace(/([A-Z])/g, '-$1').toLowerCase()}`)
-            if (checkbox) checkbox.checked = visible
-        })
-        
-        Object.entries(defaultSettings.visibleSections).forEach(([section, visible]) => {
-            const checkbox = document.getElementById(`section-${section.replace(/([A-Z])/g, '-$1').toLowerCase()}`)
-            if (checkbox) checkbox.checked = visible
-        })
-
-        this.showMessage('Interface settings reset to default!', 'success')
-        this.applyInterfaceSettings(defaultSettings)
-        window.dispatchEvent(new CustomEvent('interfaceSettingsChanged', { detail: defaultSettings }))
     }
 
     applyInterfaceSettings(settings) {
-        // Hide/show home page sections
-        Object.entries(settings.visibleSections).forEach(([section, visible]) => {
-            const sectionElement = document.querySelector(`[data-section="${section}"]`)
-            if (sectionElement) {
-                sectionElement.style.display = visible ? 'block' : 'none'
-            }
-        })
+        // This method is called when settings are saved or reset
+        // The actual application of settings is handled by the individual components
+        // and the toolbox system
+        
+        // Dispatch event to notify other components of settings change
+        window.dispatchEvent(new CustomEvent('interfaceSettingsChanged', { detail: settings }))
     }
 
     loadInterfaceSettings() {
         try {
-            const saved = localStorage.getItem('interfaceSettings')
-            if (saved) {
-                const settings = JSON.parse(saved)
-                
-                // Update checkboxes based on saved settings
-                Object.entries(settings.visibleTabs || {}).forEach(([tab, visible]) => {
-                    const checkbox = document.getElementById(`tab-${tab.replace(/([A-Z])/g, '-$1').toLowerCase()}`)
-                    if (checkbox) checkbox.checked = visible
-                })
-                
-                Object.entries(settings.visibleSections || {}).forEach(([section, visible]) => {
-                    const checkbox = document.getElementById(`section-${section.replace(/([A-Z])/g, '-$1').toLowerCase()}`)
-                    if (checkbox) checkbox.checked = visible
-                })
-
-                this.applyInterfaceSettings(settings)
+            const settings = JSON.parse(localStorage.getItem('interface-settings') || '{}')
+            let el;
+            // Load tab visibility
+            el = document.getElementById('tab-home'); if (el) el.checked = settings.home ?? true;
+            el = document.getElementById('tab-tasks'); if (el) el.checked = settings.tasks ?? true;
+            el = document.getElementById('tab-calendar'); if (el) el.checked = settings.calendar ?? true;
+            el = document.getElementById('tab-journal'); if (el) el.checked = settings.journal ?? true;
+            el = document.getElementById('tab-academic-hub'); if (el) el.checked = settings.academicHub ?? true;
+            el = document.getElementById('tab-music'); if (el) el.checked = settings.music ?? true;
+            el = document.getElementById('tab-ai-notes'); if (el) el.checked = settings.aiNotes ?? true;
+            // Load home page sections
+            el = document.getElementById('section-upcoming-tasks'); if (el) el.checked = settings.upcomingTasks ?? true;
+            el = document.getElementById('section-mood-logging'); if (el) el.checked = settings.moodLogging ?? true;
+            el = document.getElementById('section-pomodoro-widget'); if (el) el.checked = settings.pomodoroWidget ?? true;
+            el = document.getElementById('section-statistics'); if (el) el.checked = settings.statistics ?? true;
+            // Load toolbox settings
+            if (window.toolbox) {
+                el = document.getElementById('toolbox-academic-hub'); if (el) el.checked = window.toolbox.toolVisibility['academic-hub'] ?? true;
+                el = document.getElementById('toolbox-ai-notes'); if (el) el.checked = window.toolbox.toolVisibility['ai-notes'] ?? true;
+                el = document.getElementById('toolbox-music'); if (el) el.checked = window.toolbox.toolVisibility['music'] ?? true;
+                el = document.getElementById('toolbox-dev-tools'); if (el) el.checked = window.toolbox.toolVisibility['dev-tools'] ?? true;
             }
         } catch (error) {
             console.error('Error loading interface settings:', error)
