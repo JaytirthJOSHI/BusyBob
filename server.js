@@ -50,7 +50,7 @@ app.use(session({
 app.get('/auth/google/callback', async (req, res) => {
     try {
         const { code } = req.query;
-        
+
         if (!code) {
             return res.status(400).send('Authorization code not found');
         }
@@ -100,7 +100,7 @@ app.get('/auth/google/callback', async (req, res) => {
             </body>
             </html>
         `;
-        
+
         res.send(html);
     } catch (error) {
         console.error('Google OAuth error:', error);
@@ -112,7 +112,7 @@ app.get('/auth/google/callback', async (req, res) => {
 app.get('/auth/microsoft/callback', async (req, res) => {
     try {
         const { code } = req.query;
-        
+
         if (!code) {
             return res.status(400).send('Authorization code not found');
         }
@@ -161,7 +161,7 @@ app.get('/auth/microsoft/callback', async (req, res) => {
             </body>
             </html>
         `;
-        
+
         res.send(html);
     } catch (error) {
         console.error('Microsoft OAuth error:', error);
@@ -173,13 +173,13 @@ app.get('/auth/microsoft/callback', async (req, res) => {
 app.get('/api/google/calendar', async (req, res) => {
     try {
         const { accessToken, timeMin, timeMax } = req.query;
-        
+
         if (!accessToken) {
             return res.status(400).json({ error: 'Access token required' });
         }
 
         const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
-        
+
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -199,13 +199,13 @@ app.get('/api/google/calendar', async (req, res) => {
 app.get('/api/microsoft/calendar', async (req, res) => {
     try {
         const { accessToken, startDateTime, endDateTime } = req.query;
-        
+
         if (!accessToken) {
             return res.status(400).json({ error: 'Access token required' });
         }
 
         const url = `https://graph.microsoft.com/v1.0/me/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}`;
-        
+
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -225,7 +225,7 @@ app.get('/api/microsoft/calendar', async (req, res) => {
 app.get('/auth/spotify/callback', async (req, res) => {
     try {
         const { code, state, error } = req.query;
-        
+
         if (error) {
             return res.redirect(`/?error=${error}`);
         }
@@ -248,7 +248,7 @@ app.get('/auth/spotify/callback', async (req, res) => {
         });
 
         const tokenData = await tokenResponse.json();
-        
+
         if (tokenData.error) {
             return res.redirect(`/?error=${tokenData.error}`);
         }
@@ -261,7 +261,7 @@ app.get('/auth/spotify/callback', async (req, res) => {
         });
 
         const profile = await profileResponse.json();
-        
+
         if (profile.error) {
             return res.redirect(`/?error=profile_fetch_failed`);
         }
@@ -312,7 +312,7 @@ app.get('/api/spotify/recommendations', async (req, res) => {
     try {
         const { seed_genres, target_energy, target_valence, limit = 20 } = req.query;
         const accessToken = req.headers.authorization?.replace('Bearer ', '');
-        
+
         if (!accessToken) {
             return res.status(401).json({ error: 'Access token required' });
         }
@@ -341,7 +341,7 @@ app.get('/api/spotify/recommendations', async (req, res) => {
 app.get('/api/spotify/me', async (req, res) => {
     try {
         const accessToken = req.headers.authorization?.replace('Bearer ', '');
-        
+
         if (!accessToken) {
             return res.status(401).json({ error: 'Access token required' });
         }
@@ -363,7 +363,7 @@ app.get('/api/spotify/me', async (req, res) => {
 app.get('/api/spotify/player', async (req, res) => {
     try {
         const accessToken = req.headers.authorization?.replace('Bearer ', '');
-        
+
         if (!accessToken) {
             return res.status(401).json({ error: 'Access token required' });
         }
@@ -390,12 +390,12 @@ app.put('/api/spotify/player/play', async (req, res) => {
     try {
         const accessToken = req.headers.authorization?.replace('Bearer ', '');
         const { uris, device_id } = req.body;
-        
+
         if (!accessToken) {
             return res.status(401).json({ error: 'Access token required' });
         }
 
-        const url = device_id ? 
+        const url = device_id ?
             `https://api.spotify.com/v1/me/player/play?device_id=${device_id}` :
             'https://api.spotify.com/v1/me/player/play';
 
@@ -423,7 +423,7 @@ app.put('/api/spotify/player/play', async (req, res) => {
 app.put('/api/spotify/player/pause', async (req, res) => {
     try {
         const accessToken = req.headers.authorization?.replace('Bearer ', '');
-        
+
         if (!accessToken) {
             return res.status(401).json({ error: 'Access token required' });
         }
@@ -450,7 +450,7 @@ app.put('/api/spotify/player/pause', async (req, res) => {
 app.post('/api/spotify/player/next', async (req, res) => {
     try {
         const accessToken = req.headers.authorization?.replace('Bearer ', '');
-        
+
         if (!accessToken) {
             return res.status(401).json({ error: 'Access token required' });
         }
@@ -477,7 +477,7 @@ app.post('/api/spotify/player/next', async (req, res) => {
 app.post('/api/spotify/player/previous', async (req, res) => {
     try {
         const accessToken = req.headers.authorization?.replace('Bearer ', '');
-        
+
         if (!accessToken) {
             return res.status(401).json({ error: 'Access token required' });
         }
@@ -505,7 +505,7 @@ app.post('/api/spotify/player/previous', async (req, res) => {
 app.post('/api/google/refresh', async (req, res) => {
     try {
         const { refreshToken } = req.body;
-        
+
         if (!refreshToken) {
             return res.status(400).json({ error: 'Refresh token required' });
         }

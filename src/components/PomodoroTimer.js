@@ -96,7 +96,7 @@ export class PomodoroTimer {
         this.timerState.totalFocusTime = data
           .filter(s => s.session_type === 'work' && s.completed)
           .reduce((total, session) => total + session.duration, 0)
-        
+
         // Calculate daily streak
         this.calculateDailyStreak()
       }
@@ -159,11 +159,11 @@ export class PomodoroTimer {
             <span id="session-type" class="text-lg font-semibold text-gray-700 dark:text-gray-300">Work Session</span>
             <span id="session-count" class="text-sm text-gray-500 dark:text-gray-400">#1</span>
           </div>
-          
+
           <div class="timer-circle relative mb-6">
             <svg class="timer-svg w-48 h-48 transform -rotate-90" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-200 dark:text-gray-700"></circle>
-              <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" 
+              <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
                       class="text-blue-500 transition-all duration-1000 ease-linear" id="timer-progress"
                       style="stroke-dasharray: 283; stroke-dashoffset: 283;"></circle>
             </svg>
@@ -234,7 +234,7 @@ export class PomodoroTimer {
               </svg>
             </button>
           </div>
-          
+
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Work Duration (minutes)</label>
@@ -252,7 +252,7 @@ export class PomodoroTimer {
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sessions until Long Break</label>
               <input type="number" id="sessions-until-long" min="2" max="10" value="4" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white">
             </div>
-            
+
             <div class="space-y-3">
               <label class="flex items-center">
                 <input type="checkbox" id="auto-start-breaks" class="mr-3">
@@ -268,7 +268,7 @@ export class PomodoroTimer {
               </label>
             </div>
           </div>
-          
+
           <div class="flex gap-3 mt-6">
             <button id="save-settings" class="flex-1 btn-gradient text-white py-3 rounded-lg font-semibold">Save Settings</button>
             <button id="cancel-settings" class="px-6 py-3 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg font-semibold">Cancel</button>
@@ -290,7 +290,7 @@ export class PomodoroTimer {
     document.getElementById('timer-pause')?.addEventListener('click', () => this.pauseTimer())
     document.getElementById('timer-reset')?.addEventListener('click', () => this.resetTimer())
     document.getElementById('timer-skip')?.addEventListener('click', () => this.skipSession())
-    
+
     document.getElementById('pomodoro-settings-btn')?.addEventListener('click', () => this.openSettings())
     document.getElementById('close-settings')?.addEventListener('click', () => this.closeSettings())
     document.getElementById('cancel-settings')?.addEventListener('click', () => this.closeSettings())
@@ -352,11 +352,11 @@ export class PomodoroTimer {
 
     if (awardPoints) {
       pointsEarned = this.pointsSystem[`${sessionType}Completed`] || 0
-      
+
       if (sessionType === 'work') {
         this.timerState.sessionCount++
         this.timerState.totalFocusTime += duration
-        
+
         if (this.timerState.sessionCount % 5 === 0) {
           pointsEarned += 25
         }
@@ -499,7 +499,7 @@ export class PomodoroTimer {
     document.getElementById('sessions-today').textContent = this.timerState.sessionCount
     document.getElementById('focus-time').textContent = `${Math.floor(this.timerState.totalFocusTime / 60)}m`
     document.getElementById('daily-streak').textContent = this.timerState.dailyStreak
-    
+
     this.updatePointsDisplay()
   }
 
@@ -564,7 +564,7 @@ export class PomodoroTimer {
     await this.saveSettings()
     this.resetTimer()
     this.closeSettings()
-    
+
     ui.showMessage('Settings saved successfully!', 'success')
   }
 
@@ -588,10 +588,10 @@ export class PomodoroTimer {
 
   showCompletionNotification(sessionType, pointsEarned) {
     const sessionName = this.getSessionName()
-    const message = pointsEarned > 0 
+    const message = pointsEarned > 0
       ? `${sessionName} completed! +${pointsEarned} points earned 🎉`
       : `${sessionName} completed!`
-    
+
     this.showNotification('Pomodoro Complete!', message)
     ui.showMessage(message, 'success')
   }
@@ -608,9 +608,9 @@ export class PomodoroTimer {
         </div>
       </div>
     `
-    
+
     document.body.appendChild(notification)
-    
+
     setTimeout(() => {
       notification.remove()
     }, 3000)
@@ -620,7 +620,7 @@ export class PomodoroTimer {
     // Simple confetti effect using existing CSS classes
     const confetti = document.createElement('div')
     confetti.className = 'fixed inset-0 pointer-events-none z-50'
-    confetti.innerHTML = Array.from({ length: 50 }, () => 
+    confetti.innerHTML = Array.from({ length: 50 }, () =>
       `<div class="absolute animate-bounce" style="
         left: ${Math.random() * 100}%;
         top: -10px;
@@ -628,9 +628,9 @@ export class PomodoroTimer {
         font-size: ${Math.random() * 20 + 10}px;
       ">🎉</div>`
     ).join('')
-    
+
     document.body.appendChild(confetti)
-    
+
     setTimeout(() => {
       confetti.remove()
     }, 5000)
@@ -641,17 +641,17 @@ export class PomodoroTimer {
       const audioContext = new (AudioContext || webkitAudioContext)()
       const oscillator = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
-      
+
       oscillator.connect(gainNode)
       gainNode.connect(audioContext.destination)
-      
+
       oscillator.frequency.setValueAtTime(800, audioContext.currentTime)
       oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1)
       oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2)
-      
+
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
-      
+
       oscillator.start(audioContext.currentTime)
       oscillator.stop(audioContext.currentTime + 0.3)
     }
@@ -669,7 +669,7 @@ export class PomodoroTimer {
       const workSessions = data?.filter(s => s.session_type === 'work').length || 0
       const totalFocusTime = data?.filter(s => s.session_type === 'work')
         .reduce((total, session) => total + session.duration, 0) || 0
-      
+
       return {
         workSessions,
         totalFocusTime,

@@ -36,7 +36,7 @@ export const auth = {
           }
         }
       })
-      
+
       if (data.user && !error) {
         // Create user profile in the users table
         const { error: profileError } = await supabase
@@ -49,12 +49,12 @@ export const auth = {
               created_at: new Date().toISOString()
             }
           ])
-        
+
         if (profileError) {
           console.warn('Profile creation failed:', profileError)
         }
       }
-      
+
       return { data, error }
     } catch (err) {
       console.error('SignUp error:', err)
@@ -103,7 +103,7 @@ export const auth = {
     try {
       // Always use production URL for OAuth redirect to avoid localhost issues
       const redirectUrl = 'https://busybob.site';
-      
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -135,7 +135,7 @@ export const auth = {
       if (existingUsers && existingUsers.length > 0) {
         // User exists, update with Spotify info
         user = existingUsers[0];
-        
+
         // Update user record with Spotify data
         const { error: updateError } = await supabase
           .from('users')
@@ -254,7 +254,7 @@ export const db = {
               name: user.user_metadata?.name || user.email?.split('@')[0] || 'User'
             }
           ])
-        
+
         if (createError) {
           console.error('Error creating user record:', createError)
           throw createError
@@ -569,7 +569,7 @@ export const db = {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-      
+
       return { data, error }
     } catch (err) {
       console.error('GetFeelings error:', err)
@@ -595,7 +595,7 @@ export const db = {
           }
         ])
         .select()
-      
+
       return { data, error }
     } catch (err) {
       console.error('CreateFeeling error:', err)

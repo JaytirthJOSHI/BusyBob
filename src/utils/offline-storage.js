@@ -30,8 +30,8 @@ const CONFIG = {
     MAX_RECORD_SIZE_BYTES: 1024 * 1024, // 1MB limit per record
     MAX_TOTAL_STORAGE_MB: 50, // 50MB total storage limit
     STORE_NAMES: [
-        'users', 'tasks', 'feelings', 'journal_entries', 
-        'kid_mode_settings', 'studentvue_credentials', 
+        'users', 'tasks', 'feelings', 'journal_entries',
+        'kid_mode_settings', 'studentvue_credentials',
         'canvas_credentials', 'music_connections', 'ai_notes',
         'sync_queue', 'user_metadata'
     ],
@@ -131,14 +131,14 @@ class OfflineStorage {
         this.initTimestamp = null
         this.maxSessionDuration = 7 * 24 * 60 * 60 * 1000 // 7 days (more reasonable for web app)
         this.rateLimiters = new Map()
-        
+
         // Listen for online/offline events
         window.addEventListener('online', () => {
             this.isOnline = true
             this.logger.info('Connection restored, scheduling sync')
             this.scheduleSync()
         })
-        
+
         window.addEventListener('offline', () => {
             this.isOnline = false
             this.logger.warn('Connection lost, clearing retry timeouts')
@@ -168,7 +168,7 @@ class OfflineStorage {
         // 🔒 SECURITY: Verify user exists in Supabase before allowing offline access
         try {
             const { data: { user }, error } = await auth.getCurrentUser()
-            
+
             if (error || !user || user.id !== userId) {
                 throw new OfflineStorageError('User verification failed', 'USER_NOT_FOUND')
             }
@@ -180,39 +180,39 @@ class OfflineStorage {
         this.currentUserId = userId
         this.sessionToken = sessionToken
         this.initTimestamp = Date.now()
-        
+
         // 🔒 SECURITY: Auto-refresh session if token is provided
         if (sessionToken) {
-            this.logger.info('Session token provided during init', { 
+            this.logger.info('Session token provided during init', {
                 userId: this.redactUserId(userId),
-                tokenLength: sessionToken.length 
+                tokenLength: sessionToken.length
             })
         }
-        
+
         this.db = await this.openDB()
         await this.loadSyncQueue()
-        
+
         // If we're online, sync any pending changes
         if (this.isOnline) {
             await this.syncPendingChanges()
         }
-        
+
         this.logger.info('Offline storage initialized', { userId: this.redactUserId(userId) })
     }
 
     async openDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(this.dbName, this.dbVersion)
-            
+
             request.onerror = () => reject(request.error)
             request.onsuccess = () => resolve(request.result)
-            
+
             request.onupgradeneeded = (event) => {
                 const db = event.target.result
-                
+
                 // Create object stores for each data type
                 const stores = CONFIG.STORE_NAMES
-                
+
                 stores.forEach(storeName => {
                     if (!db.objectStoreNames.contains(storeName)) {
                         const store = db.createObjectStore(storeName, { keyPath: 'id' })
@@ -229,11 +229,11 @@ class OfflineStorage {
         if (!tableName || typeof tableName !== 'string') {
             throw new OfflineStorageError('Invalid table name', 'INVALID_TABLE_NAME')
         }
-        
+
         if (!CONFIG.STORE_NAMES.includes(tableName)) {
             throw new OfflineStorageError(`Unknown table: ${tableName}`, 'UNKNOWN_TABLE')
         }
-        
+
         return true
     }
 
@@ -241,7 +241,7 @@ class OfflineStorage {
         if (!data || typeof data !== 'object') {
             throw new OfflineStorageError('Data must be a valid object', 'INVALID_DATA')
         }
-        
+
         // Check for potentially dangerous properties
         const dangerousProps = ['__proto__', 'constructor', 'prototype']
         for (const prop of dangerousProps) {
@@ -249,7 +249,7 @@ class OfflineStorage {
                 throw new OfflineStorageError(`Dangerous property detected: ${prop}`, 'DANGEROUS_PROPERTY')
             }
         }
-        
+
         return true
     }
 
@@ -271,7 +271,7 @@ class OfflineStorage {
     // 🔒 SECURITY: User ID validation
     validateUserId(userId) {
         if (!userId || typeof userId !== 'string') return false
-        
+
         // UUID format validation (Supabase uses UUIDs)
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
         return uuidRegex.test(userId)
@@ -281,13 +281,13 @@ class OfflineStorage {
     validateSessionToken(sessionToken) {
         if (!sessionToken || typeof sessionToken !== 'string') return false
         if (sessionToken.length < 32) return false // Minimum token length
-        
+
         // Check session age
         if (this.initTimestamp && (Date.now() - this.initTimestamp) > this.maxSessionDuration) {
             this.logger.warn('Session expired')
             return false
         }
-        
+
         return true
     }
 
@@ -304,11 +304,11 @@ class OfflineStorage {
         if (!this.currentUserId) {
             throw new OfflineStorageError('User not authenticated', 'NOT_AUTHENTICATED')
         }
-        
+
         // Warn if session is expired but don't block read operations
         if (this.sessionToken && !this.validateSessionToken(this.sessionToken)) {
-            this.logger.warn('Session expired but allowing read operations', { 
-                userId: this.redactUserId(this.currentUserId) 
+            this.logger.warn('Session expired but allowing read operations', {
+                userId: this.redactUserId(this.currentUserId)
             })
         }
     }
@@ -325,24 +325,24 @@ class OfflineStorage {
     // 🔒 SECURITY: Enhanced value sanitization
     sanitizeValue(value) {
         if (value === null || value === undefined) return value
-        
+
         if (typeof value === 'string') {
             return this.sanitizeString(value)
         }
-        
+
         if (typeof value === 'object' && !Array.isArray(value)) {
             return this.sanitizeData(value) // Recursive sanitization
         }
-        
+
         if (Array.isArray(value)) {
             return value.map(item => this.sanitizeValue(item))
         }
-        
+
         // Numbers, booleans pass through
         if (typeof value === 'number' || typeof value === 'boolean') {
             return value
         }
-        
+
         // Reject other types
         this.logger.warn('Rejected unsupported data type', { type: typeof value })
         return null
@@ -351,7 +351,7 @@ class OfflineStorage {
     // 🔒 SECURITY: String sanitization with XSS protection
     sanitizeString(str) {
         if (typeof str !== 'string') return null
-        
+
         // Remove potential XSS vectors
         const cleaned = str
             .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
@@ -360,12 +360,12 @@ class OfflineStorage {
             .replace(/data:text\/html/gi, '') // Remove data URLs
             .replace(/vbscript:/gi, '') // Remove vbscript URLs
             .trim()
-        
+
         // Length validation
         if (cleaned.length > 10000) { // 10KB limit per string
             throw new OfflineStorageError('String too long', 'STRING_TOO_LONG')
         }
-        
+
         return cleaned
     }
 
@@ -402,7 +402,7 @@ class OfflineStorage {
         }
 
         const limiter = this.rateLimiters.get(key)
-        
+
         if (now - limiter.windowStart > windowMs) {
             // Reset window
             limiter.count = 1
@@ -424,13 +424,13 @@ class OfflineStorage {
     redactSensitiveData(data) {
         const sensitiveFields = ['password', 'token', 'secret', 'key', 'auth', 'credential', 'ssn', 'credit_card']
         const redacted = { ...data }
-        
+
         for (const field of sensitiveFields) {
             if (field in redacted) {
                 redacted[field] = '[REDACTED]'
             }
         }
-        
+
         return redacted
     }
 
@@ -441,14 +441,14 @@ class OfflineStorage {
 
     validateDataSize(data) {
         const sizeBytes = this.getDataSizeBytes(data)
-        
+
         if (sizeBytes > CONFIG.MAX_RECORD_SIZE_BYTES) {
             throw new OfflineStorageError(
                 `Record size (${(sizeBytes / 1024 / 1024).toFixed(2)}MB) exceeds limit (${CONFIG.MAX_RECORD_SIZE_BYTES / 1024 / 1024}MB)`,
                 'RECORD_TOO_LARGE'
             )
         }
-        
+
         return sizeBytes
     }
 
@@ -457,15 +457,15 @@ class OfflineStorage {
 
         try {
             let totalSize = 0
-            
+
             for (const tableName of CONFIG.STORE_NAMES) {
                 const data = await this.getData(tableName)
                 totalSize += this.getDataSizeBytes(data)
             }
-            
+
             const maxSize = CONFIG.MAX_TOTAL_STORAGE_MB * 1024 * 1024
             const percentage = (totalSize / maxSize) * 100
-            
+
             return {
                 used: totalSize,
                 available: maxSize - totalSize,
@@ -480,23 +480,23 @@ class OfflineStorage {
 
     async checkStorageQuota() {
         const usage = await this.getStorageUsage()
-        
+
         if (usage.percentage > 90) {
             this.logger.warn('Storage quota nearly exceeded', { usage })
             return false
         }
-        
+
         if (usage.percentage > 75) {
             this.logger.warn('Storage usage high', { usage })
         }
-        
+
         return true
     }
 
     // Generic data operations
     async saveData(tableName, data, skipSync = false) {
         const timerKey = this.performanceMonitor.startTimer(`saveData_${tableName}`)
-        
+
         try {
             // 🔒 SECURITY: Check session validity for write operations
             this.validateSessionForWrite()
@@ -504,7 +504,7 @@ class OfflineStorage {
             // Validate inputs
             this.validateTableName(tableName)
             this.validateData(data)
-            
+
             if (!this.currentUserId || !this.db) {
                 throw new OfflineStorageError('Storage not initialized', 'NOT_INITIALIZED')
             }
@@ -539,8 +539,8 @@ class OfflineStorage {
 
             // Validate record size
             const sizeBytes = this.validateDataSize(record)
-            this.logger.debug(`Saving ${tableName} record`, { 
-                id: record.id, 
+            this.logger.debug(`Saving ${tableName} record`, {
+                id: record.id,
                 sizeBytes,
                 offline_created: record.offline_created,
                 userId: this.redactUserId(this.currentUserId)
@@ -548,7 +548,7 @@ class OfflineStorage {
 
             const tx = this.db.transaction([tableName], 'readwrite')
             const store = tx.objectStore(tableName)
-            
+
             await new Promise((resolve, reject) => {
                 const request = store.put(record)
                 request.onsuccess = () => resolve(request.result)
@@ -558,8 +558,8 @@ class OfflineStorage {
                     request.error
                 ))
             })
-            
-            this.logger.info(`Saved ${tableName} offline`, { 
+
+            this.logger.info(`Saved ${tableName} offline`, {
                 id: record.id,
                 sizeBytes,
                 skipSync,
@@ -575,12 +575,12 @@ class OfflineStorage {
             return record
         } catch (error) {
             this.performanceMonitor.endTimer(timerKey)
-            
+
             if (error instanceof OfflineStorageError) {
                 this.logger.error(`Failed to save ${tableName}`, error, { tableName, dataId: data?.id })
                 throw error
             }
-            
+
             this.logger.error(`Unexpected error saving ${tableName}`, error, { tableName, dataId: data?.id })
             throw new OfflineStorageError(
                 `Failed to save ${tableName}: ${error.message}`,
@@ -601,7 +601,7 @@ class OfflineStorage {
             const store = tx.objectStore(tableName)
             const index = store.index('user_id')
             const request = index.getAll(this.currentUserId)
-            
+
             const result = await new Promise((resolve, reject) => {
                 request.onsuccess = () => resolve(request.result)
                 request.onerror = () => reject(request.error)
@@ -646,7 +646,7 @@ class OfflineStorage {
             const tx = this.db.transaction([tableName], 'readwrite')
             const store = tx.objectStore(tableName)
             await store.delete(id)
-            
+
             console.log(`🗑️ Deleted ${tableName} offline:`, id)
 
             // Queue for sync
@@ -695,13 +695,13 @@ class OfflineStorage {
 
         this.syncQueue.push(syncItem)
         await this.saveSyncQueue()
-        
-        this.logger.info('Queued for sync', { 
-            table: tableName, 
-            operation, 
-            userId: this.redactUserId(this.currentUserId) 
+
+        this.logger.info('Queued for sync', {
+            table: tableName,
+            operation,
+            userId: this.redactUserId(this.currentUserId)
         })
-        
+
         // Try to sync immediately if online
         if (this.isOnline) {
             setTimeout(() => this.syncPendingChanges(), CONFIG.INITIAL_SYNC_DELAY_MS)
@@ -714,11 +714,11 @@ class OfflineStorage {
         try {
             const tx = this.db.transaction(['sync_queue'], 'readwrite')
             const store = tx.objectStore('sync_queue')
-            
+
             // Clear existing queue for this user
             const index = store.index('user_id')
             const request = index.openCursor(this.currentUserId)
-            
+
             await new Promise((resolve) => {
                 request.onsuccess = (event) => {
                     const cursor = event.target.result
@@ -730,7 +730,7 @@ class OfflineStorage {
                     }
                 }
             })
-            
+
             // Save current queue
             for (const item of this.syncQueue) {
                 if (item.user_id === this.currentUserId) {
@@ -750,7 +750,7 @@ class OfflineStorage {
             const store = tx.objectStore('sync_queue')
             const index = store.index('user_id')
             const request = index.getAll(this.currentUserId)
-            
+
             const result = await new Promise((resolve, reject) => {
                 request.onsuccess = () => resolve(request.result)
                 request.onerror = () => reject(request.error)
@@ -769,7 +769,7 @@ class OfflineStorage {
 
         this.isSyncing = true
         console.log('🔄 Starting sync of pending changes...')
-        
+
         // Group operations by type and table for batching
         const groupedOps = this.syncQueue
             .filter(item => item.user_id === this.currentUserId)
@@ -785,7 +785,7 @@ class OfflineStorage {
         // Process batched operations
         for (const [opKey, items] of Object.entries(groupedOps)) {
             const [operation, tableName] = opKey.split('_', 2)
-            
+
             try {
                 if (operation === 'upsert' && items.length > 1) {
                     // Batch upserts
@@ -803,7 +803,7 @@ class OfflineStorage {
                     for (const item of items) {
                         try {
                             let success = false
-                            
+
                             if (item.operation === 'upsert') {
                                 success = await this.syncUpsert(item.table_name, item.data)
                             } else if (item.operation === 'delete') {
@@ -838,7 +838,7 @@ class OfflineStorage {
 
         this.syncQueue = failedItems
         await this.saveSyncQueue()
-        
+
         this.isSyncing = false
         console.log(`✅ Sync completed. ${failedItems.length} items remaining in queue`)
 
@@ -846,12 +846,12 @@ class OfflineStorage {
         if (failedItems.length > 0) {
             const maxAttempts = Math.max(...failedItems.map(item => item.attempts))
             const retryDelay = this.getRetryDelay(maxAttempts)
-            
+
             console.log(`⏰ Scheduling retry in ${retryDelay}ms`)
             const timeoutId = setTimeout(() => {
                 this.syncPendingChanges()
             }, retryDelay)
-            
+
             this.retryTimeouts.set('sync', timeoutId)
         }
     }
@@ -863,7 +863,7 @@ class OfflineStorage {
                 .upsert(dataArray)
 
             if (error) throw error
-            
+
             // Update local records to mark as synced
             for (const data of dataArray) {
                 if (data.offline_created) {
@@ -871,7 +871,7 @@ class OfflineStorage {
                     await this.saveData(tableName, data, true) // Skip adding to sync queue
                 }
             }
-            
+
             return true
         } catch (error) {
             console.error(`Batch sync error for ${tableName}:`, error)
@@ -886,13 +886,13 @@ class OfflineStorage {
                 .upsert(data)
 
             if (error) throw error
-            
+
             // Update local record to mark as synced
             if (data.offline_created) {
                 data.offline_created = false
                 await this.saveData(tableName, data, true) // Skip adding to sync queue
             }
-            
+
             return true
         } catch (error) {
             console.error(`Sync error for ${tableName}:`, error)
@@ -930,7 +930,7 @@ class OfflineStorage {
                 const store = tx.objectStore(tableName)
                 const index = store.index('user_id')
                 const request = index.openCursor(targetUserId)
-                
+
                 await new Promise((resolve) => {
                     request.onsuccess = (event) => {
                         const cursor = event.target.result
@@ -943,10 +943,10 @@ class OfflineStorage {
                     }
                 })
             }
-            
+
             // Clear sync queue for this user
             this.syncQueue = this.syncQueue.filter(item => item.user_id !== targetUserId)
-            
+
             console.log('✅ User data cleared successfully')
         } catch (error) {
             console.error('Error clearing user data:', error)
@@ -955,23 +955,23 @@ class OfflineStorage {
 
     async switchUser(newUserId) {
         console.log('🔄 Switching user from', this.currentUserId, 'to', newUserId)
-        
+
         // Save current sync queue before switching
         if (this.currentUserId) {
             await this.saveSyncQueue()
         }
-        
+
         // Switch to new user
         this.currentUserId = newUserId
         await this.loadSyncQueue()
-        
+
         console.log('✅ User switched successfully')
     }
 
     async getStorageInfo() {
         const usage = await this.getStorageUsage()
         const userSyncQueue = this.syncQueue.filter(item => item.user_id === this.currentUserId)
-        
+
         return {
             isOnline: this.isOnline,
             currentUserId: this.currentUserId,
@@ -1006,10 +1006,10 @@ class OfflineStorage {
     getAverageOperationTime() {
         const metrics = this.performanceMonitor.getMetrics()
         if (metrics.length === 0) return 0
-        
+
         const validMetrics = metrics.filter(m => m.duration !== null)
         if (validMetrics.length === 0) return 0
-        
+
         const total = validMetrics.reduce((sum, m) => sum + m.duration, 0)
         return (total / validMetrics.length).toFixed(2)
     }
@@ -1019,7 +1019,7 @@ class OfflineStorage {
         try {
             const info = await this.getStorageInfo()
             const tables = {}
-            
+
             for (const tableName of CONFIG.STORE_NAMES) {
                 try {
                     const data = await this.getData(tableName)
@@ -1032,7 +1032,7 @@ class OfflineStorage {
                     tables[tableName] = { error: error.message }
                 }
             }
-            
+
             // 🔒 SECURITY: Redact sensitive information
             const safeDiagnostics = {
                 ...info,
@@ -1054,20 +1054,20 @@ class OfflineStorage {
                 },
                 timestamp: new Date().toISOString()
             }
-            
+
             return safeDiagnostics
         } catch (error) {
             this.logger.error('Failed to generate diagnostics', error)
-            return { 
-                error: 'Diagnostics unavailable', 
-                timestamp: new Date().toISOString() 
+            return {
+                error: 'Diagnostics unavailable',
+                timestamp: new Date().toISOString()
             }
         }
     }
 
     scheduleSync(delayMs = CONFIG.INITIAL_SYNC_DELAY_MS) {
         if (!this.isOnline || this.isSyncing) return
-        
+
         setTimeout(() => {
             if (this.isOnline && !this.isSyncing) {
                 this.syncPendingChanges()
@@ -1101,7 +1101,7 @@ class OfflineStorage {
         const now = Date.now()
         const sessionAge = this.initTimestamp ? now - this.initTimestamp : 0
         const isExpired = this.initTimestamp ? sessionAge > this.maxSessionDuration : true
-        
+
         return {
             hasUserId: !!this.currentUserId,
             hasSessionToken: !!this.sessionToken,

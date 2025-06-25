@@ -34,7 +34,7 @@ export class KidMode {
                 this.settings = kidModeData
                 this.isEnabled = kidModeData.enabled
                 this.dateOfBirth = kidModeData.date_of_birth
-                
+
                 if (this.dateOfBirth) {
                     this.userAge = this.calculateAge(this.dateOfBirth)
                 }
@@ -50,7 +50,7 @@ export class KidMode {
             if (userData && !this.settings) {
                 this.isEnabled = userData.kid_mode_enabled || false
                 this.dateOfBirth = userData.date_of_birth
-                
+
                 if (this.dateOfBirth) {
                     this.userAge = this.calculateAge(this.dateOfBirth)
                 }
@@ -63,16 +63,16 @@ export class KidMode {
 
     calculateAge(birthDate) {
         if (!birthDate) return null
-        
+
         const birth = new Date(birthDate)
         const today = new Date()
         let age = today.getFullYear() - birth.getFullYear()
         const monthDiff = today.getMonth() - birth.getMonth()
-        
+
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
             age--
         }
-        
+
         return age
     }
 
@@ -80,12 +80,12 @@ export class KidMode {
         if (!this.isEnabled || !this.dateOfBirth) return
 
         const age = this.calculateAge(this.dateOfBirth)
-        
+
         if (age >= 13) {
             await this.autoDisableKidMode()
             return true
         }
-        
+
         return false
     }
 
@@ -109,13 +109,13 @@ export class KidMode {
             // Update users table
             await supabase
                 .from('users')
-                .update({ 
-                    kid_mode_enabled: false 
+                .update({
+                    kid_mode_enabled: false
                 })
                 .eq('id', user.id)
 
             this.isEnabled = false
-            
+
             // Show notification
             this.showAutoDisableNotification()
 
@@ -130,7 +130,7 @@ export class KidMode {
         }
 
         const age = this.calculateAge(dateOfBirth)
-        
+
         if (age >= 13) {
             throw new Error('Kid Mode is only available for users under 13 years old')
         }
@@ -198,7 +198,7 @@ export class KidMode {
 
     async setDateOfBirth(dateOfBirth) {
         const age = this.calculateAge(dateOfBirth)
-        
+
         if (age >= 13 && this.isEnabled) {
             // Auto-disable if setting age to 13+
             await this.autoDisableKidMode()
@@ -289,7 +289,7 @@ export class KidMode {
                 border: 3px solid #10b981 !important;
                 border-radius: 12px !important;
             }
-            
+
             .kid-mode-indicator {
                 position: fixed;
                 top: 10px;
@@ -303,7 +303,7 @@ export class KidMode {
                 z-index: 1000;
                 box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
             }
-            
+
             /* Simplified color scheme for kids */
             .kid-mode-colors {
                 --primary-color: #10b981;

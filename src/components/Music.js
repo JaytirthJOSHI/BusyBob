@@ -12,7 +12,7 @@ export class Music {
         this.focusPlaylists = []
         this.currentMood = null
         this.listeningHistory = []
-        
+
         // Mood-based playlist recommendations
         this.moodPlaylists = {
             1: { // Very Bad
@@ -59,7 +59,7 @@ export class Music {
         await this.loadListeningHistory()
         this.render()
         this.setupEventListeners()
-        
+
         if (this.isConnected) {
             await this.initializeSpotifyPlayer()
         }
@@ -80,7 +80,7 @@ export class Music {
             if (musicData) {
                 this.isConnected = true
                 this.accessToken = musicData.access_token
-                
+
                 // Check if token needs refresh
                 if (musicData.expires_at && new Date(musicData.expires_at) < new Date()) {
                     await this.refreshSpotifyToken(musicData.refresh_token)
@@ -138,7 +138,7 @@ export class Music {
                     </div>
                     <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Connect Spotify</h3>
                     <p class="text-gray-600 dark:text-gray-400 mb-6">Connect your Spotify account to get personalized focus playlists based on your mood and productivity patterns.</p>
-                    
+
                     <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
                         <h4 class="font-medium text-gray-900 dark:text-white mb-2">What you'll get:</h4>
                         <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
@@ -148,7 +148,7 @@ export class Music {
                             <li>• Personalized music insights</li>
                         </ul>
                     </div>
-                    
+
                     <button id="connect-spotify-btn" class="btn-gradient text-white px-6 py-3 rounded-lg hover:opacity-90 transition-opacity">
                         Connect Spotify Account
                     </button>
@@ -276,7 +276,7 @@ export class Music {
         return Object.entries(this.moodPlaylists).map(([mood, playlist]) => {
             const moodEmojis = ['😞', '😕', '😐', '🙂', '😄']
             const moodLabels = ['Very Bad', 'Bad', 'Okay', 'Good', 'Excellent']
-            
+
             return `
                 <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors mood-playlist-card" data-mood="${mood}">
                     <div class="flex items-center space-x-3 mb-2">
@@ -325,7 +325,7 @@ export class Music {
             if (e.target.id === 'connect-spotify-btn') {
                 this.connectSpotify()
             }
-            
+
             if (e.target.id === 'disconnect-spotify') {
                 this.disconnectSpotify()
             }
@@ -361,7 +361,7 @@ export class Music {
             localStorage.setItem('spotify_auth_state', state)
 
             const scope = 'user-read-playback-state user-modify-playback-state user-read-currently-playing streaming user-library-read user-top-read user-read-recently-played playlist-read-private'
-            
+
             const authUrl = new URL('https://accounts.spotify.com/authorize')
             authUrl.searchParams.append('response_type', 'code')
             authUrl.searchParams.append('client_id', import.meta.env.VITE_SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID')
@@ -390,7 +390,7 @@ export class Music {
             this.isConnected = false
             this.accessToken = null
             this.currentTrack = null
-            
+
             ui.showMessage('Spotify disconnected successfully', 'success')
             this.render()
         } catch (error) {
@@ -403,12 +403,12 @@ export class Music {
         try {
             // Get mood-based recommendations from Spotify
             const recommendations = await this.getMoodBasedRecommendations(mood)
-            
+
             if (recommendations && recommendations.tracks.length > 0) {
                 // Create a temporary playlist or play the first track
                 await this.playTrack(recommendations.tracks[0].uri)
                 ui.showMessage(`Playing ${this.moodPlaylists[mood].name} playlist`, 'success')
-                
+
                 // Track this selection for analytics
                 await this.trackMoodPlaylistSelection(mood)
             }
@@ -420,7 +420,7 @@ export class Music {
 
     async getMoodBasedRecommendations(mood) {
         const playlist = this.moodPlaylists[mood]
-        
+
         try {
             const response = await fetch(`/api/spotify/recommendations?` + new URLSearchParams({
                 seed_genres: playlist.genres.join(','),
@@ -442,7 +442,7 @@ export class Music {
 
     async startFocusSession() {
         const duration = document.getElementById('focus-duration').value
-        
+
         // Show focus session UI
         const statusDiv = document.getElementById('focus-session-status')
         statusDiv.classList.remove('hidden')
@@ -467,19 +467,19 @@ export class Music {
     async runFocusSession(durationMinutes) {
         const startTime = Date.now()
         const endTime = startTime + (durationMinutes * 60 * 1000)
-        
+
         const timer = setInterval(() => {
             const remaining = endTime - Date.now()
-            
+
             if (remaining <= 0) {
                 clearInterval(timer)
                 this.endFocusSession()
                 return
             }
-            
+
             const minutes = Math.floor(remaining / 60000)
             const seconds = Math.floor((remaining % 60000) / 1000)
-            
+
             const timerEl = document.getElementById('focus-timer')
             if (timerEl) {
                 timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`
@@ -493,7 +493,7 @@ export class Music {
     async endFocusSession() {
         const statusDiv = document.getElementById('focus-session-status')
         statusDiv.classList.add('hidden')
-        
+
         ui.showMessage('Focus session completed! Great work!', 'success')
         await this.trackFocusSession(0, 'end')
     }

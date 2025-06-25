@@ -154,4 +154,4 @@ For issues with this setup:
 3. Test with different Spotify accounts
 4. Check browser console for detailed error messages
 
-The Spotify authentication integration provides a seamless way for users to access BusyBob's music features while maintaining a smooth sign-in experience. 
+The Spotify authentication integration provides a seamless way for users to access BusyBob's music features while maintaining a smooth sign-in experience.

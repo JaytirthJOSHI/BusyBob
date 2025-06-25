@@ -32,7 +32,7 @@ const moodUI = {
             </div>
         `
     },
-    
+
     renderMoodButton(rating) {
         const emojis = ['😞', '😕', '😐', '🙂', '😄']
         const colors = [
@@ -72,7 +72,7 @@ const moodUI = {
             btn.addEventListener('click', () => {
                 // Reset styles
                 document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('ring-2', 'ring-blue-500'))
-                
+
                 // Apply style to selected
                 btn.classList.add('ring-2', 'ring-blue-500')
                 selectedRating = parseInt(btn.dataset.rating)
@@ -110,20 +110,20 @@ const moodManager = {
         try {
             const { data, error } = await db.createFeeling({ rating })
             if (error) throw error
-            
+
             feelings.unshift(data[0])
             moodUI.render()
             ui.showMessage("Mood logged successfully!", "success")
 
             // Update home page stats if needed
             if (window.loadHomeData) window.loadHomeData()
-            
+
         } catch (error) {
             console.error("Error logging mood:", error)
             ui.showMessage("Failed to save mood.", "error")
         }
     },
-    
+
     checkPrompt() {
         const today = new Date().toDateString()
         if (lastCheckedDate === today) return // Already checked today
@@ -180,12 +180,12 @@ const moodManager = {
                 saveBtn.disabled = false
             })
         })
-        
+
         saveBtn.addEventListener('click', async () => {
             if (selectedRating > 0) {
                 const yesterday = new Date()
                 yesterday.setDate(yesterday.getDate() - 1)
-                
+
                 try {
                     await db.createFeeling({ rating: selectedRating, created_at: yesterday.toISOString() })
                     ui.showMessage("Yesterday's mood logged!", "success")

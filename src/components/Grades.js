@@ -1,12 +1,12 @@
 import { auth, db, supabase } from '../lib/supabase.js'
 import districts from '../lib/districts.js'
-import { 
-    parseGradebook, 
-    parseAssignments, 
-    parseAttendance, 
+import {
+    parseGradebook,
+    parseAssignments,
+    parseAttendance,
     parseSchedule,
     calculateGPA,
-    getGradeColor 
+    getGradeColor
 } from '../utils/grades-parser.js'
 
 export class Grades {
@@ -25,7 +25,7 @@ export class Grades {
 
     async init() {
         console.log('📊 Initializing Grades component...')
-        
+
         const storedCredentials = await this.getStoredCredentials()
         if (storedCredentials) {
             this.districtUrl = storedCredentials.districtUrl
@@ -43,14 +43,14 @@ export class Grades {
         try {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) return null
-            
+
             const { data, error } = await supabase.from('studentvue_credentials')
                 .select('*')
                 .eq('user_id', user.id)
                 .single()
-            
+
             if (error || !data) return null
-            
+
             return {
                 districtUrl: data.district_url,
                 username: data.username,
@@ -65,26 +65,26 @@ export class Grades {
     async storeCredentials(districtUrl, username, password) {
         try {
             console.log('🔐 Attempting to store credentials...')
-            
+
             // First, check if we have a current user
             const authResult = await auth.getCurrentUser()
             console.log('Auth result:', authResult)
-            
+
             if (!authResult || !authResult.data || !authResult.data.user) {
                 console.error('❌ No authenticated user found')
                 throw new Error('You must be logged in to save StudentVue credentials. Please log in and try again.')
             }
-            
+
             const { data: { user } } = authResult
             console.log('User from auth:', user)
-            
+
             if (!user) {
                 console.error('❌ User not authenticated')
                 throw new Error('User not authenticated')
             }
-            
+
             console.log('✅ User authenticated, storing credentials for user:', user.id)
-            
+
             const { error } = await supabase.from('studentvue_credentials')
                 .upsert({
                     user_id: user.id,
@@ -93,12 +93,12 @@ export class Grades {
                     password: password,
                     updated_at: new Date().toISOString()
                 })
-            
+
             if (error) {
                 console.error('❌ Supabase error:', error)
                 throw error
             }
-            
+
             console.log('✅ Credentials stored successfully')
         } catch (error) {
             console.error('❌ Error storing credentials:', error)
@@ -110,7 +110,7 @@ export class Grades {
         if (!this.districtUrl || !this.username || !this.password) {
             throw new Error('User credentials are not set.');
         }
-        
+
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 const response = await fetch('/api/studentvue', {
@@ -135,12 +135,12 @@ export class Grades {
                         // If we can't parse the error response, use the status text
                         errorMessage = response.statusText || errorMessage;
                     }
-                    
+
                     // If it's the last attempt, throw the error
                     if (attempt === retries) {
                         throw new Error(errorMessage);
                     }
-                    
+
                     // Otherwise, wait and retry
                     console.log(`Attempt ${attempt} failed for ${action}, retrying in ${attempt * 1000}ms...`);
                     await new Promise(resolve => setTimeout(resolve, attempt * 1000));
@@ -163,7 +163,7 @@ export class Grades {
                 if (attempt === retries) {
                     throw error;
                 }
-                
+
                 // Otherwise, wait and retry
                 console.log(`Attempt ${attempt} failed for ${action}, retrying in ${attempt * 1000}ms...`);
                 await new Promise(resolve => setTimeout(resolve, attempt * 1000));
@@ -185,7 +185,7 @@ export class Grades {
         await Promise.all(dataPromises.map(p => p.catch(e => {
             console.error('Data loading failed for one of the items:', e);
             // The error is handled inside each load function
-            return e; 
+            return e;
         })));
 
         this.render();
@@ -377,7 +377,7 @@ export class Grades {
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">School: ${schoolName || 'N/A'}</h3>
                     <p class="text-sm text-gray-600 dark:text-gray-400">Term: ${term || 'Current Term'}</p>
                 </div>
-                
+
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700">
@@ -419,7 +419,7 @@ export class Grades {
     renderAttendanceTab() {
         if (this.attendance === -1) return this.renderDataError('attendance data')
         if (!this.attendance) return this.renderDataNotFound('attendance')
-        
+
         const { Absences, TotalExcused, TotalTardies, TotalUnexcused, TotalActivities, TotalUnexcusedTardies, SchoolName } = this.attendance
 
         // Helper function to get total from period totals
@@ -434,7 +434,7 @@ export class Grades {
                 <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">School: ${SchoolName || 'N/A'}</h3>
                 </div>
-                
+
                 <!-- Attendance Summary -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -485,23 +485,23 @@ export class Grades {
                                             ` : ''}
                                         </div>
                                         <span class="px-3 py-1 text-xs font-semibold rounded-full ${
-                                            absence.CodeAllDayDescription?.includes('Activity') 
+                                            absence.CodeAllDayDescription?.includes('Activity')
                                                 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                                                 : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                                         }">
                                             ${absence.CodeAllDayDescription || 'Absent'}
                                         </span>
                                     </div>
-                                    
+
                                     ${absence.Periods?.Period && absence.Periods.Period.length > 0 ? `
                                         <div class="mt-4">
                                             <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Period Details:</h4>
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                                                 ${absence.Periods.Period.map(period => `
                                                     <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded border-l-4 ${
-                                                        period.Name?.includes('Absent') 
-                                                            ? 'border-red-400' 
-                                                            : period.Name?.includes('Tardy') 
+                                                        period.Name?.includes('Absent')
+                                                            ? 'border-red-400'
+                                                            : period.Name?.includes('Tardy')
                                                                 ? 'border-yellow-400'
                                                                 : 'border-gray-400'
                                                     }">
@@ -519,7 +519,7 @@ export class Grades {
                                                             </div>
                                                             ${period.Name && period.Name !== 'Not Included' ? `
                                                                 <span class="text-xs px-2 py-1 rounded ${
-                                                                    period.Name.includes('Absent') 
+                                                                    period.Name.includes('Absent')
                                                                         ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                                                                         : period.Name.includes('Tardy')
                                                                             ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
@@ -593,23 +593,23 @@ export class Grades {
         const percentage = parseFloat(mark?.percentage) || 0
         const gradeColor = getGradeColor(percentage)
         const gradeClass = `text-${gradeColor}-600 dark:text-${gradeColor}-400`
-        
+
         return `
             <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div class="flex items-center justify-between mb-3">
                     <h4 class="font-semibold text-gray-900 dark:text-white text-sm">${course.name}</h4>
                     <span class="text-xs text-gray-500 dark:text-gray-400">Period ${course.period}</span>
                 </div>
-                
+
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-xs text-gray-600 dark:text-gray-400">${course.teacher}</span>
                     <span class="text-lg font-bold ${gradeClass}">${course.grade}</span>
                 </div>
-                
+
                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div class="bg-${gradeColor}-500 h-2 rounded-full" style="width: ${Math.min(percentage, 100)}%"></div>
                 </div>
-                
+
                 <div class="mt-4">
                     <button class="view-assignments-btn w-full text-center text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline" data-course-name="${course.name}">
                         View Assignments
@@ -636,7 +636,7 @@ export class Grades {
                 </div>
             `;
         }
-        
+
         const assignmentsList = course.assignments.map(a => `
             <li class="py-3 sm:py-4">
                 <div class="flex items-center space-x-4">
@@ -797,7 +797,7 @@ export class Grades {
 
             // Store credentials first
             await this.storeCredentials(districtUrl, username, password)
-            
+
             // Now, load all data using the new proxy
             await this.loadAllData()
 
@@ -828,9 +828,9 @@ export class Grades {
             type === 'error' ? 'bg-red-500' : 'bg-blue-500'
         }`
         messageEl.textContent = message
-        
+
         document.body.appendChild(messageEl)
-        
+
         setTimeout(() => {
             if (messageEl.parentNode) {
                 messageEl.parentNode.removeChild(messageEl)

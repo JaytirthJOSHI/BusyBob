@@ -10,7 +10,7 @@ export class PointsSystem {
     this.achievements = []
     this.isInitialized = false
     this.isLoading = false
-    
+
     this.pointValues = {
       taskCompleted: 25,
       taskCompletedEarly: 35,
@@ -99,7 +99,7 @@ export class PointsSystem {
 
   async init() {
     if (this.isInitialized || this.isLoading) return
-    
+
     this.isLoading = true
     try {
       await this.loadUserData()
@@ -139,7 +139,7 @@ export class PointsSystem {
         this.totalLifetimePoints = parseInt(data.lifetime_points) || 0
         this.currentLevel = parseInt(data.level) || 1
         this.rank = data.rank
-        
+
         if (data.unlocked_rewards && Array.isArray(data.unlocked_rewards)) {
           this.rewards.forEach(reward => {
             reward.unlocked = data.unlocked_rewards.includes(reward.id)
@@ -168,7 +168,7 @@ export class PointsSystem {
         })
 
       if (error) throw error
-      
+
       console.log('Created initial user metadata')
     } catch (error) {
       console.error('Error creating initial user data:', error)
@@ -219,12 +219,12 @@ export class PointsSystem {
             </svg>
           </button>
         </div>
-        
+
         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
-          <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500" 
+          <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
                id="level-progress" style="width: ${this.getLevelProgress()}%"></div>
         </div>
-        
+
         <div class="text-xs text-gray-500 dark:text-gray-400 text-center">
           ${this.getPointsToNextLevel().toLocaleString()} points to level ${this.currentLevel + 1}
         </div>
@@ -246,7 +246,7 @@ export class PointsSystem {
               </div>
             </div>
           </div>
-          
+
           <div>
             <div class="space-y-2">
               <button id="view-rewards" class="w-full text-left p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
@@ -292,7 +292,7 @@ export class PointsSystem {
               </svg>
             </button>
           </div>
-          
+
           <div class="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg">
             <div class="flex items-center justify-between">
               <div>
@@ -334,7 +334,7 @@ export class PointsSystem {
               </svg>
             </button>
           </div>
-          
+
           <div class="space-y-4" id="leaderboard-content">
             <div class="text-center text-gray-500 dark:text-gray-400">Loading leaderboard...</div>
           </div>
@@ -352,7 +352,7 @@ export class PointsSystem {
               </svg>
             </button>
           </div>
-          
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="achievements-grid">
             ${this.renderAchievementsGrid()}
           </div>
@@ -371,14 +371,14 @@ export class PointsSystem {
           <h3 class="font-bold text-gray-800 dark:text-white">${reward.name}</h3>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${reward.description}</p>
         </div>
-        
+
         <div class="text-center">
-          ${reward.unlocked ? 
+          ${reward.unlocked ?
             '<div class="text-green-600 dark:text-green-400 font-semibold">✓ Unlocked</div>' :
             `<div class="mb-3">
               <div class="text-lg font-bold text-purple-600 dark:text-purple-400">${reward.cost.toLocaleString()} 💎</div>
             </div>
-            <button class="unlock-reward w-full py-2 px-4 rounded-lg font-semibold transition-colors ${this.currentPoints >= reward.cost ? 'bg-purple-500 hover:bg-purple-600 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'}" 
+            <button class="unlock-reward w-full py-2 px-4 rounded-lg font-semibold transition-colors ${this.currentPoints >= reward.cost ? 'bg-purple-500 hover:bg-purple-600 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'}"
                     data-reward-id="${reward.id}" ${this.currentPoints < reward.cost ? 'disabled' : ''}>
               ${this.currentPoints >= reward.cost ? 'Unlock' : 'Not enough points'}
             </button>`
@@ -442,7 +442,7 @@ export class PointsSystem {
             <h3 class="font-bold text-gray-800 dark:text-white">${achievement.name}</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">${achievement.description}</p>
             <div class="mt-2">
-              ${achievement.unlocked ? 
+              ${achievement.unlocked ?
                 '<span class="text-yellow-600 dark:text-yellow-400 font-semibold">✓ Achieved</span>' :
                 '<span class="text-gray-500 dark:text-gray-400">Not yet achieved</span>'
               }
@@ -456,13 +456,13 @@ export class PointsSystem {
   attachEventListeners() {
     // Remove existing listeners to prevent duplicates
     this.removeEventListeners()
-    
+
     // Add new listeners
     document.getElementById('points-menu-toggle')?.addEventListener('click', () => this.togglePointsMenu())
     document.getElementById('view-rewards')?.addEventListener('click', () => this.openRewardsModal())
     document.getElementById('view-leaderboard')?.addEventListener('click', () => this.openLeaderboardModal())
     document.getElementById('view-achievements')?.addEventListener('click', () => this.openAchievementsModal())
-    
+
     document.getElementById('close-rewards')?.addEventListener('click', () => this.closeModal('rewards-modal'))
     document.getElementById('close-leaderboard')?.addEventListener('click', () => this.closeModal('leaderboard-modal'))
     document.getElementById('close-achievements')?.addEventListener('click', () => this.closeModal('achievements-modal'))
@@ -734,11 +734,11 @@ export class PointsSystem {
     this.updateTimer = setTimeout(() => {
       const currentPointsEl = document.getElementById('current-points')
       const levelProgressEl = document.getElementById('level-progress')
-      
+
       if (currentPointsEl) {
         currentPointsEl.textContent = this.currentPoints.toLocaleString()
       }
-      
+
       if (levelProgressEl) {
         levelProgressEl.style.width = `${this.getLevelProgress()}%`
       }
@@ -763,9 +763,9 @@ export class PointsSystem {
         </button>
       </div>
     `
-    
+
     document.body.appendChild(notification)
-    
+
     // Auto-remove after 10 seconds
     setTimeout(() => {
       if (notification.parentElement) {
@@ -815,7 +815,7 @@ export class PointsSystem {
     if (this.updateTimer) {
       clearTimeout(this.updateTimer)
     }
-    
+
     const elements = [
       'points-widget',
       'points-menu',
@@ -823,14 +823,14 @@ export class PointsSystem {
       'leaderboard-modal',
       'achievements-modal'
     ]
-    
+
     elements.forEach(id => {
       const element = document.getElementById(id)
       if (element) {
         element.remove()
       }
     })
-    
+
     this.isInitialized = false
   }
 }

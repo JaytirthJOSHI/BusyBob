@@ -260,7 +260,7 @@ focus_playlists (
 
 #### Authentication
 - `POST /auth/signup` - User registration
-- `POST /auth/login` - User login  
+- `POST /auth/login` - User login
 - `POST /auth/logout` - User logout
 - `GET /auth/user` - Get current user
 - `POST /auth/google` - Google OAuth
@@ -406,7 +406,7 @@ MICROSOFT_CLIENT_SECRET=your_microsoft_client_secret
 
 ### Security Considerations
 - **Token storage** in secure keychain
-- **API key protection** 
+- **API key protection**
 - **Data encryption** at rest
 - **Secure OAuth flows**
 - **Row-level security** (RLS) enforcement

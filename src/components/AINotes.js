@@ -135,10 +135,10 @@ export class AINotes {
                     <h1>AI Notes</h1>
                     <div class="notes-actions">
                         <div class="search-container">
-                            <input 
-                                type="text" 
-                                id="notes-search" 
-                                placeholder="Search notes..." 
+                            <input
+                                type="text"
+                                id="notes-search"
+                                placeholder="Search notes..."
                                 value="${this.searchQuery}"
                                 class="search-input"
                             >
@@ -427,16 +427,16 @@ export class AINotes {
                     .ai-notes-content {
                         flex-direction: column;
                     }
-                    
+
                     .notes-sidebar {
                         width: 100%;
                         height: 40vh;
                     }
-                    
+
                     .search-input {
                         width: 200px;
                     }
-                    
+
                     .notes-actions {
                         flex-direction: column;
                         gap: 0.5rem;
@@ -458,7 +458,7 @@ export class AINotes {
         }
 
         return this.notes.map(note => `
-            <div class="note-item ${this.currentNote?.id === note.id ? 'active' : ''}" 
+            <div class="note-item ${this.currentNote?.id === note.id ? 'active' : ''}"
                  data-note-id="${note.id}">
                 <div class="note-item-header">
                     <h3 class="note-title">${note.title}</h3>
@@ -477,7 +477,7 @@ export class AINotes {
 
     renderNoteEditor() {
         const note = this.currentNote;
-        
+
         return `
             <div class="note-editor">
                 <div class="editor-header">
@@ -489,10 +489,10 @@ export class AINotes {
                     </div>
                 </div>
 
-                <input 
-                    type="text" 
-                    id="note-title" 
-                    class="note-title-input" 
+                <input
+                    type="text"
+                    id="note-title"
+                    class="note-title-input"
                     placeholder="Note title..."
                     value="${note.title || ''}"
                 >
@@ -504,16 +504,16 @@ export class AINotes {
                     </div>
                 ` : ''}
 
-                <textarea 
-                    id="note-content" 
-                    class="note-content-input" 
+                <textarea
+                    id="note-content"
+                    class="note-content-input"
                     placeholder="Start writing your note..."
                 >${note.content || ''}</textarea>
 
-                <input 
-                    type="text" 
-                    id="note-tags" 
-                    class="note-tags-input" 
+                <input
+                    type="text"
+                    id="note-tags"
+                    class="note-tags-input"
                     placeholder="Tags (comma-separated)..."
                     value="${(note.tags || []).join(', ')}"
                 >
@@ -535,7 +535,7 @@ export class AINotes {
         // Search functionality
         const searchInput = document.getElementById('notes-search');
         const searchBtn = document.getElementById('search-btn');
-        
+
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 this.searchQuery = e.target.value;

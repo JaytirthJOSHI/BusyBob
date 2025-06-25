@@ -155,22 +155,22 @@
   .pomodoro-container {
     margin: 0 1rem;
   }
-  
+
   .timer-svg {
     width: 200px;
     height: 200px;
   }
-  
+
   .timer-controls {
     flex-wrap: wrap;
     gap: 0.5rem;
   }
-  
+
   .timer-controls button {
     flex: 1;
     min-width: 80px;
   }
-  
+
   .pomodoro-stats {
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
@@ -182,11 +182,11 @@
     width: 160px;
     height: 160px;
   }
-  
+
   .timer-text #timer-time {
     font-size: 2rem;
   }
-  
+
   .pomodoro-stats {
     grid-template-columns: 1fr;
   }

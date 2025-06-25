@@ -11,7 +11,7 @@ export class EnhancedAIAgent {
     this.toolRegistry = new ToolRegistry()
     this.collaborationHub = new AgentCollaborationHub()
     this.initialized = false
-    
+
     // Core agent capabilities
     this.capabilities = {
       reasoning: true,
@@ -21,7 +21,7 @@ export class EnhancedAIAgent {
       collaboration: true,
       learning: true
     }
-    
+
     this.initializeAgents()
     setTimeout(() => this.init(), 100)
   }
@@ -37,9 +37,9 @@ export class EnhancedAIAgent {
 
   async init() {
     if (this.initialized) return
-    
+
     console.log('🚀 Initializing Enhanced AI Agent System...')
-    
+
     // Initialize all subsystems
     await Promise.all([
       this.memorySystem.initialize(),
@@ -47,17 +47,17 @@ export class EnhancedAIAgent {
       this.toolRegistry.initialize(),
       this.collaborationHub.initialize()
     ])
-    
+
     // Initialize each agent
     for (const [name, agent] of this.agents) {
       await agent.initialize()
       console.log(`✅ ${name} agent initialized`)
     }
-    
+
     this.createEnhancedUI()
     this.attachEventListeners()
     this.initialized = true
-    
+
     console.log('🎯 Enhanced AI Agent System ready!')
   }
 
@@ -65,16 +65,16 @@ export class EnhancedAIAgent {
     try {
       // Step 1: Analyze the request
       const analysis = await this.analyzeRequest(userInput)
-      
+
       // Step 2: Create execution plan
       const plan = await this.planningSystem.createPlan(analysis)
-      
+
       // Step 3: Execute with multi-agent collaboration
       const result = await this.executeWithCollaboration(plan)
-      
+
       // Step 4: Learn from the interaction
       await this.memorySystem.recordInteraction(userInput, result)
-      
+
       return result
     } catch (error) {
       console.error('Error processing request:', error)
@@ -116,21 +116,21 @@ export class EnhancedAIAgent {
           </div>
           <button id="enhanced-ai-close">×</button>
         </div>
-        
+
         <div id="enhanced-ai-messages" class="enhanced-ai-messages"></div>
-        
+
         <div class="enhanced-ai-tools">
           <div class="active-tools" id="active-tools"></div>
           <div class="agent-thinking" id="agent-thinking"></div>
         </div>
-        
+
         <div class="enhanced-ai-input">
           <input type="text" id="enhanced-ai-input" placeholder="What can our AI team help you with?">
           <button id="enhanced-ai-send">Send</button>
         </div>
       </div>
     `
-    
+
     document.body.insertAdjacentHTML('beforeend', agentHTML)
   }
 
@@ -138,7 +138,7 @@ export class EnhancedAIAgent {
     document.getElementById('enhanced-ai-toggle')?.addEventListener('click', () => this.toggle())
     document.getElementById('enhanced-ai-close')?.addEventListener('click', () => this.close())
     document.getElementById('enhanced-ai-send')?.addEventListener('click', () => this.sendMessage())
-    
+
     document.getElementById('enhanced-ai-input')?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') this.sendMessage()
     })
@@ -148,11 +148,11 @@ export class EnhancedAIAgent {
     const input = document.getElementById('enhanced-ai-input')
     const message = input.value.trim()
     if (!message) return
-    
+
     input.value = ''
     this.addMessage('user', message)
     this.showThinking()
-    
+
     const response = await this.processRequest(message)
     this.hideThinking()
     this.addMessage('agent', response.content, response.metadata)
@@ -162,14 +162,14 @@ export class EnhancedAIAgent {
     const messagesDiv = document.getElementById('enhanced-ai-messages')
     const messageEl = document.createElement('div')
     messageEl.className = `message ${type}`
-    
+
     messageEl.innerHTML = `
       <div class="message-content">${content}</div>
       ${metadata.agents ? `<div class="message-agents">Collaborated: ${metadata.agents.join(', ')}</div>` : ''}
       ${metadata.tools ? `<div class="message-tools">Tools used: ${metadata.tools.join(', ')}</div>` : ''}
       ${metadata.reasoning ? `<div class="message-reasoning">${metadata.reasoning}</div>` : ''}
     `
-    
+
     messagesDiv.appendChild(messageEl)
     messagesDiv.scrollTop = messagesDiv.scrollHeight
   }
@@ -219,7 +219,7 @@ class AgentMemory {
       result,
       context: this.getCurrentContext()
     }
-    
+
     this.episodicMemory.push(interaction)
     await this.updateSemanticMemory(interaction)
     await this.saveToStorage()
@@ -230,7 +230,7 @@ class AgentMemory {
     const relevant = this.episodicMemory
       .filter(memory => this.calculateSimilarity(memory.input, input) > 0.7)
       .slice(-5)
-    
+
     return {
       recentInteractions: relevant,
       semanticConcepts: this.getRelevantConcepts(input),
@@ -302,13 +302,13 @@ class AgentMemory {
     try {
       const { data: { user } } = await auth.getCurrentUser()
       if (!user) return {}
-      
+
       const { data } = await supabase
         .from('user_metadata')
         .select('preferences')
         .eq('user_id', user.id)
         .single()
-      
+
       return data?.preferences || {}
     } catch (error) {
       return {}
@@ -350,7 +350,7 @@ class AgentPlanner {
         { agent: 'executor', action: 'create_task' }
       ]
     })
-    
+
     this.planTemplates.set('research_topic', {
       steps: [
         { agent: 'researcher', action: 'search_information' },
@@ -358,7 +358,7 @@ class AgentPlanner {
         { agent: 'planner', action: 'organize_results' }
       ]
     })
-    
+
     this.planTemplates.set('mood_analysis', {
       steps: [
         { agent: 'analyst', action: 'analyze_mood_patterns' },
@@ -377,11 +377,11 @@ class AgentPlanner {
   async createPlan(analysis) {
     const planType = this.determinePlanType(analysis)
     const template = this.planTemplates.get(planType)
-    
+
     if (!template) {
       return this.createAdHocPlan(analysis)
     }
-    
+
     return {
       type: planType,
       strategy: template.strategy || 'sequential',
@@ -395,11 +395,11 @@ class AgentPlanner {
 
   determinePlanType(analysis) {
     const { intent, entities, complexity } = analysis
-    
+
     if (intent.includes('create') && entities.includes('task')) return 'create_task'
     if (intent.includes('research') || intent.includes('find')) return 'research_topic'
     if (intent.includes('mood') || intent.includes('feeling')) return 'mood_analysis'
-    
+
     return 'general_assistance'
   }
 
@@ -478,19 +478,19 @@ class ToolRegistry {
     this.register('create_mood', new CreateMoodTool())
     this.register('get_moods', new GetMoodsTool())
     this.register('create_journal', new CreateJournalTool())
-    
+
     // Academic tools
     this.register('get_grades', new GetGradesTool())
     this.register('get_assignments', new GetAssignmentsTool())
-    
+
     // Music tools
     this.register('play_music', new PlayMusicTool())
     this.register('get_playlists', new GetPlaylistsTool())
-    
+
     // Research tools
     this.register('web_search', new WebSearchTool())
     this.register('analyze_text', new AnalyzeTextTool())
-    
+
     // Calendar tools
     this.register('get_schedule', new GetScheduleTool())
     this.register('add_event', new AddEventTool())
@@ -498,7 +498,7 @@ class ToolRegistry {
 
   register(name, tool) {
     this.tools.set(name, tool)
-    
+
     // Group tools by category
     const category = tool.category || 'general'
     if (!this.toolGroups.has(category)) {
@@ -522,7 +522,7 @@ class ToolRegistry {
       const { data: customTools } = await supabase
         .from('custom_tools')
         .select('*')
-      
+
       customTools?.forEach(toolData => {
         const tool = new CustomTool(toolData)
         this.register(toolData.name, tool)
@@ -553,7 +553,7 @@ class AgentCollaborationHub {
 
   async facilitateCollaboration(agents, task) {
     const collaborationId = this.generateCollaborationId()
-    
+
     const collaboration = {
       id: collaborationId,
       agents: new Set(agents.keys()),
@@ -562,30 +562,30 @@ class AgentCollaborationHub {
       messages: [],
       sharedContext: new Map()
     }
-    
+
     this.activeCollaborations.set(collaborationId, collaboration)
-    
+
     // Enable inter-agent communication
     for (const [name, agent] of agents) {
       agent.setCollaborationContext(collaboration)
     }
-    
+
     return collaborationId
   }
 
   async sendMessage(fromAgent, toAgent, message, collaborationId) {
     const collaboration = this.activeCollaborations.get(collaborationId)
     if (!collaboration) return
-    
+
     const messageObj = {
       from: fromAgent,
       to: toAgent,
       message,
       timestamp: Date.now()
     }
-    
+
     collaboration.messages.push(messageObj)
-    
+
     // Notify receiving agent
     const receivingAgent = this.findAgent(toAgent)
     if (receivingAgent) {
@@ -697,11 +697,11 @@ class ExecutorAgent extends BaseAgent {
 
   async create_task(context) {
     const taskData = this.extractTaskData(context)
-    
+
     try {
       const { data: { user } } = await auth.getCurrentUser()
       if (!user) throw new Error('User not authenticated')
-      
+
       const { data, error } = await supabase
         .from('tasks')
         .insert({
@@ -711,9 +711,9 @@ class ExecutorAgent extends BaseAgent {
           priority: taskData.priority || 'medium',
           created_at: new Date().toISOString()
         })
-      
+
       if (error) throw error
-      
+
       return {
         agent: this.name,
         action: 'create_task',
@@ -785,16 +785,16 @@ class AnalystAgent extends BaseAgent {
 
   async analyze(analysis) {
     const { input, context, capabilities } = analysis
-    
+
     // Analyze intent
     const intent = this.extractIntent(input)
-    
+
     // Extract entities
     const entities = this.extractEntities(input)
-    
+
     // Determine complexity
     const complexity = this.assessComplexity(input, context)
-    
+
     return {
       intent,
       entities,
@@ -811,16 +811,16 @@ class AnalystAgent extends BaseAgent {
       analyze: ['analyze', 'check', 'review', 'examine'],
       help: ['help', 'assist', 'support']
     }
-    
+
     const words = input.toLowerCase().split(' ')
     const detectedIntents = []
-    
+
     for (const [intent, keywords] of Object.entries(intentKeywords)) {
       if (keywords.some(keyword => words.includes(keyword))) {
         detectedIntents.push(intent)
       }
     }
-    
+
     return detectedIntents
   }
 
@@ -833,32 +833,32 @@ class AnalystAgent extends BaseAgent {
       grade: ['grade', 'score', 'mark'],
       calendar: ['calendar', 'schedule', 'event']
     }
-    
+
     const words = input.toLowerCase().split(' ')
     const detectedEntities = []
-    
+
     for (const [entity, keywords] of Object.entries(entityTypes)) {
       if (keywords.some(keyword => words.includes(keyword))) {
         detectedEntities.push(entity)
       }
     }
-    
+
     return detectedEntities
   }
 
   assessComplexity(input, context) {
     let complexity = 0
-    
+
     // Word count factor
     complexity += input.split(' ').length * 0.1
-    
+
     // Context factor
     complexity += context.recentInteractions?.length * 0.2 || 0
-    
+
     // Multiple entities factor
     const entities = this.extractEntities(input)
     complexity += entities.length * 0.3
-    
+
     if (complexity < 1) return 'low'
     if (complexity < 3) return 'medium'
     return 'high'
@@ -873,19 +873,19 @@ class AnalystAgent extends BaseAgent {
 
   generateRecommendations(intent, entities, context) {
     const recommendations = []
-    
+
     if (intent.includes('create') && entities.includes('task')) {
       recommendations.push('Use task creation workflow')
     }
-    
+
     if (entities.includes('mood')) {
       recommendations.push('Consider mood tracking patterns')
     }
-    
+
     if (context.userPreferences?.preferredAgents) {
       recommendations.push(`Prefer agents: ${context.userPreferences.preferredAgents.join(', ')}`)
     }
-    
+
     return recommendations
   }
 
@@ -935,10 +935,10 @@ class CoordinatorAgent extends BaseAgent {
   async orchestrate(plan, agents) {
     const { strategy, steps } = plan
     const planner = this.aiSystem.planningSystem
-    
+
     try {
       let results
-      
+
       switch (strategy) {
         case 'sequential':
           results = await planner.executeSequential(steps, agents)
@@ -952,7 +952,7 @@ class CoordinatorAgent extends BaseAgent {
         default:
           results = await planner.executeSequential(steps, agents)
       }
-      
+
       return this.synthesizeResults(results, plan)
     } catch (error) {
       return {
@@ -966,20 +966,20 @@ class CoordinatorAgent extends BaseAgent {
   synthesizeResults(results, plan) {
     const successfulResults = results.filter(r => !r.error)
     const errors = results.filter(r => r.error)
-    
+
     let content = 'Task completed successfully! Here\'s what our AI team accomplished:\n\n'
-    
+
     successfulResults.forEach((result, index) => {
       content += `✅ ${result.agent}: ${result.result}\n`
     })
-    
+
     if (errors.length > 0) {
       content += '\n⚠️ Some issues occurred:\n'
       errors.forEach(error => {
         content += `❌ ${error.agent}: ${error.error}\n`
       })
     }
-    
+
     return {
       content,
       metadata: {
@@ -1192,5 +1192,5 @@ class CustomTool {
     } catch (error) {
       return { success: false, error: error.message }
     }
-  } 
+  }
 }

@@ -155,7 +155,7 @@ export class Settings {
                     <div class="p-6">
                         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Connected Accounts</h2>
                         <p class="text-gray-600 dark:text-gray-400 mb-6">Connect your accounts to sync data and enhance your experience.</p>
-                        
+
                         <!-- StudentVue Connection -->
                         <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
                             ${this.renderStudentVueConnection()}
@@ -217,7 +217,7 @@ export class Settings {
                     <div class="p-6">
                         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Interface Customization</h2>
                         <p class="text-gray-600 dark:text-gray-400 mb-6">Customize which tabs and sections are visible in your app.</p>
-                        
+
                         <div class="space-y-4">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">Visible Tabs</h3>
                             <div class="grid grid-cols-2 gap-4">
@@ -250,7 +250,7 @@ export class Settings {
                                     <span class="text-sm text-gray-700 dark:text-gray-300">🤖 AI Notes</span>
                                 </label>
                             </div>
-                            
+
                             <div class="mt-6">
                                 <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">Home Page Sections</h3>
                                 <div class="grid grid-cols-2 gap-4">
@@ -272,7 +272,7 @@ export class Settings {
                                     </label>
                                 </div>
                             </div>
-                            
+
                             <div class="mt-6">
                                 <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-3">🛠️ Toolbox Tools</h3>
                                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Choose which tools appear in your toolbox</p>
@@ -295,7 +295,7 @@ export class Settings {
                                     </label>
                                 </div>
                             </div>
-                            
+
                             <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                                 <button id="save-interface-settings" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                                     Save Interface Settings
@@ -321,11 +321,11 @@ export class Settings {
                                 <div class="flex items-center space-x-2">
                                     <button id="settings-theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
                                         <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
                                         </svg>
                                         <svg class="w-6 h-6 text-gray-800 dark:text-gray-200 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                                         </svg>
                                     </button>
@@ -605,15 +605,15 @@ export class Settings {
                         ${userAge !== null ? `<span class="text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">Age: ${userAge}</span>` : ''}
                     </div>
                     <div class="flex items-center space-x-3">
-                        <input 
-                            type="date" 
-                            id="kid-mode-dob" 
+                        <input
+                            type="date"
+                            id="kid-mode-dob"
                             class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             value="${dateOfBirth || ''}"
                             max="${new Date().toISOString().split('T')[0]}"
                         >
-                        <button 
-                            id="save-dob-btn" 
+                        <button
+                            id="save-dob-btn"
                             class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
                         >
                             Save
@@ -626,7 +626,7 @@ export class Settings {
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="font-medium text-gray-900 dark:text-white flex items-center">
-                                Kid Mode 
+                                Kid Mode
                                 ${isEnabled ? '<span class="ml-2 text-green-600 dark:text-green-400">✓ Active</span>' : ''}
                             </h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -635,15 +635,15 @@ export class Settings {
                         </div>
                         <div class="flex items-center space-x-2">
                             ${isEnabled ? `
-                                <button 
-                                    id="disable-kid-mode-btn" 
+                                <button
+                                    id="disable-kid-mode-btn"
                                     class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
                                 >
                                     Disable
                                 </button>
                             ` : `
-                                <button 
-                                    id="enable-kid-mode-btn" 
+                                <button
+                                    id="enable-kid-mode-btn"
                                     class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
                                     ${!dateOfBirth || (userAge && userAge >= 13) ? 'disabled' : ''}
                                 >
@@ -712,7 +712,7 @@ export class Settings {
             if (event.target.id === 'disconnect-spotify') this.disconnectSpotify();
             if (event.target.id === 'privacy-policy-link') this.showPrivacyPolicy();
             if (event.target.id === 'terms-of-service-link') this.showTermsOfService();
-            
+
             // Kid Mode event listeners
             if (event.target.id === 'save-dob-btn') this.saveDateOfBirth();
             if (event.target.id === 'enable-kid-mode-btn') this.enableKidMode();
@@ -761,11 +761,11 @@ export class Settings {
         // Outlook Calendar listeners
         document.getElementById('connect-outlook-btn')?.addEventListener('click', () => this.connectOutlook())
         document.getElementById('disconnect-outlook-btn')?.addEventListener('click', () => this.disconnectOutlook())
-        
+
         // Interface customization listeners
         document.getElementById('save-interface-settings')?.addEventListener('click', () => this.saveInterfaceSettings())
         document.getElementById('reset-interface-settings')?.addEventListener('click', () => this.resetInterfaceSettings())
-        
+
         // Toolbox settings
         document.getElementById('toolbox-academic-hub')?.addEventListener('change', (e) => {
             if (window.toolbox) {
@@ -847,7 +847,7 @@ export class Settings {
             this.handleStudentVueConnection(e.target, modal);
         });
     }
-    
+
     setupDistrictSearch(modal) {
         const searchInput = modal.querySelector('#district-search');
         const urlInput = modal.querySelector('#district-url');
@@ -859,7 +859,7 @@ export class Settings {
             if (query.length < 3) return;
 
             const filteredDistricts = districts.filter(d => d.name.toLowerCase().includes(query));
-            
+
             filteredDistricts.forEach(d => {
                 const div = document.createElement('div');
                 div.textContent = d.name;
@@ -927,9 +927,9 @@ export class Settings {
             type === 'error' ? 'bg-red-500' : 'bg-blue-500'
         }`
         messageEl.textContent = message
-        
+
         document.body.appendChild(messageEl)
-        
+
         setTimeout(() => {
             if (messageEl.parentNode) {
                 messageEl.parentNode.removeChild(messageEl)
@@ -964,7 +964,7 @@ export class Settings {
         try {
             const response = await fetch('http://worldtimeapi.org/api/timezone');
             if (!response.ok) throw new Error('Failed to fetch timezones');
-            
+
             const timezones = await response.json();
             const savedTimezone = localStorage.getItem('timezone');
 
@@ -990,7 +990,7 @@ export class Settings {
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
-                
+
                 <form id="canvas-connection-form">
                     <!-- Step 1: Get URL -->
                     <div id="canvas-step-1" class="step active">
@@ -1119,7 +1119,7 @@ export class Settings {
                 .from('canvas_credentials')
                 .delete()
                 .eq('user_id', user.id)
-            
+
             if (error) throw error
 
             this.showMessage('Disconnected from Canvas.', 'info')
@@ -1186,13 +1186,13 @@ export class Settings {
     async connectSpotify() {
         try {
             console.log('🎵 Connecting to Spotify from settings...')
-            
+
             // Generate a random state for security
             const state = Math.random().toString(36).substring(2, 15)
             localStorage.setItem('spotify_settings_state', state)
 
             const scope = 'user-read-email user-read-private user-read-playback-state user-modify-playback-state user-read-currently-playing streaming user-library-read user-top-read user-read-recently-played playlist-read-private'
-            
+
             const authUrl = new URL('https://accounts.spotify.com/authorize')
             authUrl.searchParams.append('response_type', 'code')
             authUrl.searchParams.append('client_id', import.meta.env.VITE_SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID')
@@ -1211,7 +1211,7 @@ export class Settings {
     async disconnectSpotify() {
         try {
             console.log('🎵 Disconnecting from Spotify...')
-            
+
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) throw new Error('User not authenticated')
 
@@ -1227,7 +1227,7 @@ export class Settings {
             // Update local state
             this.spotifyConnected = false
             this.spotifyProfile = null
-            
+
             // Re-render the connected accounts section
             this.init()
 
@@ -1272,7 +1272,7 @@ export class Settings {
             await this.loadKidModeSettings()
             this.render()
             this.showMessage('Kid Mode enabled successfully', 'success')
-            
+
             // Reload the page to apply kid mode styling
             setTimeout(() => {
                 window.location.reload()
@@ -1294,26 +1294,26 @@ export class Settings {
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white">🔒 Disable Kid Mode</h2>
                         <button id="close-disable-modal-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-2xl">&times;</button>
                     </div>
-                    
+
                     <div class="mb-4">
                         <p class="text-gray-700 dark:text-gray-300 mb-4">
                             To disable Kid Mode, please enter the admin code:
                         </p>
-                        
+
                         <div class="space-y-4">
                             <div>
                                 <label for="admin-code-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Admin Code
                                 </label>
-                                <input 
-                                    type="password" 
-                                    id="admin-code-input" 
+                                <input
+                                    type="password"
+                                    id="admin-code-input"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-center text-lg font-mono"
                                     placeholder="Enter 4-digit code"
                                     maxlength="4"
                                 >
                             </div>
-                            
+
                             <div class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3">
                                 <p class="text-sm text-yellow-800 dark:text-yellow-200">
                                     <strong>Warning:</strong> Disabling Kid Mode will remove all safety restrictions and give access to all features.
@@ -1321,16 +1321,16 @@ export class Settings {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="flex justify-end space-x-3">
-                        <button 
-                            id="cancel-disable-btn" 
+                        <button
+                            id="cancel-disable-btn"
                             class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg text-sm font-medium"
                         >
                             Cancel
                         </button>
-                        <button 
-                            id="confirm-disable-btn" 
+                        <button
+                            id="confirm-disable-btn"
                             class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
                         >
                             Disable Kid Mode
@@ -1339,24 +1339,24 @@ export class Settings {
                 </div>
             </div>
         `
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHtml)
-        
+
         const modal = document.getElementById(modalId)
         const adminCodeInput = modal.querySelector('#admin-code-input')
-        
+
         // Focus on the input
         adminCodeInput.focus()
-        
+
         // Event listeners
         modal.querySelector('#close-disable-modal-btn').addEventListener('click', () => modal.remove())
         modal.querySelector('#cancel-disable-btn').addEventListener('click', () => modal.remove())
-        
+
         modal.querySelector('#confirm-disable-btn').addEventListener('click', () => {
             this.disableKidMode(adminCodeInput.value)
             modal.remove()
         })
-        
+
         // Enter key support
         adminCodeInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -1364,7 +1364,7 @@ export class Settings {
                 modal.remove()
             }
         })
-        
+
         // Close modal on outside click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
@@ -1398,7 +1398,7 @@ export class Settings {
         try {
             const status = await db.getStatus()
             const diagnostics = await db.getDiagnostics()
-            
+
             const statusContainer = document.getElementById('offline-storage-status')
             if (!statusContainer) return
 
@@ -1410,7 +1410,7 @@ export class Settings {
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
             }
 
-            const connectionStatus = status.isOnline ? 
+            const connectionStatus = status.isOnline ?
                 '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Online</span>' :
                 '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Offline</span>'
 
@@ -1501,10 +1501,10 @@ export class Settings {
                 try {
                     forceSyncBtn.disabled = true
                     forceSyncBtn.textContent = 'Syncing...'
-                    
+
                     await db.syncOfflineData()
                     await this.loadOfflineStorageStatus() // Refresh status
-                    
+
                     this.showMessage('Sync completed successfully', 'success')
                 } catch (error) {
                     console.error('Manual sync failed:', error)
@@ -1525,10 +1525,10 @@ export class Settings {
                     try {
                         clearDataBtn.disabled = true
                         clearDataBtn.textContent = 'Clearing...'
-                        
+
                         await db.clearCurrentUserData()
                         await this.loadOfflineStorageStatus() // Refresh status
-                        
+
                         this.showMessage('Offline data cleared successfully', 'success')
                     } catch (error) {
                         console.error('Failed to clear offline data:', error)
@@ -1562,25 +1562,25 @@ export class Settings {
                 academicHub: document.getElementById('tab-academic-hub')?.checked ?? true,
                 music: document.getElementById('tab-music')?.checked ?? true,
                 aiNotes: document.getElementById('tab-ai-notes')?.checked ?? true,
-                
+
                 // Home page sections
                 upcomingTasks: document.getElementById('section-upcoming-tasks')?.checked ?? true,
                 moodLogging: document.getElementById('section-mood-logging')?.checked ?? true,
                 pomodoroWidget: document.getElementById('section-pomodoro-widget')?.checked ?? true,
                 statistics: document.getElementById('section-statistics')?.checked ?? true,
-                
+
                 // Toolbox settings
                 toolboxAcademicHub: document.getElementById('toolbox-academic-hub')?.checked ?? true,
                 toolboxAiNotes: document.getElementById('toolbox-ai-notes')?.checked ?? true,
                 toolboxMusic: document.getElementById('toolbox-music')?.checked ?? true,
                 toolboxDevTools: document.getElementById('toolbox-dev-tools')?.checked ?? true
             }
-            
+
             localStorage.setItem('interface-settings', JSON.stringify(settings))
-            
+
             // Apply settings immediately
             this.applyInterfaceSettings(settings)
-            
+
             // Update toolbox visibility
             if (window.toolbox) {
                 window.toolbox.setToolVisibility('academic-hub', settings.toolboxAcademicHub)
@@ -1588,7 +1588,7 @@ export class Settings {
                 window.toolbox.setToolVisibility('music', settings.toolboxMusic)
                 window.toolbox.setToolVisibility('dev-tools', settings.toolboxDevTools)
             }
-            
+
             this.showMessage('Interface settings saved successfully!', 'success')
         } catch (error) {
             console.error('Error saving interface settings:', error)
@@ -1608,20 +1608,20 @@ export class Settings {
                 academicHub: true,
                 music: true,
                 aiNotes: true,
-                
+
                 // Home page sections - all enabled by default
                 upcomingTasks: true,
                 moodLogging: true,
                 pomodoroWidget: true,
                 statistics: true,
-                
+
                 // Toolbox settings - all enabled by default
                 toolboxAcademicHub: true,
                 toolboxAiNotes: true,
                 toolboxMusic: true,
                 toolboxDevTools: true
             }
-            
+
             let el;
             el = document.getElementById('tab-home'); if (el) el.checked = defaultSettings.home;
             el = document.getElementById('tab-tasks'); if (el) el.checked = defaultSettings.tasks;
@@ -1638,7 +1638,7 @@ export class Settings {
             el = document.getElementById('toolbox-ai-notes'); if (el) el.checked = defaultSettings.toolboxAiNotes;
             el = document.getElementById('toolbox-music'); if (el) el.checked = defaultSettings.toolboxMusic;
             el = document.getElementById('toolbox-dev-tools'); if (el) el.checked = defaultSettings.toolboxDevTools;
-            
+
             // Save and apply
             localStorage.setItem('interface-settings', JSON.stringify(defaultSettings))
             this.applyInterfaceSettings(defaultSettings)
@@ -1654,7 +1654,7 @@ export class Settings {
                 window.toolbox.saveToolVisibility()
                 window.toolbox.updateToolVisibility()
             }
-            
+
             this.showMessage('Interface settings reset to default!', 'success')
         } catch (error) {
             console.error('Error resetting interface settings:', error)
@@ -1666,7 +1666,7 @@ export class Settings {
         // This method is called when settings are saved or reset
         // The actual application of settings is handled by the individual components
         // and the toolbox system
-        
+
         // Dispatch event to notify other components of settings change
         window.dispatchEvent(new CustomEvent('interfaceSettingsChanged', { detail: settings }))
     }

@@ -53,7 +53,7 @@
     ],
     "featureList": [
       "Smart Task Management with Priority Levels",
-      "Real-time Canvas LMS Integration", 
+      "Real-time Canvas LMS Integration",
       "StudentVue Grade Tracking",
       "AI-Powered Academic Assistant",
       "Mood Tracking & Wellness Analytics",
@@ -82,7 +82,7 @@
         }
       },
       {
-        "@type": "Question", 
+        "@type": "Question",
         "name": "Does BusyBob integrate with Canvas and StudentVue?",
         "acceptedAnswer": {
           "@type": "Answer",
@@ -93,7 +93,7 @@
         "@type": "Question",
         "name": "How does the Spotify integration work?",
         "acceptedAnswer": {
-          "@type": "Answer", 
+          "@type": "Answer",
           "text": "Connect your Spotify account to get mood-based playlist recommendations, focus session music, and productivity-enhancing study soundtracks. The AI learns your preferences over time."
         }
       },
@@ -129,7 +129,7 @@
         "name": "Canvas or StudentVue school account"
       },
       {
-        "@type": "HowToSupply", 
+        "@type": "HowToSupply",
         "name": "Spotify account (optional)"
       },
       {
@@ -182,7 +182,7 @@
     "areaServed": "Worldwide",
     "knowsAbout": [
       "Student Productivity",
-      "Academic Management", 
+      "Academic Management",
       "Canvas LMS Integration",
       "StudentVue Integration",
       "Educational Technology",
@@ -190,4 +190,4 @@
       "Task Management"
     ]
   }
-} 
+}

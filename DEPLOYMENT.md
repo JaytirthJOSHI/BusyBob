@@ -256,4 +256,4 @@ curl -X POST https://busybob.site/api/studentvue/health \
 
 ---
 
-**Need Help?** Check the logs and error messages for specific issues. The improved Canvas API should provide better error handling and debugging information. 
+**Need Help?** Check the logs and error messages for specific issues. The improved Canvas API should provide better error handling and debugging information.

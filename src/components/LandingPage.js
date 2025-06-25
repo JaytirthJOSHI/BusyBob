@@ -39,7 +39,7 @@ export class LandingPage {
                                         <p class="mt-3 text-base text-gray-500 dark:text-gray-300 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
                                             The productivity powerhouse for busy students. Track tasks, monitor your mood, and maintain a journal—all in one place. Because busy students need smart solutions.
                                         </p>
-                                        
+
                                         <!-- CTA Buttons -->
                                         <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start space-y-3 sm:space-y-0 sm:space-x-4">
                                             <button id="hero-signup-btn" class="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-xl">

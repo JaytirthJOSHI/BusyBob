@@ -14,7 +14,7 @@
 
     <script type="module">
         const statusDiv = document.getElementById('status');
-        
+
         function log(message, type = 'info') {
             const div = document.createElement('div');
             div.className = `p-2 mb-2 rounded ${type === 'error' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`;
@@ -24,23 +24,23 @@
 
         try {
             log('Starting debug...');
-            
+
             // Test environment variables
             log(`VITE_SUPABASE_URL: ${import.meta.env.VITE_SUPABASE_URL ? 'Set' : 'Missing'}`);
             log(`VITE_SUPABASE_ANON_KEY: ${import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Set' : 'Missing'}`);
-            
+
             // Test imports one by one
             log('Testing imports...');
-            
+
             import('./src/lib/supabase.js').then(() => {
                 log('✅ Supabase import successful');
-                
+
                 import('./src/components/AuthPages.js').then(() => {
                     log('✅ AuthPages import successful');
-                    
+
                     import('./src/components/LandingPage.js').then(() => {
                         log('✅ LandingPage import successful');
-                        
+
                         import('./src/utils/helpers.js').then(() => {
                             log('✅ Helpers import successful');
                             log('🎉 All imports working! The issue might be in main.js initialization.');
@@ -56,7 +56,7 @@
             }).catch(err => {
                 log(`❌ Supabase import failed: ${err.message}`, 'error');
             });
-            
+
         } catch (error) {
             log(`❌ Debug error: ${error.message}`, 'error');
         }

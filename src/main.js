@@ -42,7 +42,7 @@ let multiAgentSystem = null
 const moodManager = {
     feelings: [],
     lastCheckedDate: null,
-    
+
     async init() {
         await this.load()
         this.ui.render()
@@ -68,7 +68,7 @@ const moodManager = {
             }
             const { data, error } = await db.createFeeling(feelingData)
             if (error) throw error
-            
+
             await this.load() // Reload all feelings
             this.ui.render()
             ui.showMessage("Mood logged successfully!", "success")
@@ -84,13 +84,13 @@ const moodManager = {
             }
 
             if (window.loadHomeData) window.loadHomeData()
-            
+
         } catch (error) {
             console.error("Error logging mood:", error)
             ui.showMessage("Failed to save mood.", "error")
         }
     },
-    
+
     checkPrompt() {
         const today = new Date().toDateString()
         if (this.lastCheckedDate === today) return
@@ -144,7 +144,7 @@ const moodManager = {
                 </div>
             `
         },
-        
+
         renderMoodButton(rating) {
             const emojis = ['😞', '😕', '😐', '🙂', '😄']
             return `
@@ -219,7 +219,7 @@ const moodManager = {
                     saveBtn.disabled = false
                 })
             })
-            
+
             saveBtn.addEventListener('click', async () => {
                 if (selectedRating > 0) {
                     const yesterday = new Date()
@@ -245,13 +245,13 @@ document.addEventListener('DOMContentLoaded', function() {
 async function initializeApp() {
     try {
         console.log('🔧 Starting app initialization...')
-        
+
         // Check for direct URL access to legal pages
         const path = window.location.pathname
         if (path === '/privacy-policy' || path === '/terms-of-service') {
             const page = path === '/privacy-policy' ? 'privacy-policy' : 'terms-of-service'
             console.log(`📄 Direct access to ${page} detected`)
-            
+
             // Initialize components needed for legal pages
                     console.log('📦 Creating components...')
         authPages = new AuthPages()
@@ -264,34 +264,34 @@ async function initializeApp() {
         settings = new Settings(calendar)
         privacyPolicy = new PrivacyPolicy()
         termsOfService = new TermsOfService()
-            
+
             // Initialize theme
             console.log('🎨 Initializing theme...')
             theme.initialize()
-            
+
             // Set up theme toggle
             console.log('🌙 Setting up theme toggle...')
             document.getElementById('theme-toggle').addEventListener('click', theme.toggle)
-            
+
             // Show main app and navigate to legal page
             await showMainApp()
             setTimeout(() => {
                 showPage(page)
                 console.log(`✅ Navigated to ${page} page`)
             }, 100)
-            
+
             // Set up event listeners
             setupFormListeners()
             setupNavigationListeners()
-            
+
             console.log('🎉 Legal page initialization complete!')
             return
         }
-        
+
         // Initialize theme
         console.log('🎨 Initializing theme...')
         theme.initialize()
-        
+
         // Initialize components
         console.log('📦 Creating components...')
         authPages = new AuthPages()
@@ -304,7 +304,7 @@ async function initializeApp() {
         privacyPolicy = new PrivacyPolicy()
         termsOfService = new TermsOfService()
         console.log('✅ Components created successfully')
-        
+
         // Initialize gamification systems
         console.log('🎮 Initializing gamification systems...')
         try {
@@ -320,7 +320,7 @@ async function initializeApp() {
         } catch (gameError) {
             console.error('❌ Error initializing gamification systems:', gameError)
         }
-        
+
         // Initialize Enhanced AI Agent
         console.log('🤖 Initializing Enhanced AI Agent...')
         try {
@@ -331,11 +331,11 @@ async function initializeApp() {
         } catch (aiError) {
             console.error('❌ Error initializing AI Agent:', aiError)
         }
-        
+
         // Set up theme toggle
         console.log('🌙 Setting up theme toggle...')
         document.getElementById('theme-toggle').addEventListener('click', theme.toggle)
-        
+
         // Check for Spotify auth completion
         const urlParams = new URLSearchParams(window.location.search)
         if (urlParams.get('spotify_auth') === 'success') {
@@ -347,11 +347,11 @@ async function initializeApp() {
         // Check authentication state
         console.log('🔐 Checking authentication state...')
         const { data: { user } } = await auth.getCurrentUser()
-        
+
         if (user) {
             console.log('👤 User is authenticated, showing main app')
             currentUser = user
-            
+
             // Refresh offline storage session for existing user
             if (window.offlineStorage) {
                 try {
@@ -364,25 +364,25 @@ async function initializeApp() {
                     console.warn('Failed to refresh offline storage session for existing user:', error)
                 }
             }
-            
+
             // Initialize Kid Mode
             console.log('🛡️ Initializing Kid Mode...')
             await kidMode.init()
             await applyKidModeStyles()
-            
+
             // Initialize Enhanced Multi-Agent System
             console.log('🤖 Initializing Enhanced Multi-Agent System...')
             multiAgentSystem = new MultiAgentSystem()
             await multiAgentSystem.init()
-            
+
             // Initialize Multi-Agent System Widgets
             console.log('🎨 Initializing Multi-Agent System Widgets...')
             window.multiAgentWidgets = new MultiAgentWidgets(multiAgentSystem)
-            
+
             // Initialize Toolbox
             console.log('🛠️ Initializing Toolbox...')
             window.toolbox.init()
-            
+
             showMainApp()
         } else {
             console.log('🏠 No user found, showing landing page')
@@ -394,7 +394,7 @@ async function initializeApp() {
             console.log('Auth state change:', event, session)
             if (event === 'SIGNED_IN' && session) {
                 currentUser = session.user
-                
+
                 // Refresh offline storage session
                 if (window.offlineStorage && currentUser) {
                     try {
@@ -404,17 +404,17 @@ async function initializeApp() {
                         console.warn('Failed to refresh offline storage session:', error)
                     }
                 }
-                
+
                 // Initialize Kid Mode for new session
                 console.log('🛡️ Initializing Kid Mode for new session...')
                 await kidMode.init()
                 await applyKidModeStyles()
-                
+
                 // Initialize Enhanced Multi-Agent System for new session
                 console.log('🤖 Initializing Enhanced Multi-Agent System for new session...')
                 multiAgentSystem = new MultiAgentSystem()
                 await multiAgentSystem.init()
-                
+
                 // Don't auto-redirect - let user choose when to enter the app
                 console.log('User signed in:', currentUser.email)
             } else if (event === 'SIGNED_OUT') {
@@ -427,7 +427,7 @@ async function initializeApp() {
         document.addEventListener('showSignup', () => {
             showAuthPages('signup')
         })
-        
+
         document.addEventListener('showLogin', () => {
             showAuthPages('login')
         })
@@ -443,20 +443,20 @@ async function initializeApp() {
 
         // Set up form listeners
         setupFormListeners()
-        
+
         // Set up navigation listeners
         setupNavigationListeners()
-        
+
         // Initialize calendar
         calendar = new Calendar('calendar-container', onDateSelect)
-        
+
         // Update current date
         updateCurrentDate()
-        
+
         // Start live clock
         updateLiveClock()
         setInterval(updateLiveClock, 1000)
-        
+
         // Listen for demo login event
         document.addEventListener('demoLogin', async () => {
             // Demo credentials (should match a user in your Supabase or be created on the fly)
@@ -474,10 +474,10 @@ async function initializeApp() {
                 } else if (error) {
                     throw error
                 }
-                
+
                 // Get the session for demo user
                 const { data: { session } } = await auth.getSession()
-                
+
                 // Refresh offline storage session for demo user
                 if (window.offlineStorage && session) {
                     try {
@@ -487,16 +487,16 @@ async function initializeApp() {
                         console.warn('Failed to refresh offline storage session for demo user:', refreshError)
                     }
                 }
-                
+
                 // Ensure user record exists in users table
                 await db.ensureUser()
-                
+
                 // Populate demo data
                 await db.populateDemoData()
-                
+
                 // Show main app
                 showMainApp()
-                
+
                 // Load data after a short delay to ensure demo data is processed
                 setTimeout(async () => {
                     try {
@@ -507,15 +507,15 @@ async function initializeApp() {
                         ui.showMessage('Demo data loaded, but some items may not appear. Please refresh if needed.', 'warning')
                     }
                 }, 1000)
-                
+
             } catch (err) {
                 console.error('Demo login error:', err)
                 ui.showMessage('Demo login failed: ' + err.message, 'error')
             }
         })
-        
+
         console.log('🎉 App initialization complete!')
-        
+
         // Add global debug function for offline storage
         window.checkOfflineStorageStatus = () => {
             if (window.offlineStorage) {
@@ -527,7 +527,7 @@ async function initializeApp() {
                 return null
             }
         }
-        
+
         // Add global function for Multi-Agent System
         window.getMultiAgentSystemStatus = () => {
             if (multiAgentSystem) {
@@ -539,7 +539,7 @@ async function initializeApp() {
                 return null
             }
         }
-        
+
         // Add global function to test Multi-Agent System
         window.testMultiAgentSystem = async function(prompt) {
             try {
@@ -548,34 +548,34 @@ async function initializeApp() {
                     ui.showMessage('AI system not ready. Please refresh the page.', 'error')
                     return
                 }
-                
+
                 console.log('🤖 Testing multi-agent system with prompt:', prompt)
-                
+
                 // Show loading state
                 ui.showMessage('🤖 AI team is working on your request...', 'info')
-                
+
                 const result = await window.multiAgentSystem.processRequest(prompt)
-                
+
                 console.log('✅ Multi-agent system result:', result)
-                
+
                 // Show result in a nice format
-                const message = result.success 
+                const message = result.success
                     ? `✅ ${result.response}`
                     : `❌ ${result.error || 'Something went wrong'}`
-                
+
                 ui.showMessage(message, result.success ? 'success' : 'error')
-                
+
                 // Update metrics
                 if (window.multiAgentWidgets) {
                     window.multiAgentWidgets.updateMetrics()
                 }
-                
+
             } catch (error) {
                 console.error('❌ Error testing multi-agent system:', error)
                 ui.showMessage('Error testing AI system. Please try again.', 'error')
             }
         }
-        
+
     } catch (error) {
         console.error('❌ Error during app initialization:', error)
         // Show error message to user
@@ -612,7 +612,7 @@ function setupFormListeners() {
             handleReflectionSubmit(e)
         }
     })
-    
+
     // Sign out button (exists in main app)
     document.addEventListener('click', (e) => {
         if (e.target.id === 'sign-out-btn') {
@@ -623,11 +623,11 @@ function setupFormListeners() {
             handleSpotifyAuth()
         }
     })
-    
+
     // Journal character counter
     const journalContent = document.getElementById('journal-content')
     const charCount = document.getElementById('journal-char-count')
-    
+
     if (journalContent && charCount) {
         journalContent.addEventListener('input', function() {
             charCount.textContent = this.value.length
@@ -641,7 +641,7 @@ function setupNavigationListeners() {
         const { page } = e.detail
         showPage(page)
     })
-    
+
     // Quick action buttons
     document.addEventListener('click', (e) => {
         const quickActionBtn = e.target.closest('.quick-action-btn')
@@ -664,14 +664,14 @@ function setupNavigationListeners() {
 // Authentication functions
 async function handleLogin(event) {
     event.preventDefault()
-    
+
     const email = document.getElementById('login-email').value
     const password = document.getElementById('login-password').value
-    
+
     try {
         const { data, error } = await auth.signIn(email, password)
         if (error) throw error
-        
+
         // Refresh offline storage session after successful login
         if (window.offlineStorage && data.session) {
             try {
@@ -681,7 +681,7 @@ async function handleLogin(event) {
                 console.warn('Failed to refresh offline storage session after login:', refreshError)
             }
         }
-        
+
         showSignInSuccess()
     } catch (error) {
         console.error('Login error:', error)
@@ -709,26 +709,26 @@ function showSignInSuccess() {
                 <button id="continue-to-dashboard" class="btn-gradient w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                     Continue to Dashboard →
                 </button>
-                
+
                 <button id="back-to-home" class="w-full flex justify-center py-3 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
                     ← Back to Home
                 </button>
             </div>
         </div>
     `
-    
+
     // Add event listeners after the HTML is inserted
     setTimeout(() => {
         const continueBtn = document.getElementById('continue-to-dashboard')
         const backBtn = document.getElementById('back-to-home')
-        
+
         if (continueBtn) {
             continueBtn.addEventListener('click', () => {
                 console.log('Continue to dashboard clicked')
                 showMainApp()
             })
         }
-        
+
         if (backBtn) {
             backBtn.addEventListener('click', () => {
                 console.log('Back to home clicked')
@@ -740,15 +740,15 @@ function showSignInSuccess() {
 
 async function handleSignup(event) {
     event.preventDefault()
-    
+
     const email = document.getElementById('signup-email').value
     const password = document.getElementById('signup-password').value
     const name = document.getElementById('signup-name').value
-    
+
     try {
         const { data, error } = await auth.signUp(email, password, name)
         if (error) throw error
-        
+
         // Refresh offline storage session after successful signup
         if (window.offlineStorage && data.session) {
             try {
@@ -758,7 +758,7 @@ async function handleSignup(event) {
                 console.warn('Failed to refresh offline storage session after signup:', refreshError)
             }
         }
-        
+
         showSignInSuccess()
     } catch (error) {
         console.error('Signup error:', error)
@@ -769,18 +769,18 @@ async function handleSignup(event) {
 async function signOut() {
     try {
         console.log('🚪 Signing out user...')
-        
+
         // Clear offline data first
         await db.clearUserData()
         console.log('🧹 Cleared offline user data')
-        
+
         await auth.signOut()
         currentUser = null
-        
+
         // Clear application state
         tasks = []
         journalEntries = []
-        
+
         // Remove AI agent when user signs out
         if (aiAgent) {
             const aiAgentToggle = document.getElementById('ai-agent-toggle')
@@ -789,21 +789,21 @@ async function signOut() {
             if (aiAgentWindow) aiAgentWindow.remove()
             aiAgent = null
         }
-        
+
         // Remove kid mode indicators and styles
         const kidModeIndicator = document.querySelector('.kid-mode-indicator')
         if (kidModeIndicator) kidModeIndicator.remove()
-        
+
         const kidModeStyles = document.getElementById('kid-mode-styles')
         if (kidModeStyles) kidModeStyles.remove()
-        
+
         document.body.classList.remove('kid-mode-active')
-        
+
         // Offline status is only shown in Settings, no need to destroy
-        
+
         showLandingPage()
         ui.showMessage('Signed out successfully - all offline data cleared', 'success')
-        
+
         console.log('✅ User signed out successfully with data cleanup')
     } catch (error) {
         console.error('Error signing out:', error)
@@ -816,9 +816,9 @@ async function handleGoogleAuth() {
     try {
         ui.showMessage('Redirecting to Google...', 'info')
         const { data, error } = await auth.signInWithGoogle()
-        
+
         if (error) throw error
-        
+
         // OAuth will redirect, so we don't need to handle success here
     } catch (error) {
         ui.showMessage(error.message, 'error')
@@ -829,13 +829,13 @@ async function handleSpotifyAuth() {
     try {
         console.log('🎵 Starting Spotify authentication...')
         ui.showMessage('Redirecting to Spotify...', 'info')
-        
+
         // Generate a random state for security
         const state = Math.random().toString(36).substring(2, 15)
         localStorage.setItem('spotify_auth_state', state)
 
         const scope = 'user-read-email user-read-private user-read-playback-state user-modify-playback-state user-read-currently-playing streaming user-library-read user-top-read user-read-recently-played playlist-read-private'
-        
+
         const authUrl = new URL('https://accounts.spotify.com/authorize')
         authUrl.searchParams.append('response_type', 'code')
         authUrl.searchParams.append('client_id', import.meta.env.VITE_SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID')
@@ -880,10 +880,10 @@ async function handleSpotifyAuthCompletion() {
         }
 
         console.log('✅ Spotify authentication completed successfully!')
-        
+
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname)
-        
+
         // Show success and redirect to main app
         currentUser = data.user
         ui.showMessage('Welcome to BusyBob! Your Spotify account is connected.', 'success')
@@ -892,7 +892,7 @@ async function handleSpotifyAuthCompletion() {
     } catch (error) {
         console.error('❌ Error completing Spotify authentication:', error)
         ui.showMessage(`Spotify sign-in failed: ${error.message}`, 'error')
-        
+
         // Clean up URL and redirect to landing page
         window.history.replaceState({}, document.title, window.location.pathname)
         showLandingPage()
@@ -904,26 +904,26 @@ function showLandingPage() {
     console.log('🏠 Showing landing page...')
     const authContainer = document.getElementById('auth-container')
     const mainApp = document.getElementById('main-app')
-    
+
     if (!authContainer) {
         console.error('❌ auth-container element not found!')
         return
     }
-    
+
     if (!mainApp) {
         console.error('❌ main-app element not found!')
         return
     }
-    
+
     // Clean up any existing AI elements
     const existingAIToggle = document.getElementById('ai-agent-toggle')
     const existingAIWindow = document.getElementById('ai-agent-window')
     if (existingAIToggle) existingAIToggle.remove()
     if (existingAIWindow) existingAIWindow.remove()
-    
+
     authContainer.classList.remove('hidden')
     mainApp.classList.add('hidden')
-    
+
     // Load landing page content
     console.log('📄 Mounting landing page content...')
     landingPage.mount(authContainer)
@@ -933,10 +933,10 @@ function showLandingPage() {
 function showAuthPages(page = 'login') {
     document.getElementById('auth-container').classList.remove('hidden')
     document.getElementById('main-app').classList.add('hidden')
-    
+
     // Load auth pages content
     authPages.mount(document.getElementById('auth-container'))
-    
+
     // Show specific page
     if (page === 'signup') {
         authPages.showSignup()
@@ -948,14 +948,14 @@ function showAuthPages(page = 'login') {
 async function showMainApp() {
     document.getElementById('auth-container').classList.add('hidden')
     document.getElementById('main-app').classList.remove('hidden')
-    
+
     // Update user info
     if (currentUser) {
         const userName = currentUser.user_metadata?.name || currentUser.email
         document.getElementById('user-name').textContent = userName
         document.getElementById('welcome-name').textContent = userName.split(' ')[0]
     }
-    
+
     // 🔒 SECURITY: Ensure secure user initialization
     try {
         await db.ensureUser()
@@ -965,17 +965,17 @@ async function showMainApp() {
         ui.showMessage('Security initialization failed. Please sign out and back in.', 'error')
         return
     }
-    
+
     // Initialize Enhanced AI agent only when showing main app
     if (!aiAgent) {
         console.log('🚀 Initializing Enhanced AI Agent system for authenticated user...')
         aiAgent = new EnhancedAIAgent()
         window.enhancedAI = aiAgent // Make globally available for debugging/extensions
     }
-    
+
     // Offline status indicator will be shown only in Settings page
     console.log('📱 Offline status available in Settings')
-    
+
     // Load data and show home page
     await loadAllData()
     showPage('home')
@@ -987,29 +987,29 @@ function showPage(pageName) {
     pages.forEach(page => {
         page.classList.add('hidden')
     })
-    
+
     // Show selected page with animation
     const targetPage = document.getElementById(pageName + '-page')
     if (targetPage) {
         targetPage.classList.remove('hidden')
         animations.fadeIn(targetPage, 300)
     }
-    
+
     // Update navigation active state
     if (navigation) {
         navigation.setActivePage(pageName)
     }
-    
+
     // Control points widget visibility
     if (window.pointsSystem) {
         window.pointsSystem.showInSection(pageName)
     }
-    
+
     // Cleanup development widgets if leaving home page
     if (pageName !== 'home' && window.cleanupDevelopmentWidgets) {
         window.cleanupDevelopmentWidgets()
     }
-    
+
     // Load page-specific data
     switch (pageName) {
         case 'home':
@@ -1061,14 +1061,14 @@ function showPage(pageName) {
 async function loadAllData() {
     try {
         console.log('🔄 Starting to load all data...')
-        
+
         await moodManager.init()
 
         const results = await Promise.allSettled([
             loadTasks(),
             loadJournalData()
         ])
-        
+
         // Check for any failures
         const failures = results.filter(result => result.status === 'rejected')
         if (failures.length > 0) {
@@ -1077,11 +1077,11 @@ async function loadAllData() {
                 console.error('Data loading error:', failure.reason)
             })
         }
-        
+
         console.log('✅ Data loading completed')
         loadHomeData()
         loadCharts()
-        
+
     } catch (error) {
         console.error('❌ Error in loadAllData:', error)
         ui.showMessage('Error loading data. Please refresh the page.', 'error')
@@ -1091,11 +1091,11 @@ async function loadAllData() {
 function loadHomeData() {
     // Update current date
     document.getElementById('current-date').textContent = dateUtils.getCurrentDate()
-    
+
     // Update task count
     const pendingTasks = tasks.filter(task => !task.completed)
     document.getElementById('tasks-count').textContent = pendingTasks.length
-    
+
     // Update mood average
     const feelings = moodManager.feelings;
     if (feelings.length > 0) {
@@ -1105,13 +1105,13 @@ function loadHomeData() {
     } else {
         document.getElementById('mood-average').textContent = '-';
     }
-    
+
     // Update streak (simplified calculation)
     document.getElementById('streak-count').textContent = Math.min(feelings.length, 30)
-    
+
     // Load upcoming tasks
     loadUpcomingTasks()
-    
+
     // Load development widgets
     loadDevelopmentWidgets()
 }
@@ -1119,15 +1119,15 @@ function loadHomeData() {
 function loadDevelopmentWidgets() {
     const container = document.getElementById('development-widgets-container')
     if (!container || !window.multiAgentWidgets) return
-    
+
     try {
         container.innerHTML = window.multiAgentWidgets.generateDevelopmentWidgets()
-        
+
         // Update metrics after a short delay to ensure DOM is ready
         setTimeout(() => {
             window.multiAgentWidgets.updateMetrics()
         }, 100)
-        
+
         // Set up periodic metrics updates
         if (window.developmentMetricsInterval) {
             clearInterval(window.developmentMetricsInterval)
@@ -1144,13 +1144,13 @@ function loadDevelopmentWidgets() {
 function loadUpcomingTasks() {
     const upcomingContainer = document.getElementById('upcoming-tasks')
     if (!upcomingContainer) return
-    
+
     const upcoming = tasks
         .filter(task => !task.completed)
         .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
         .slice(0, 5)
-    
-    upcomingContainer.innerHTML = upcoming.length > 0 
+
+    upcomingContainer.innerHTML = upcoming.length > 0
         ? upcoming.map(task => `
         <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div class="flex-1">
@@ -1171,10 +1171,10 @@ async function loadTasks() {
     try {
         const { data, error } = await db.getTasks()
         if (error) throw error
-        
+
         tasks = data || []
         renderTasks()
-        
+
         // Update calendar with tasks
         if (calendar) {
             calendar.setTasks(tasks)
@@ -1188,8 +1188,8 @@ async function loadTasks() {
 function renderTasks() {
     const taskList = document.getElementById('task-list')
     if (!taskList) return
-    
-    taskList.innerHTML = tasks.length > 0 
+
+    taskList.innerHTML = tasks.length > 0
         ? tasks.map(task => createSimpleTaskHTML(task)).join('')
         : '<p class="text-gray-500 dark:text-gray-400 text-center py-8">No tasks yet. Add your first task above!</p>'
 }
@@ -1199,7 +1199,7 @@ function createSimpleTaskHTML(task) {
         <div class="todo-item border rounded-lg p-3 sm:p-4 bg-white dark:bg-gray-700 card-hover" data-task-id="${task.id}">
             <div class="flex items-start justify-between">
                 <div class="flex items-start space-x-3 flex-1 min-w-0">
-                    <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                    <input type="checkbox" ${task.completed ? 'checked' : ''}
                            onchange="toggleTask(${task.id})"
                            class="h-5 w-5 sm:h-4 sm:w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 flex-shrink-0">
                     <div class="flex-1 min-w-0">
@@ -1227,12 +1227,12 @@ function loadCalendar() {
 function loadSelectedDateTasks(date) {
     const selectedTasksContainer = document.getElementById('selected-date-tasks')
     const titleElement = document.getElementById('selected-date-title')
-    
+
     if (!selectedTasksContainer || !titleElement) return
-    
+
     // Show all tasks instead of just selected date tasks
     titleElement.textContent = "All Tasks"
-    
+
     if (tasks.length > 0) {
         selectedTasksContainer.innerHTML = tasks.map(task => createCalendarTaskHTML(task)).join('')
     } else {
@@ -1242,14 +1242,14 @@ function loadSelectedDateTasks(date) {
 
 function createCalendarTaskHTML(task) {
     const isOverdue = task.due_date && dateUtils.isOverdue(task.due_date, task.due_time) && !task.completed
-    const priorityClass = task.priority === 'high' ? 'border-l-4 border-l-red-500' : 
+    const priorityClass = task.priority === 'high' ? 'border-l-4 border-l-red-500' :
                          task.priority === 'medium' ? 'border-l-4 border-l-yellow-500' : 'border-l-4 border-l-green-500'
-    
+
     return `
         <div class="task-item border rounded-lg p-3 sm:p-4 bg-white dark:bg-gray-700 ${priorityClass} card-hover" data-task-id="${task.id}">
             <div class="flex items-start justify-between">
                 <div class="flex items-start space-x-3 flex-1 min-w-0">
-                    <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                    <input type="checkbox" ${task.completed ? 'checked' : ''}
                            onchange="toggleTask(${task.id})"
                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 flex-shrink-0">
                     <div class="flex-1 min-w-0">
@@ -1279,7 +1279,7 @@ async function loadJournalData() {
         const { data, error } = await db.getJournalEntries()
         if (error) throw error
         journalEntries = data || []
-        
+
         renderPastJournalEntries()
         renderTodaysReflection()
         calculateAndRenderStreak()
@@ -1349,7 +1349,7 @@ function calculateAndRenderStreak() {
     }
 
     const entryDates = [...new Set(journalEntries.map(e => e.created_at.split('T')[0]))].sort().reverse();
-    
+
     let streak = 0;
     const today = new Date();
     const yesterday = new Date(today);
@@ -1363,7 +1363,7 @@ function calculateAndRenderStreak() {
         for (let i = 0; i < entryDates.length - 1; i++) {
             const current = new Date(entryDates[i]);
             const next = new Date(entryDates[i+1]);
-            
+
             const diffTime = current - next;
             const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
@@ -1374,7 +1374,7 @@ function calculateAndRenderStreak() {
             }
         }
     }
-    
+
     streakContainer.innerHTML = `
         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10s5 2 7 0l2.657-2.657a8 8 0 010 11.314z"></path></svg>
         ${streak} Day Streak
@@ -1398,7 +1398,7 @@ function setupJournalListeners() {
 async function handleTaskSubmit(event) {
     event.preventDefault()
     const formData = new FormData(event.target)
-    
+
     const taskData = {
         title: formData.get('title'),
         description: formData.get('description') || '',
@@ -1409,22 +1409,22 @@ async function handleTaskSubmit(event) {
         stress_level: 3,
         completed: false
     }
-    
+
     try {
         const { data, error } = await db.createTask(taskData)
         if (error) throw error
-        
+
         tasks.push(data[0])
         renderTasks()
-        
+
         // Update calendar
         if (calendar) {
             calendar.setTasks(tasks)
         }
-        
+
         ui.showMessage('Task added!', 'success')
         event.target.reset()
-        
+
         // Add success animation
         const taskList = document.getElementById('task-list')
         if (taskList.firstElementChild) {
@@ -1440,38 +1440,38 @@ async function handleReflectionSubmit(event) {
     event.preventDefault()
     const form = event.target
     const content = form.querySelector('#reflection-content').value
-    
+
     if (content.length < 1 || content.length > 280) {
         ui.showMessage('Reflection must be between 1 and 280 characters.', 'error')
         return
     }
-    
+
     try {
         // Always create a new entry
         await db.addJournalEntry(content)
-        
+
         // Award points for journal entry
         if (window.pointsSystem) {
             try {
                 const wordCount = content.trim().split(/\s+/).length
                 let points = window.pointsSystem.getPointValue('journalEntry')
                 let reason = 'Journal entry created'
-                
+
                 // Bonus points for longer entries
                 if (wordCount >= 50) {
                     points = window.pointsSystem.getPointValue('longJournalEntry')
                     reason = 'Long journal entry created'
                 }
-                
+
                 await window.pointsSystem.awardPoints(points, reason, 'journal')
             } catch (pointsError) {
                 console.error('Error awarding points for journal:', pointsError)
             }
         }
-        
+
         ui.showMessage('Reflection saved!', 'success')
         await loadJournalData() // Reload all journal data to update streak and views
-        
+
     } catch (error) {
         console.error('Error saving journal entry:', error)
         ui.showMessage('Could not save reflection.', 'error')
@@ -1493,24 +1493,24 @@ async function toggleTask(taskId) {
         if (!data || data.length === 0) {
             throw new Error("Update failed. No rows were updated. This might be due to security policies.");
         }
-        
+
         const updatedTask = data[0];
         const taskIndex = tasks.findIndex(t => t.id === updatedTask.id);
         if (taskIndex !== -1) {
             tasks[taskIndex] = updatedTask;
         }
-        
+
         renderTasks();
-        
+
         // Update calendar
         if (calendar) {
             calendar.setTasks(tasks);
             calendar.refreshTaskSidebar();
         }
-        
+
         // Refresh home data
         loadHomeData();
-        
+
         // Show feedback
         if (updatedTask.completed) {
             ui.showMessage('Task completed! Great job! 🎉', 'success');
@@ -1532,20 +1532,20 @@ async function toggleTask(taskId) {
 
 async function deleteTask(taskId) {
     if (!confirm('Are you sure you want to delete this task?')) return
-    
+
     try {
         const { error } = await db.deleteTask(taskId)
         if (error) throw error
-        
+
         tasks = tasks.filter(t => t.id !== taskId)
         renderTasks()
-        
+
         // Update calendar
         if (calendar) {
             calendar.setTasks(tasks)
             calendar.refreshTaskSidebar()
         }
-        
+
         ui.showMessage('Task deleted', 'success')
     } catch (error) {
         console.error('Error deleting task:', error)
@@ -1555,15 +1555,15 @@ async function deleteTask(taskId) {
 
 async function deleteJournalEntry(entryId) {
     if (!confirm('Are you sure you want to delete this journal entry?')) return
-    
+
     try {
         const { error } = await db.deleteJournalEntry(entryId)
         if (error) throw error
-        
+
         journalEntries = journalEntries.filter(e => e.id !== entryId)
         renderPastJournalEntries()
         calculateAndRenderStreak()
-        
+
         ui.showMessage('Journal entry deleted', 'success')
     } catch (error) {
         console.error('Error deleting journal entry:', error)
@@ -1612,7 +1612,7 @@ function loadCharts() {
     if (taskCtx) {
         const completedTasks = tasks.filter(t => t.completed).length
         const pendingTasks = tasks.length - completedTasks
-        
+
         new Chart(taskCtx, {
             type: 'doughnut',
             data: {
@@ -1642,7 +1642,7 @@ function updateLiveClock() {
     if (clockElement) {
         const now = new Date();
         const timezone = localStorage.getItem('timezone');
-        
+
         const options = {
             hour: '2-digit',
             minute: '2-digit',
@@ -1665,48 +1665,48 @@ window.addEventListener('timezoneChange', updateLiveClock);
 // Kid Mode Functions
 async function applyKidModeStyles() {
     if (!kidMode.isEnabled) return
-    
+
     console.log('🎨 Applying Kid Mode styles...')
-    
+
     // Add Kid Mode styles to the page
     const existingStyles = document.getElementById('kid-mode-styles')
     if (existingStyles) {
         existingStyles.remove()
     }
-    
+
     const styleSheet = document.createElement('style')
     styleSheet.id = 'kid-mode-styles'
     styleSheet.textContent = kidMode.getKidModeStyles()
     document.head.appendChild(styleSheet)
-    
+
     // Add Kid Mode indicator
     const existingIndicator = document.querySelector('.kid-mode-indicator')
     if (existingIndicator) {
         existingIndicator.remove()
     }
-    
+
     const indicatorHtml = kidMode.renderKidModeIndicator()
     if (indicatorHtml) {
         document.body.insertAdjacentHTML('afterbegin', indicatorHtml)
     }
-    
+
     // Apply Kid Mode class to body
     document.body.classList.add('kid-mode-active')
-    
+
     // Restrict certain features
     applyKidModeRestrictions()
-    
+
     // Initialize content filtering observer
     initKidModeObserver()
-    
+
     console.log('✅ Kid Mode styles applied successfully')
 }
 
 function applyKidModeRestrictions() {
     if (!kidMode.isEnabled) return
-    
+
     console.log('🚫 Applying Kid Mode restrictions...')
-    
+
     // Hide Spotify integration if restricted
     if (kidMode.isFeatureRestricted('spotify_integration')) {
         const musicTab = document.querySelector('[data-page="music"]')
@@ -1714,7 +1714,7 @@ function applyKidModeRestrictions() {
             musicTab.style.display = 'none'
         }
     }
-    
+
     // Remove external links
     if (kidMode.isFeatureRestricted('external_links')) {
         const externalLinks = document.querySelectorAll('a[href*="http"]:not([href*="' + window.location.hostname + '"])')
@@ -1725,7 +1725,7 @@ function applyKidModeRestrictions() {
             link.style.pointerEvents = 'none'
         })
     }
-    
+
     // Restrict file upload inputs
     if (kidMode.isFeatureRestricted('file_uploads')) {
         const fileInputs = document.querySelectorAll('input[type="file"]')
@@ -1734,7 +1734,7 @@ function applyKidModeRestrictions() {
             input.style.opacity = '0.5'
         })
     }
-    
+
     // Hide advanced settings
     if (kidMode.isFeatureRestricted('advanced_settings')) {
         const advancedSettings = document.querySelectorAll('.advanced-setting, .danger-zone')
@@ -1742,14 +1742,14 @@ function applyKidModeRestrictions() {
             setting.style.display = 'none'
         })
     }
-    
+
     console.log('✅ Kid Mode restrictions applied')
 }
 
 // Apply content filtering
 function applyKidModeContentFiltering() {
     if (!kidMode.isEnabled) return
-    
+
     // Filter content in real-time
     const contentElements = document.querySelectorAll('p, div, span, h1, h2, h3, h4, h5, h6')
     contentElements.forEach(element => {
@@ -1762,7 +1762,7 @@ function applyKidModeContentFiltering() {
 // Initialize Kid Mode content filtering observer
 function initKidModeObserver() {
     if (!kidMode.isEnabled) return
-    
+
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.type === 'childList') {
@@ -1778,7 +1778,7 @@ function initKidModeObserver() {
                                 link.style.pointerEvents = 'none'
                             })
                         }
-                        
+
                         // Apply content filtering
                         if (node.textContent) {
                             node.textContent = kidMode.sanitizeContent(node.textContent)
@@ -1788,7 +1788,7 @@ function initKidModeObserver() {
             }
         })
     })
-    
+
     observer.observe(document.body, {
         childList: true,
         subtree: true
@@ -1814,20 +1814,20 @@ window.toolbox = {
         'music': true,
         'dev-tools': true
     },
-    
+
     init() {
         this.loadToolVisibility()
         this.setupEventListeners()
         this.updateToolVisibility()
     },
-    
+
     setupEventListeners() {
         // Toggle button
         document.getElementById('toolbox-toggle')?.addEventListener('click', () => this.toggle())
-        
+
         // Close button
         document.getElementById('close-toolbox')?.addEventListener('click', () => this.hide())
-        
+
         // Close on outside click
         document.addEventListener('click', (e) => {
             const toolbox = document.getElementById('toolbox-window')
@@ -1837,7 +1837,7 @@ window.toolbox = {
             }
         })
     },
-    
+
     toggle() {
         this.isVisible = !this.isVisible
         const toolbox = document.getElementById('toolbox-window')
@@ -1847,17 +1847,17 @@ window.toolbox = {
             toolbox?.classList.add('hidden')
         }
     },
-    
+
     show() {
         this.isVisible = true
         document.getElementById('toolbox-window')?.classList.remove('hidden')
     },
-    
+
     hide() {
         this.isVisible = false
         document.getElementById('toolbox-window')?.classList.add('hidden')
     },
-    
+
     loadToolVisibility() {
         try {
             const saved = localStorage.getItem('toolbox-visibility')
@@ -1868,7 +1868,7 @@ window.toolbox = {
             console.error('Error loading tool visibility:', error)
         }
     },
-    
+
     saveToolVisibility() {
         try {
             localStorage.setItem('toolbox-visibility', JSON.stringify(this.toolVisibility))
@@ -1876,7 +1876,7 @@ window.toolbox = {
             console.error('Error saving tool visibility:', error)
         }
     },
-    
+
     updateToolVisibility() {
         Object.entries(this.toolVisibility).forEach(([toolId, isVisible]) => {
             const toolElement = document.getElementById(`${toolId}-tool`)
@@ -1885,7 +1885,7 @@ window.toolbox = {
             }
         })
     },
-    
+
     setToolVisibility(toolId, isVisible) {
         this.toolVisibility[toolId] = isVisible
         this.saveToolVisibility()
@@ -1896,10 +1896,10 @@ window.toolbox = {
 // Global function to open tools
 window.openTool = function(toolId) {
     console.log('🛠️ Opening tool:', toolId)
-    
+
     // Hide toolbox first
     window.toolbox.hide()
-    
+
     switch (toolId) {
         case 'academic-hub':
             showPage('academic-hub')

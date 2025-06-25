@@ -12,7 +12,7 @@
   "categories": ["productivity", "education", "lifestyle", "utilities"],
   "keywords": [
     "student productivity",
-    "task management", 
+    "task management",
     "academic planner",
     "mood tracking",
     "study organization",
@@ -32,7 +32,7 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.svg", 
+      "src": "/icon-512.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
@@ -52,7 +52,7 @@
       "label": "BusyBob Dashboard - Desktop View"
     },
     {
-      "src": "/screenshot-mobile.png", 
+      "src": "/screenshot-mobile.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
@@ -71,7 +71,7 @@
       "name": "Academic Hub",
       "short_name": "Grades",
       "description": "Check grades and assignments",
-      "url": "/#academic-hub", 
+      "url": "/#academic-hub",
       "icons": [{"src": "/icon-192.svg", "sizes": "192x192"}]
     },
     {

@@ -29,7 +29,7 @@ class OfflineStorage {
                 .select('id')
                 .eq('id', userId)
                 .single()
-            
+
             if (error || !user) {
                 throw new OfflineStorageError('User verification failed', 'USER_NOT_FOUND')
             }
@@ -40,21 +40,21 @@ class OfflineStorage {
         this.currentUserId = userId
         this.sessionToken = sessionToken
         this.initTimestamp = Date.now()
-        
+
         this.db = await this.openDB()
         await this.loadSyncQueue()
-        
+
         if (this.isOnline) {
             await this.syncPendingChanges()
         }
-        
+
         this.logger.info('Offline storage initialized', { userId: this.redactUserId(userId) })
     }
 
     // 🔒 User ID validation
     validateUserId(userId) {
         if (!userId || typeof userId !== 'string') return false
-        
+
         // UUID format validation
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
         return uuidRegex.test(userId)
@@ -64,54 +64,54 @@ class OfflineStorage {
     validateSession(sessionToken) {
         if (!sessionToken || typeof sessionToken !== 'string') return false
         if (sessionToken.length < 32) return false // Minimum token length
-        
+
         // Check session age
         if (this.initTimestamp && (Date.now() - this.initTimestamp) > this.maxSessionDuration) {
             this.logger.warn('Session expired')
             return false
         }
-        
+
         return true
     }
 
     // 🔒 Enhanced data sanitization
     sanitizeData(data) {
         const sanitized = {}
-        
+
         for (const [key, value] of Object.entries(data)) {
             if (typeof key !== 'string' || key.startsWith('__')) continue
-            
+
             // Sanitize the key
             const cleanKey = this.sanitizeString(key)
             if (!cleanKey) continue
-            
+
             // Sanitize the value
             sanitized[cleanKey] = this.sanitizeValue(value)
         }
-        
+
         return sanitized
     }
 
     sanitizeValue(value) {
         if (value === null || value === undefined) return value
-        
+
         if (typeof value === 'string') {
             return this.sanitizeString(value)
         }
-        
+
         if (typeof value === 'object' && !Array.isArray(value)) {
             return this.sanitizeData(value) // Recursive sanitization
         }
-        
+
         if (Array.isArray(value)) {
             return value.map(item => this.sanitizeValue(item))
         }
-        
+
         // Numbers, booleans pass through
         if (typeof value === 'number' || typeof value === 'boolean') {
             return value
         }
-        
+
         // Reject other types
         this.logger.warn('Rejected unsupported data type', { type: typeof value })
         return null
@@ -119,7 +119,7 @@ class OfflineStorage {
 
     sanitizeString(str) {
         if (typeof str !== 'string') return null
-        
+
         // Remove potential XSS vectors
         const cleaned = str
             .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
@@ -127,12 +127,12 @@ class OfflineStorage {
             .replace(/on\w+\s*=/gi, '') // Remove event handlers
             .replace(/data:text\/html/gi, '') // Remove data URLs
             .trim()
-        
+
         // Length validation
         if (cleaned.length > 10000) { // 10KB limit per string
             throw new OfflineStorageError('String too long', 'STRING_TOO_LONG')
         }
-        
+
         return cleaned
     }
 
@@ -188,7 +188,7 @@ class OfflineStorage {
         }
 
         const limiter = this.rateLimiters.get(key)
-        
+
         if (now - limiter.windowStart > windowMs) {
             // Reset window
             limiter.count = 1
@@ -210,13 +210,13 @@ class OfflineStorage {
     redactSensitiveData(data) {
         const sensitiveFields = ['password', 'token', 'secret', 'key', 'auth', 'credential']
         const redacted = { ...data }
-        
+
         for (const field of sensitiveFields) {
             if (field in redacted) {
                 redacted[field] = '[REDACTED]'
             }
         }
-        
+
         return redacted
     }
 
@@ -255,13 +255,13 @@ class OfflineStorage {
 
         this.syncQueue.push(syncItem)
         await this.saveSyncQueue()
-        
-        this.logger.info('Queued for sync', { 
-            table: tableName, 
-            operation, 
-            userId: this.redactUserId(this.currentUserId) 
+
+        this.logger.info('Queued for sync', {
+            table: tableName,
+            operation,
+            userId: this.redactUserId(this.currentUserId)
         })
-        
+
         if (this.isOnline) {
             setTimeout(() => this.syncPendingChanges(), 100)
         }
@@ -271,7 +271,7 @@ class OfflineStorage {
     async getDiagnostics() {
         try {
             const info = await this.getStorageInfo()
-            
+
             // Redact sensitive information
             const safeDiagnostics = {
                 ...info,
@@ -297,13 +297,13 @@ class OfflineStorage {
                     ])
                 )
             }
-            
+
             return safeDiagnostics
         } catch (error) {
             this.logger.error('Failed to generate secure diagnostics', error)
-            return { 
-                error: 'Diagnostics unavailable', 
-                timestamp: new Date().toISOString() 
+            return {
+                error: 'Diagnostics unavailable',
+                timestamp: new Date().toISOString()
             }
         }
     }

@@ -39,24 +39,24 @@ export class OfflineStatus {
                 #offline-status.compact {
                     transition: all 0.3s ease;
                 }
-                
+
                 #offline-status.compact .status-content {
                     min-width: auto;
                     padding: 0.5rem;
                 }
-                
+
                 #offline-status.compact.minimized .status-details {
                     display: none;
                 }
-                
+
                 #offline-status.compact.minimized {
                     cursor: pointer;
                 }
-                
+
                 #offline-status.compact:not(.minimized) .connection-indicator-only {
                     display: none;
                 }
-                
+
                 #offline-status.compact.minimized .connection-indicator-only {
                     display: flex;
                     align-items: center;
@@ -80,7 +80,7 @@ export class OfflineStatus {
             this.isOnline = false
             this.updateStatus().catch(console.error)
             this.showTemporaryMessage('📱 You\'re offline - changes will sync when reconnected', 5000)
-        }) 
+        })
     }
 
     render() {
@@ -88,7 +88,7 @@ export class OfflineStatus {
         const positionClasses = this.getPositionClasses()
         const compactClass = this.position === 'compact' ? 'compact' : ''
         const minimizedClass = this.isMinimized ? 'minimized' : ''
-        
+
         const statusHtml = `
             <div id="offline-status" class="${positionClasses} ${compactClass} ${minimizedClass} transition-all duration-300">
                 <div class="status-content bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 min-w-[200px]">
@@ -96,7 +96,7 @@ export class OfflineStatus {
                     <div class="connection-indicator-only">
                         <div id="connection-indicator-compact" class="w-3 h-3 rounded-full"></div>
                     </div>
-                    
+
                     <!-- Full status details -->
                     <div class="status-details">
                         <div class="flex items-center space-x-2">
@@ -115,7 +115,7 @@ export class OfflineStatus {
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Temporary message overlay -->
                 <div id="status-message" class="absolute bottom-full left-0 mb-2 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm shadow-lg transform transition-all duration-300 opacity-0 translate-y-2 pointer-events-none">
                 </div>
@@ -125,37 +125,37 @@ export class OfflineStatus {
                 #offline-status {
                     transition: transform 0.3s ease, opacity 0.3s ease;
                 }
-                
+
                 #offline-status.hidden {
                     transform: translateY(100%);
                     opacity: 0;
                 }
-                
+
                 .status-online {
                     background-color: #10b981;
                 }
-                
+
                 .status-offline {
                     background-color: #ef4444;
                 }
-                
+
                 .status-syncing {
                     background-color: #f59e0b;
                     animation: pulse 2s infinite;
                 }
-                
+
                 @keyframes pulse {
                     0%, 100% { opacity: 1; }
                     50% { opacity: 0.5; }
                 }
-                
+
                 .status-message-show {
                     opacity: 1 !important;
                     transform: translateY(0) !important;
                 }
-                
+
                 ${this.getCompactStyle()}
-                
+
                 /* Responsive adjustments */
                 @media (max-width: 768px) {
                     #offline-status {
@@ -166,12 +166,12 @@ export class OfflineStatus {
                         bottom: auto !important;
                         width: auto !important;
                     }
-                    
+
                     #offline-status .status-content {
                         min-width: auto;
                         width: 100%;
                     }
-                    
+
                     #offline-status.compact.minimized {
                         width: 3rem;
                         right: 1rem;
@@ -195,13 +195,13 @@ export class OfflineStatus {
         if (this.position === 'compact') {
             const minimizeBtn = document.getElementById('minimize-status')
             const statusElement = this.statusElement
-            
+
             if (minimizeBtn) {
                 minimizeBtn.addEventListener('click', () => {
                     this.toggleMinimized()
                 })
             }
-            
+
             if (statusElement) {
                 statusElement.addEventListener('click', (e) => {
                     if (this.isMinimized && !e.target.closest('button')) {
@@ -216,7 +216,7 @@ export class OfflineStatus {
         this.isMinimized = !this.isMinimized
         if (this.statusElement) {
             this.statusElement.classList.toggle('minimized', this.isMinimized)
-            
+
             const minimizeBtn = document.getElementById('minimize-status')
             if (minimizeBtn) {
                 minimizeBtn.textContent = this.isMinimized ? '+' : '−'
@@ -231,12 +231,12 @@ export class OfflineStatus {
             // Remove old position classes
             const oldClasses = this.getPositionClasses().split(' ')
             this.statusElement.classList.remove(...oldClasses)
-            
+
             // Update position and apply new classes
             this.position = newPosition
             const newClasses = this.getPositionClasses().split(' ')
             this.statusElement.classList.add(...newClasses)
-            
+
             // Update compact mode
             if (newPosition === 'compact') {
                 this.statusElement.classList.add('compact')
@@ -245,7 +245,7 @@ export class OfflineStatus {
                 this.statusElement.classList.remove('compact', 'minimized')
                 this.isMinimized = false
             }
-            
+
             console.log(`📱 Offline status moved to: ${newPosition}`)
         }
     }
@@ -290,11 +290,11 @@ export class OfflineStatus {
         if (indicatorCompact) {
             indicatorCompact.className = indicatorClass
         }
-        
+
         let statusClass = ''
         let statusTextContent = ''
         let syncTextContent = ''
-        
+
         if (this.isOnline) {
             if (this.syncQueueCount > 0) {
                 statusClass = 'status-syncing'
@@ -314,16 +314,16 @@ export class OfflineStatus {
                 syncTextContent = 'Changes will sync when online'
             }
         }
-        
+
         // Apply status class to both indicators
         indicator.classList.add(statusClass)
         if (indicatorCompact) {
             indicatorCompact.classList.add(statusClass)
         }
-        
+
         statusText.textContent = statusTextContent
         syncText.textContent = syncTextContent
-        
+
         // Update title for compact mode
         if (this.position === 'compact' && this.statusElement) {
             this.statusElement.title = `${statusTextContent} - ${syncTextContent}`

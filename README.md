@@ -1,6 +1,6 @@
 # 🎓 BusyBob - Ultimate Student Productivity Platform | Canvas & StudentVue Integration
 
-> **Free productivity powerhouse for busy students** - Track tasks, monitor mood, manage academic data with Canvas & StudentVue integration, AI assistant, and Spotify focus music. Join thousands of students getting organized! 
+> **Free productivity powerhouse for busy students** - Track tasks, monitor mood, manage academic data with Canvas & StudentVue integration, AI assistant, and Spotify focus music. Join thousands of students getting organized!
 
 [![GitHub stars](https://img.shields.io/github/stars/JaytirthJOSHI/BusyBob?style=social)](https://github.com/JaytirthJOSHI/BusyBob/stargazers)
 [![Website](https://img.shields.io/website?url=https%3A//busybob.site&label=busybob.site)](https://busybob.site)
@@ -14,7 +14,7 @@ BusyBob is the **all-in-one student productivity platform** that busy students n
 
 ### ✨ Perfect For:
 - 🎓 **College students** managing multiple Canvas courses
-- 📚 **High school students** using StudentVue grade portals  
+- 📚 **High school students** using StudentVue grade portals
 - 📱 **Busy students** who need everything in one dashboard
 - 🧠 **Wellness-focused learners** tracking mood and productivity
 - 🎵 **Music lovers** who study better with the right playlist

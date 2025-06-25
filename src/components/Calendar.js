@@ -12,7 +12,7 @@ export class Calendar {
     this.view = 'month' // month, week, day
     this.showCalendarSettings = false
     this.showTaskForm = false
-    
+
     this.init()
   }
 
@@ -69,7 +69,7 @@ export class Calendar {
     try {
       // Use existing Google OAuth from Supabase
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       if (!user) {
         this.showMessage('Please sign in first', 'error')
         return
@@ -79,7 +79,7 @@ export class Calendar {
       if (user.app_metadata?.provider === 'google') {
         // User is already signed in with Google, we can use their access token
         const { data, error } = await supabase.auth.getSession()
-        
+
         if (error || !data.session) {
           this.showMessage('Please sign in with Google first', 'error')
           return
@@ -87,7 +87,7 @@ export class Calendar {
 
         // Get the access token from the session
         const accessToken = data.session.provider_token
-        
+
         if (!accessToken) {
           // Request additional scopes for calendar access
           const { data: oauthData, error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -101,12 +101,12 @@ export class Calendar {
               },
             }
           })
-          
+
           if (oauthError) {
             this.showMessage('Failed to get calendar access', 'error')
             return
           }
-          
+
           this.showMessage('Please complete the Google authorization for calendar access', 'info')
           return
         }
@@ -121,18 +121,18 @@ export class Calendar {
           enabled: true,
           userId: user.id
         }
-        
+
         this.connectedCalendars.push(newCalendar)
         await this.saveConnectedCalendars()
         await this.loadEvents()
         this.render()
-        
+
         this.showMessage('Google Calendar connected successfully!', 'success')
-        
+
       } else {
         // User is not signed in with Google, prompt them to sign in
         this.showMessage('Please sign in with Google to connect your calendar', 'info')
-        
+
         // Redirect to Google sign-in
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
@@ -145,12 +145,12 @@ export class Calendar {
             },
           }
         })
-        
+
         if (error) {
           this.showMessage('Failed to initiate Google sign-in', 'error')
         }
       }
-      
+
     } catch (error) {
       console.error('Error adding Google Calendar:', error)
       this.showMessage('Failed to connect Google Calendar', 'error')
@@ -165,19 +165,19 @@ export class Calendar {
         const clientId = 'YOUR_MICROSOFT_CLIENT_ID' // Replace with actual client ID
         const scope = 'https://graph.microsoft.com/Calendars.Read'
         const redirectUri = window.location.origin + '/auth/microsoft/callback'
-        
+
         const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`
-        
+
         // Open popup for OAuth
         const popup = window.open(authUrl, 'outlookAuth', 'width=500,height=600')
-        
+
         // Handle the OAuth callback
         window.addEventListener('message', async (event) => {
           if (event.origin !== window.location.origin) return
-          
+
           if (event.data.type === 'OUTLOOK_AUTH_SUCCESS') {
             const { accessToken } = event.data
-            
+
             const newCalendar = {
               id: `outlook_${Date.now()}`,
               name: 'Outlook Calendar',
@@ -186,12 +186,12 @@ export class Calendar {
               color: '#0078D4',
               enabled: true
             }
-            
+
             this.connectedCalendars.push(newCalendar)
             await this.saveConnectedCalendars()
             await this.loadEvents()
             this.render()
-            
+
             popup.close()
           }
         })
@@ -205,15 +205,15 @@ export class Calendar {
           enabled: true,
           isDemo: true
         }
-        
+
         this.connectedCalendars.push(newCalendar)
         await this.saveConnectedCalendars()
         await this.loadDemoEvents()
         this.render()
-        
+
         this.showMessage('Outlook Calendar connected in demo mode!', 'success')
       }
-      
+
     } catch (error) {
       console.error('Error adding Outlook Calendar:', error)
       this.showMessage('Failed to connect Outlook Calendar', 'error')
@@ -262,16 +262,16 @@ export class Calendar {
         isAllDay: true
       }
     ]
-    
+
     this.events.push(...demoEvents)
   }
 
   async loadEvents() {
     this.events = []
-    
+
     for (const calendar of this.connectedCalendars) {
       if (!calendar.enabled) continue
-      
+
       try {
         if (calendar.type === 'google') {
           await this.loadGoogleEvents(calendar)
@@ -289,14 +289,14 @@ export class Calendar {
       const now = new Date()
       const timeMin = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
       const timeMax = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString()
-      
+
       const response = await fetch(`/api/google/calendar?accessToken=${calendar.accessToken}&timeMin=${timeMin}&timeMax=${timeMax}`)
       const data = await response.json()
-      
+
       if (data.error) {
         throw new Error(data.error)
       }
-      
+
       const events = data.items?.map(event => ({
         id: event.id,
         title: event.summary,
@@ -308,7 +308,7 @@ export class Calendar {
         calendarName: calendar.name,
         isAllDay: !event.start.dateTime
       })) || []
-      
+
       this.events.push(...events)
     } catch (error) {
       console.error('Error loading Google Calendar events:', error)
@@ -324,14 +324,14 @@ export class Calendar {
       const now = new Date()
       const startDateTime = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
       const endDateTime = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString()
-      
+
       const response = await fetch(`/api/microsoft/calendar?accessToken=${calendar.accessToken}&startDateTime=${startDateTime}&endDateTime=${endDateTime}`)
       const data = await response.json()
-      
+
       if (data.error) {
         throw new Error(data.error.message || data.error)
       }
-      
+
       const events = data.value?.map(event => ({
         id: event.id,
         title: event.subject,
@@ -343,7 +343,7 @@ export class Calendar {
         calendarName: calendar.name,
         isAllDay: event.isAllDay
       })) || []
-      
+
       this.events.push(...events)
     } catch (error) {
       console.error('Error loading Outlook Calendar events:', error)
@@ -360,7 +360,7 @@ export class Calendar {
         console.error('No refresh token available for Google Calendar')
         return
       }
-      
+
       const response = await fetch('/api/google/refresh', {
         method: 'POST',
         headers: {
@@ -370,9 +370,9 @@ export class Calendar {
           refreshToken: calendar.refreshToken
         })
       })
-      
+
       const data = await response.json()
-      
+
       if (data.accessToken) {
         calendar.accessToken = data.accessToken
         await this.saveConnectedCalendars()
@@ -435,7 +435,7 @@ export class Calendar {
   async handleTaskSubmit(event) {
     event.preventDefault()
     const formData = new FormData(event.target)
-    
+
     const taskData = {
       title: formData.get('title'),
       description: formData.get('description'),
@@ -446,7 +446,7 @@ export class Calendar {
       stress_level: 3,
       completed: false
     }
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
@@ -461,12 +461,12 @@ export class Calendar {
         .select()
 
       if (error) throw error
-      
+
       this.tasks.push(data[0])
       this.toggleTaskForm()
       this.render()
       this.refreshTaskSidebar()
-      
+
       // Show success message
       this.showMessage('Task created successfully!', 'success')
       event.target.reset()
@@ -487,11 +487,11 @@ export class Calendar {
     // Create a simple toast notification
     const toast = document.createElement('div')
     toast.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white ${
-      type === 'success' ? 'bg-green-500' : 
+      type === 'success' ? 'bg-green-500' :
       type === 'error' ? 'bg-red-500' : 'bg-blue-500'
     }`
     toast.textContent = message
-    
+
     document.body.appendChild(toast)
     setTimeout(() => {
       document.body.removeChild(toast)
@@ -501,7 +501,7 @@ export class Calendar {
   render() {
     const year = this.currentDate.getFullYear()
     const month = this.currentDate.getMonth()
-    
+
     const monthNames = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
@@ -527,12 +527,12 @@ export class Calendar {
               </button>
             </div>
           </div>
-          
+
           <div class="flex items-center justify-between">
             <h3 class="text-xl font-semibold">
               ${monthNames[month]} ${year}
             </h3>
-            
+
             <div class="flex items-center space-x-2">
               <button id="prevMonth" class="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -549,7 +549,7 @@ export class Calendar {
               </button>
             </div>
           </div>
-          
+
           <div class="flex items-center justify-between mt-4">
             <div class="flex items-center space-x-2">
               <button id="viewMonth" class="px-3 py-1 rounded-md text-sm font-medium transition-colors ${this.view === 'month' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}">
@@ -562,7 +562,7 @@ export class Calendar {
                 Day
               </button>
             </div>
-            
+
             <div class="flex items-center space-x-2">
               ${this.connectedCalendars.map(calendar => `
                 <div class="flex items-center space-x-1">
@@ -582,8 +582,8 @@ export class Calendar {
 
         <!-- Calendar Grid -->
         <div class="p-6">
-          ${this.view === 'month' ? this.renderMonthView() : 
-            this.view === 'week' ? this.renderWeekView() : 
+          ${this.view === 'month' ? this.renderMonthView() :
+            this.view === 'week' ? this.renderWeekView() :
             this.renderDayView()}
         </div>
       </div>
@@ -604,7 +604,7 @@ export class Calendar {
               </svg>
             </button>
           </div>
-          
+
           <form id="calendar-task-form" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="sm:col-span-2">
@@ -612,7 +612,7 @@ export class Calendar {
                 <input type="text" name="title" id="calendar-task-title" required
                   class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
               </div>
-              
+
               <div>
                 <label for="calendar-task-category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
                 <select name="category" id="calendar-task-category"
@@ -624,7 +624,7 @@ export class Calendar {
                   <option value="health">Health</option>
                 </select>
               </div>
-              
+
               <div>
                 <label for="calendar-task-priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
                 <select name="priority" id="calendar-task-priority"
@@ -634,27 +634,27 @@ export class Calendar {
                   <option value="high">High</option>
                 </select>
               </div>
-              
+
               <div>
                 <label for="calendar-task-due-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Date</label>
                 <input type="date" name="due_date" id="calendar-task-due-date" required
                   class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
               </div>
-              
+
               <div>
                 <label for="calendar-task-due-time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Time</label>
                 <input type="time" name="due_time" id="calendar-task-due-time"
                   class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
               </div>
             </div>
-            
+
             <div>
               <label for="calendar-task-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
               <textarea name="description" id="calendar-task-description" rows="3"
                 class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 placeholder="Optional description..."></textarea>
             </div>
-            
+
             <div class="flex justify-end space-x-3">
               <button type="button" id="cancelTaskBtn" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors">
                 Cancel
@@ -681,7 +681,7 @@ export class Calendar {
               </svg>
             </button>
           </div>
-          
+
           <div class="space-y-3">
             <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
               <div class="flex items-center space-x-3">
@@ -695,7 +695,7 @@ export class Calendar {
                 </div>
               </div>
             </div>
-            
+
             ${this.connectedCalendars.map(calendar => `
               <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
                 <div class="flex items-center space-x-3">
@@ -715,7 +715,7 @@ export class Calendar {
                 </div>
               </div>
             `).join('')}
-            
+
             <div class="grid grid-cols-2 gap-3 pt-3">
               <button id="addGoogleBtn" class="flex items-center justify-center space-x-2 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <svg class="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
@@ -726,7 +726,7 @@ export class Calendar {
                 </svg>
                 <span class="text-sm font-medium text-gray-900 dark:text-white">Google Calendar</span>
               </button>
-              
+
               <button id="addOutlookBtn" class="flex items-center justify-center space-x-2 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M21.59 12.794a.996.996 0 0 0-.857-.457H20V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v5.337H3.267a.996.996 0 0 0-.857.457A1 1 0 0 0 2.5 14v4a2 2 0 0 0 2 2h15a2 2 0 0 0 2-2v-4a1 1 0 0 0-.41-1.206zM7 7h10v5H7V7z"/>
@@ -734,7 +734,7 @@ export class Calendar {
                 <span class="text-sm font-medium text-gray-900 dark:text-white">Outlook Calendar</span>
               </button>
             </div>
-            
+
             <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
               <div class="flex items-start space-x-2">
                 <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -757,15 +757,15 @@ export class Calendar {
     const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0)
     const startDate = new Date(firstDay)
     startDate.setDate(startDate.getDate() - firstDay.getDay())
-    
+
     return `
       <div class="space-y-2">
         <div class="grid grid-cols-7 gap-1 mb-2">
-          ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => 
+          ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day =>
             `<div class="p-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400">${day}</div>`
           ).join('')}
         </div>
-        
+
         <div class="grid grid-cols-7 gap-1" id="calendarGrid">
           ${this.generateCalendarDays(startDate, lastDay)}
         </div>
@@ -807,7 +807,7 @@ export class Calendar {
       const isCurrentMonth = currentDate.getMonth() === currentMonth
       const isToday = currentDate.toDateString() === today.toDateString()
       const isSelected = this.selectedDate && currentDate.toDateString() === this.selectedDate.toDateString()
-      
+
       // Get tasks for this date
       const dateStr = currentDate.toISOString().split('T')[0]
       const dayTasks = this.tasks.filter(task => task.due_date === dateStr)
@@ -821,8 +821,8 @@ export class Calendar {
       })
 
       let dayClasses = `calendar-day relative p-2 h-16 text-center cursor-pointer transition-colors rounded-lg ${
-        isCurrentMonth 
-          ? 'text-gray-900 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-900/20' 
+        isCurrentMonth
+          ? 'text-gray-900 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-900/20'
           : 'text-gray-400 dark:text-gray-600'
       }`
 
@@ -844,12 +844,12 @@ export class Calendar {
         <div class="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex space-x-1">
           ${dayTasks.slice(0, 3).map(task => `
             <div class="w-1.5 h-1.5 rounded-full ${
-              task.completed 
-                ? 'bg-green-500' 
-                : task.priority === 'high' 
-                  ? 'bg-red-500' 
-                  : task.priority === 'medium' 
-                    ? 'bg-yellow-500' 
+              task.completed
+                ? 'bg-green-500'
+                : task.priority === 'high'
+                  ? 'bg-red-500'
+                  : task.priority === 'medium'
+                    ? 'bg-yellow-500'
                     : 'bg-blue-500'
             }"></div>
           `).join('')}

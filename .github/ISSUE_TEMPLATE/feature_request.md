@@ -29,7 +29,7 @@ If you have specific ideas about how this should work:
 ### 🔗 Integration Requirements
 Which services or systems should this feature work with?
 - [ ] StudentVue
-- [ ] Canvas LMS  
+- [ ] Canvas LMS
 - [ ] Spotify (music/focus)
 - [ ] AI Assistant
 - [ ] Calendar systems

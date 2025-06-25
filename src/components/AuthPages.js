@@ -6,7 +6,7 @@ export class AuthPages {
   mount(container) {
     this.container = container
     container.innerHTML = this.getAuthHTML()
-    
+
     // Store reference globally for onclick handlers
     window.authPages = this
   }
@@ -39,19 +39,16 @@ export class AuthPages {
               </svg>
               Continue with Google
             </button>
-            
+
             <button id="spotify-login" type="button" class="w-full flex justify-center items-center py-3 px-4 border border-green-300 dark:border-green-600 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-colors shadow-sm">
               <svg class="w-5 h-5 mr-3 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.5 14.5c-.2.3-.5.4-.8.4-.2 0-.4-.1-.5-.2-1.5-.9-3.4-1.1-5.6-.6-.3.1-.6-.1-.7-.4-.1-.3.1-.6.4-.7 2.5-.5 4.6-.3 6.4.7.3.2.4.6.2.8zm1.1-2.7c-.2.4-.6.5-1 .3-1.7-1-4.4-1.3-6.4-.7-.4.1-.8-.1-.9-.5-.1-.4.1-.8.5-.9 2.3-.7 5.4-.4 7.4.8.4.2.5.6.4 1zm.1-2.8c-2.1-1.2-5.5-1.3-7.5-.7-.5.1-1-.2-1.1-.7-.1-.5.2-1 .7-1.1 2.3-.7 6.1-.5 8.6.8.4.2.6.8.3 1.2-.2.4-.8.6-1.2.3z"/>
               </svg>
               Continue with Spotify
             </button>
-            
-
-            
 
           </div>
-          
+
           <!-- Divider -->
           <div class="relative my-6">
             <div class="absolute inset-0 flex items-center">
@@ -61,17 +58,17 @@ export class AuthPages {
               <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or continue with email</span>
             </div>
           </div>
- 
+
           <form id="login-form" class="space-y-6">
             <div>
               <label for="login-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-              <input id="login-email" name="email" type="email" required 
+              <input id="login-email" name="email" type="email" required
                 class="form-input mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Enter your email">
             </div>
             <div>
               <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-              <input id="login-password" name="password" type="password" required 
+              <input id="login-password" name="password" type="password" required
                 class="form-input mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Enter your password">
             </div>
@@ -79,10 +76,10 @@ export class AuthPages {
               Sign In
             </button>
           </form>
- 
+
           <div class="mt-6 text-center">
             <p class="text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account? 
+              Don't have an account?
               <button onclick="window.authPages.showSignUp()" class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
                 Sign up
               </button>
@@ -117,17 +114,16 @@ export class AuthPages {
               </svg>
               Sign up with Google
             </button>
-            
+
             <button id="spotify-signup" type="button" class="w-full flex justify-center items-center py-3 px-4 border border-green-300 dark:border-green-600 rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-colors shadow-sm">
               <svg class="w-5 h-5 mr-3 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.5 14.5c-.2.3-.5.4-.8.4-.2 0-.4-.1-.5-.2-1.5-.9-3.4-1.1-5.6-.6-.3.1-.6-.1-.7-.4-.1-.3.1-.6.4-.7 2.5-.5 4.6-.3 6.4.7.3.2.4.6.2.8zm1.1-2.7c-.2.4-.6.5-1 .3-1.7-1-4.4-1.3-6.4-.7-.4.1-.8-.1-.9-.5-.1-.4.1-.8.5-.9 2.3-.7 5.4-.4 7.4.8.4.2.5.6.4 1zm.1-2.8c-2.1-1.2-5.5-1.3-7.5-.7-.5.1-1-.2-1.1-.7-.1-.5.2-1 .7-1.1 2.3-.7 6.1-.5 8.6.8.4.2.6.8.3 1.2-.2.4-.8.6-1.2.3z"/>
               </svg>
               Sign up with Spotify
             </button>
-            
 
           </div>
-          
+
           <!-- Divider -->
           <div class="relative my-6">
             <div class="absolute inset-0 flex items-center">
@@ -141,19 +137,19 @@ export class AuthPages {
           <form id="signup-form" class="space-y-6">
             <div>
               <label for="signup-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
-              <input id="signup-name" name="name" type="text" required 
+              <input id="signup-name" name="name" type="text" required
                 class="form-input mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Enter your full name">
             </div>
             <div>
               <label for="signup-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-              <input id="signup-email" name="email" type="email" required 
+              <input id="signup-email" name="email" type="email" required
                 class="form-input mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Enter your email">
             </div>
             <div>
               <label for="signup-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-              <input id="signup-password" name="password" type="password" required 
+              <input id="signup-password" name="password" type="password" required
                 class="form-input mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Create a password (min 6 characters)" minlength="6">
             </div>
@@ -164,7 +160,7 @@ export class AuthPages {
 
           <div class="mt-6 text-center">
             <p class="text-sm text-gray-600 dark:text-gray-400">
-              Already have an account? 
+              Already have an account?
               <button onclick="window.authPages.showLogin()" class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
                 Sign in
               </button>

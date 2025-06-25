@@ -22,7 +22,7 @@ Closes #issue_number
 ## 🎓 Educational Impact
 <!-- Describe how this change benefits students, teachers, or academic workflows -->
 
-**Target Users:** 
+**Target Users:**
 - [ ] Students
 - [ ] Teachers
 - [ ] Parents

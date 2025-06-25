@@ -67,15 +67,15 @@ class CanvasClient {
       },
       async (error) => {
         const config = error.config;
-        
+
         // Retry logic for specific errors
         if (this.shouldRetry(error) && config && config.__retryCount < this.maxRetries) {
           config.__retryCount = config.__retryCount || 0;
           config.__retryCount++;
-          
+
           const delay = this.retryDelay * Math.pow(2, config.__retryCount - 1); // Exponential backoff
           console.log(`[Canvas API] Retrying request (${config.__retryCount}/${this.maxRetries}) after ${delay}ms`);
-          
+
           await this.sleep(delay);
           return this.client.request(config);
         }
@@ -84,12 +84,12 @@ class CanvasClient {
         if (error.response) {
           const { status, data } = error.response;
           throw new CanvasAPIError(
-            `Canvas API Error (${status}): ${data?.message || JSON.stringify(data)}`, 
-            status, 
+            `Canvas API Error (${status}): ${data?.message || JSON.stringify(data)}`,
+            status,
             data
           );
         }
-        
+
         throw error;
       }
     );
@@ -97,7 +97,7 @@ class CanvasClient {
 
   shouldRetry(error) {
     if (!error.response) return true; // Network errors
-    
+
     const status = error.response.status;
     return status === 429 || status >= 500; // Rate limit or server errors
   }
@@ -108,7 +108,7 @@ class CanvasClient {
 
   getNextPageUrl(linkHeader) {
     if (!linkHeader) return null;
-    
+
     const links = linkHeader.split(',');
     const nextLink = links.find(link => link.includes('rel="next"'));
     if (!nextLink) return null;
@@ -146,7 +146,7 @@ class CanvasClient {
     const params = {
       include: ['total_students', 'teachers', 'term', 'course_progress']
     };
-    
+
     if (!includeEnded) {
       params.state = ['available', 'completed'];
     }
@@ -169,7 +169,7 @@ class CanvasClient {
     const params = {
       include: ['submission', 'assignment_visibility', 'all_dates', 'overrides']
     };
-    
+
     if (includeSubmissions) {
       params.include.push('submission');
     }
@@ -182,7 +182,7 @@ class CanvasClient {
     const params = {
       include: ['submission', 'assignment_visibility', 'all_dates', 'overrides', 'rubric_assessment']
     };
-    
+
     if (includeSubmission) {
       params.include.push('submission');
     }
@@ -400,7 +400,7 @@ class CanvasClient {
       recipients: recipients,
       body: body
     };
-    
+
     if (subject) {
       data.subject = subject;
     }
@@ -427,7 +427,7 @@ const router = express.Router();
 // Middleware to validate Canvas credentials
 function validateCanvasCredentials(req, res, next) {
   const { canvasToken, canvasDomain } = req.body;
-  
+
   if (!canvasToken || !canvasDomain) {
     return res.status(400).json({
       error: 'Missing Canvas credentials',
@@ -446,7 +446,7 @@ router.post('/health', validateCanvasCredentials, async (req, res) => {
     const { token, domain } = req.canvasCredentials;
     const client = new CanvasClient(token, domain);
     const health = await client.healthCheck();
-    
+
     res.json(health);
   } catch (error) {
     console.error('Canvas health check error:', error);
@@ -463,7 +463,7 @@ router.post('/profile', validateCanvasCredentials, async (req, res) => {
     const { token, domain } = req.canvasCredentials;
     const client = new CanvasClient(token, domain);
     const profile = await client.getUserProfile();
-    
+
     res.json(profile);
   } catch (error) {
     console.error('Canvas profile error:', error);
@@ -479,10 +479,10 @@ router.post('/courses', validateCanvasCredentials, async (req, res) => {
   try {
     const { token, domain } = req.canvasCredentials;
     const { includeEnded = false } = req.body;
-    
+
     const client = new CanvasClient(token, domain);
     const courses = await client.listCourses(includeEnded);
-    
+
     res.json(courses);
   } catch (error) {
     console.error('Canvas courses error:', error);
@@ -498,16 +498,16 @@ router.post('/course', validateCanvasCredentials, async (req, res) => {
   try {
     const { token, domain } = req.canvasCredentials;
     const { courseId } = req.body;
-    
+
     if (!courseId) {
       return res.status(400).json({
         error: 'Missing courseId parameter'
       });
     }
-    
+
     const client = new CanvasClient(token, domain);
     const course = await client.getCourse(courseId);
-    
+
     res.json(course);
   } catch (error) {
     console.error('Canvas course error:', error);
@@ -523,16 +523,16 @@ router.post('/assignments', validateCanvasCredentials, async (req, res) => {
   try {
     const { token, domain } = req.canvasCredentials;
     const { courseId, includeSubmissions = false } = req.body;
-    
+
     if (!courseId) {
       return res.status(400).json({
         error: 'Missing courseId parameter'
       });
     }
-    
+
     const client = new CanvasClient(token, domain);
     const assignments = await client.listAssignments(courseId, includeSubmissions);
-    
+
     res.json(assignments);
   } catch (error) {
     console.error('Canvas assignments error:', error);
@@ -548,16 +548,16 @@ router.post('/assignment', validateCanvasCredentials, async (req, res) => {
   try {
     const { token, domain } = req.canvasCredentials;
     const { courseId, assignmentId, includeSubmission = false } = req.body;
-    
+
     if (!courseId || !assignmentId) {
       return res.status(400).json({
         error: 'Missing courseId or assignmentId parameter'
       });
     }
-    
+
     const client = new CanvasClient(token, domain);
     const assignment = await client.getAssignment(courseId, assignmentId, includeSubmission);
-    
+
     res.json(assignment);
   } catch (error) {
     console.error('Canvas assignment error:', error);
@@ -573,9 +573,9 @@ router.post('/grades', validateCanvasCredentials, async (req, res) => {
   try {
     const { token, domain } = req.canvasCredentials;
     const { courseId } = req.body;
-    
+
     const client = new CanvasClient(token, domain);
-    
+
     if (courseId) {
       const grades = await client.getCourseGrades(courseId);
       res.json(grades);
@@ -597,15 +597,15 @@ router.post('/modules', validateCanvasCredentials, async (req, res) => {
   try {
     const { token, domain } = req.canvasCredentials;
     const { courseId, moduleId } = req.body;
-    
+
     if (!courseId) {
       return res.status(400).json({
         error: 'Missing courseId parameter'
       });
     }
-    
+
     const client = new CanvasClient(token, domain);
-    
+
     if (moduleId) {
       const module = await client.getModule(courseId, moduleId);
       res.json(module);
@@ -627,15 +627,15 @@ router.post('/discussions', validateCanvasCredentials, async (req, res) => {
   try {
     const { token, domain } = req.canvasCredentials;
     const { courseId, topicId } = req.body;
-    
+
     if (!courseId) {
       return res.status(400).json({
         error: 'Missing courseId parameter'
       });
     }
-    
+
     const client = new CanvasClient(token, domain);
-    
+
     if (topicId) {
       const discussion = await client.getDiscussion(courseId, topicId);
       res.json(discussion);
@@ -657,16 +657,16 @@ router.post('/announcements', validateCanvasCredentials, async (req, res) => {
   try {
     const { token, domain } = req.canvasCredentials;
     const { courseId } = req.body;
-    
+
     if (!courseId) {
       return res.status(400).json({
         error: 'Missing courseId parameter'
       });
     }
-    
+
     const client = new CanvasClient(token, domain);
     const announcements = await client.listAnnouncements(courseId);
-    
+
     res.json(announcements);
   } catch (error) {
     console.error('Canvas announcements error:', error);
@@ -682,10 +682,10 @@ router.post('/upcoming', validateCanvasCredentials, async (req, res) => {
   try {
     const { token, domain } = req.canvasCredentials;
     const { limit = 10 } = req.body;
-    
+
     const client = new CanvasClient(token, domain);
     const assignments = await client.getUpcomingAssignments(limit);
-    
+
     res.json(assignments);
   } catch (error) {
     console.error('Canvas upcoming assignments error:', error);
@@ -701,10 +701,10 @@ router.post('/calendar', validateCanvasCredentials, async (req, res) => {
   try {
     const { token, domain } = req.canvasCredentials;
     const { startDate, endDate } = req.body;
-    
+
     const client = new CanvasClient(token, domain);
     const events = await client.listCalendarEvents(startDate, endDate);
-    
+
     res.json(events);
   } catch (error) {
     console.error('Canvas calendar error:', error);
@@ -719,10 +719,10 @@ router.post('/calendar', validateCanvasCredentials, async (req, res) => {
 router.post('/dashboard', validateCanvasCredentials, async (req, res) => {
   try {
     const { token, domain } = req.canvasCredentials;
-    
+
     const client = new CanvasClient(token, domain);
     const dashboard = await client.getDashboard();
-    
+
     res.json(dashboard);
   } catch (error) {
     console.error('Canvas dashboard error:', error);
@@ -733,4 +733,4 @@ router.post('/dashboard', validateCanvasCredentials, async (req, res) => {
   }
 });
 
-export { router }; 
+export { router };

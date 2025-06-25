@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Busy BOB - The Ultimate Student Productivity Platform</title>
-    
+
     <!-- Enhanced SEO Meta Tags -->
     <meta name="description" content="BusyBob is the ultimate student productivity platform. Track tasks, monitor mood, manage academic data with Canvas & StudentVue integration, plus AI assistant and Spotify study music. Free for students.">
     <meta name="keywords" content="student productivity, task management, student planner, college productivity, academic planner, Canvas integration, StudentVue, study organization, mood tracking, student wellness, AI study assistant, focus music, Spotify integration, student life, busy students, academic dashboard, grade tracking, assignment management">
     <meta name="author" content="BusyBob">
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-    
+
     <!-- Enhanced SEO Tags -->
     <meta name="language" content="English">
     <meta name="revisit-after" content="1 days">
@@ -18,9 +18,9 @@
     <meta name="rating" content="general">
     <meta name="googlebot" content="index, follow, snippet, archive">
     <link rel="canonical" href="https://busybob.site/">
-    
+
     <!-- Educational Schema.org structured data will be added in script below -->
-    
+
     <!-- Enhanced Open Graph Meta Tags -->
     <meta property="og:title" content="BusyBob - Ultimate Student Productivity Platform | Canvas & StudentVue Integration">
     <meta property="og:description" content="Free productivity platform for students. Manage tasks, track mood, integrate Canvas & StudentVue, use AI assistant, and focus with Spotify study music. Join thousands of students getting organized!">
@@ -32,33 +32,31 @@
     <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="BusyBob">
     <meta property="og:locale" content="en_US">
-    
 
-    
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/svg+xml" href="/icon-192.svg">
-    
+
     <!-- Apple Touch Icon -->
     <link rel="apple-touch-icon" href="/icon-192.svg">
-    
+
     <!-- Web App Manifest -->
     <link rel="manifest" href="/manifest.json">
-    
+
     <!-- Theme Color -->
     <meta name="theme-color" content="#3b82f6">
     <meta name="msapplication-TileColor" content="#3b82f6">
-    
+
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
-    
+
     <!-- External CSS and Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/styles/main.css">
-    
+
     <!-- Tailwind Configuration -->
     <script>
         tailwind.config = {
@@ -98,7 +96,7 @@
             "name": "BusyBob"
         },
         "publisher": {
-            "@type": "Organization", 
+            "@type": "Organization",
             "name": "BusyBob",
             "url": "https://busybob.site"
         },
@@ -117,7 +115,7 @@
         },
         "features": [
             "Task Management",
-            "Mood Tracking", 
+            "Mood Tracking",
             "Academic Integration",
             "Canvas LMS Integration",
             "StudentVue Integration",
@@ -159,14 +157,14 @@
 
 <body class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
     <!-- Theme Toggle Button -->
-    <button id="theme-toggle" 
+    <button id="theme-toggle"
         class="fixed top-4 right-4 z-50 p-2 sm:p-3 rounded-full glass-effect hover:bg-white/20 dark:hover:bg-gray-800/20 theme-toggle shadow-lg">
         <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-800 dark:text-gray-200 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
         </svg>
         <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-800 dark:text-gray-200 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
         </svg>
     </button>
@@ -188,7 +186,7 @@
                         </div>
                         <h1 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Busy <span class="text-orange-500">BOB</span></h1>
                     </div>
-                    
+
                     <!-- Live Clock -->
                     <div class="absolute left-1/2 -translate-x-1/2 hidden sm:block">
                         <span id="live-clock" class="text-base font-medium text-gray-700 dark:text-gray-300"></span>
@@ -300,7 +298,7 @@
                     <div class="max-w-4xl mx-auto">
                         <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 border border-white/20 card-hover">
                             <h2 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4 sm:mb-6">My To-Do List</h2>
-                            
+
                             <!-- Simple Task Form -->
                             <form id="task-form" class="mb-4 sm:mb-6">
                                 <div class="flex gap-3 sm:gap-4">
@@ -317,7 +315,7 @@
                                     </button>
                                 </div>
                             </form>
-                            
+
                             <!-- Task List -->
                             <div id="task-list" class="space-y-3 sm:space-y-4">
                                 <!-- Tasks will be dynamically added here -->
@@ -336,7 +334,7 @@
                             <div class="lg:col-span-2">
                                 <div id="calendar-container"></div>
                             </div>
-                            
+
                             <!-- Selected Date Tasks -->
                             <div class="lg:col-span-1">
                                 <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-white/20 card-hover">
@@ -360,7 +358,7 @@
                             <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Journal</h2>
                             <p class="text-gray-500 dark:text-gray-400 mt-1">A space for your private thoughts and reflections.</p>
                         </div>
-                        
+
                         <!-- Today's Reflection -->
                         <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 sm:p-8 border border-white/20 card-hover">
                             <div class="flex justify-between items-center mb-4">
@@ -464,7 +462,7 @@
                 </div>
                 <p class="text-sm opacity-90 mt-1">Quick access to tools and features</p>
             </div>
-            
+
             <!-- Toolbox Content -->
             <div class="p-4 space-y-3">
                 <!-- Academic Hub Tool -->
@@ -479,7 +477,7 @@
                         </div>
                     </button>
                 </div>
-                
+
                 <!-- AI Notes Tool -->
                 <div id="ai-notes-tool" class="tool-item">
                     <button class="w-full text-left p-3 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors" onclick="openTool('ai-notes')">
@@ -492,7 +490,7 @@
                         </div>
                     </button>
                 </div>
-                
+
                 <!-- Music Tool -->
                 <div id="music-tool" class="tool-item">
                     <button class="w-full text-left p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors" onclick="openTool('music')">
@@ -505,7 +503,7 @@
                         </div>
                     </button>
                 </div>
-                
+
                 <!-- Development Tools -->
                 <div id="dev-tools-tool" class="tool-item">
                     <button class="w-full text-left p-3 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors" onclick="openTool('dev-tools')">

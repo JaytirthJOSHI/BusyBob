@@ -30,7 +30,7 @@ async function handleRequest(body) {
         console.log('Successfully logged in to StudentVue');
     } catch (error) {
         console.error('StudentVue login failed:', { message: error.message, stack: error.stack });
-        
+
         // Provide more specific error messages
         let errorMessage = error.message;
         if (error.message.includes('55816')) {
@@ -40,13 +40,13 @@ async function handleRequest(body) {
         } else if (error.message.includes('timeout')) {
             errorMessage = 'Connection timeout. Please try again.';
         }
-        
+
         return {
             statusCode: 401, // Unauthorized
             body: JSON.stringify({ error: `StudentVue login failed: ${errorMessage}` }),
         };
     }
-        
+
     let data;
     console.log(`Fetching data for action: ${action}`);
 
@@ -74,7 +74,7 @@ async function handleRequest(body) {
                     body: JSON.stringify({ error: 'Invalid action specified.' }),
                 };
         }
-        
+
         console.log(`Successfully fetched data for ${action}:`, data ? 'Data received' : 'No data');
         return {
             statusCode: 200,
@@ -106,4 +106,4 @@ router.post('/', async (req, res) => {
 });
 
 // Export the router for Express
-export { router }; 
+export { router };

@@ -44,7 +44,7 @@ Verify your OAuth credentials:
 
 1. Go to "APIs & Services" > "Credentials"
 2. Find your existing OAuth 2.0 Client ID
-3. Click the edit (pencil) icon 
+3. Click the edit (pencil) icon
 4. Ensure the following are configured:
    - Authorized JavaScript origins: `https://busybob.site`
    - Authorized redirect URIs: `https://busybob.site/auth/google/callback`
@@ -192,4 +192,4 @@ If you encounter any issues with the calendar integration, please:
 
 For additional help, refer to the official documentation:
 - [Google Calendar API](https://developers.google.com/calendar)
-- [Microsoft Graph API](https://docs.microsoft.com/en-us/graph/) 
+- [Microsoft Graph API](https://docs.microsoft.com/en-us/graph/)

@@ -77,7 +77,7 @@ export function parseAssignments(calendar) {
             const eventLists = Array.isArray(calendar.CalendarListing.EventLists.EventList)
                 ? calendar.CalendarListing.EventLists.EventList
                 : [calendar.CalendarListing.EventLists.EventList];
-            
+
             eventLists.forEach(eventList => {
                 if (eventList && Array.isArray(eventList)) {
                     eventList.forEach(event => {
@@ -100,7 +100,7 @@ export function parseAssignments(calendar) {
             const events = Array.isArray(calendar.StudentCalendar.Events.Event)
                 ? calendar.StudentCalendar.Events.Event
                 : [calendar.StudentCalendar.Events.Event];
-            
+
             events.forEach(event => {
                 if (event && (event.Type === 'Assignment' || event.Type === 'Homework')) {
                     assignments.push({
@@ -114,7 +114,7 @@ export function parseAssignments(calendar) {
             });
             return assignments;
         }
-        
+
         console.warn('Calendar data is not in the expected format.', calendar);
         return [];
     } catch (error) {
@@ -156,7 +156,7 @@ export function parseSchedule(scheduleData) {
             console.warn('Could not find a class list in "ClassLists".', classLists);
             return null;
         }
-        
+
         return {
             type: 'StudentClassSchedule',
             classes: classes.map(cls => ({
@@ -173,6 +173,4 @@ export function parseSchedule(scheduleData) {
         throw new Error('There was an error parsing your schedule data.');
     }
 }
-
-
 

@@ -25,7 +25,7 @@ BusyBob now includes a comprehensive gamification system designed to make produc
 
 ### Settings Options
 - Work duration (1-60 minutes)
-- Short break duration (1-30 minutes) 
+- Short break duration (1-30 minutes)
 - Long break duration (1-60 minutes)
 - Sessions until long break (2-10 sessions)
 - Auto-start preferences
@@ -45,7 +45,7 @@ BusyBob now includes a comprehensive gamification system designed to make produc
 
 ### Leveling System
 - **Level 1**: 0 points
-- **Level 2**: 100 points  
+- **Level 2**: 100 points
 - **Level 3**: 250 points
 - **Level 4**: 500 points
 - **Level 5**: 1,000 points
@@ -85,7 +85,7 @@ BusyBob now includes a comprehensive gamification system designed to make produc
 - **Priority Master**: Complete high-priority tasks
 - **Time Management**: Complete tasks before due dates
 
-### Habit-Based Achievements  
+### Habit-Based Achievements
 - **Mood Tracking**: Consistent mood logging
 - **Journal Streak**: Daily reflection writing
 - **Focus Master**: Pomodoro session milestones
@@ -163,7 +163,7 @@ The system intelligently awards points based on:
 
 ### Daily Habits
 - **Morning Routine**: Complete tasks before 9 AM for Early Bird bonus
-- **Consistent Logging**: Track mood daily for streak bonuses  
+- **Consistent Logging**: Track mood daily for streak bonuses
 - **Pomodoro Blocks**: Use timer for focused work sessions
 - **Evening Reflection**: Write journal entries for bonus points
 
@@ -182,4 +182,3 @@ The system intelligently awards points based on:
 ---
 
 **Ready to level up your productivity?** Start earning points today and transform your daily tasks into an engaging, rewarding experience! 🚀
-

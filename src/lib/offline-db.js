@@ -4,7 +4,7 @@ import { offlineDB } from '../utils/offline-storage.js'
 // Enhanced database utility that works online and offline
 export const db = {
     isOnline: navigator.onLine,
-    
+
     init() {
         // Listen for online/offline events
         window.addEventListener('online', () => {
@@ -12,7 +12,7 @@ export const db = {
             console.log('📶 Back online - syncing data...')
             this.syncOfflineData()
         })
-        
+
         window.addEventListener('offline', () => {
             this.isOnline = false
             console.log('📱 Offline mode activated')
@@ -30,7 +30,7 @@ export const db = {
         }
 
         await offlineDB.init(userId, sessionToken)
-        
+
         // Sync data from server if online
         if (this.isOnline) {
             await this.syncFromServer()
@@ -43,16 +43,16 @@ export const db = {
 
     async syncFromServer() {
         if (!this.isOnline) return
-        
+
         try {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) return
 
             console.log('📥 Syncing data from server...')
-            
+
             // Sync all tables
             const tables = ['tasks', 'feelings', 'journal_entries', 'kid_mode_settings', 'ai_notes']
-            
+
             for (const table of tables) {
                 try {
                     const { data, error } = await supabase
@@ -98,9 +98,9 @@ export const db = {
                     .insert(task)
                     .select()
                     .single()
-                
+
                 if (error) throw error
-                
+
                 // Also save offline for caching
                 await offlineDB.saveTask(data)
                 return { data, error: null }
@@ -174,14 +174,14 @@ export const db = {
                 // Get current task from offline storage
                 const tasks = await offlineDB.getTasks()
                 const currentTask = tasks.find(t => t.id === taskId)
-                
+
                 if (!currentTask) {
                     throw new Error('Task not found')
                 }
 
                 const updatedTask = { ...currentTask, ...updatedData }
                 await offlineDB.saveTask(updatedTask)
-                
+
                 return { data: [updatedTask], error: null }
             }
         } catch (error) {
@@ -203,7 +203,7 @@ export const db = {
 
             // Delete from offline storage
             await offlineDB.deleteTask(taskId)
-            
+
             return { error: null }
         } catch (error) {
             console.error('Error deleting task:', error)
@@ -388,7 +388,7 @@ export const db = {
 
             // Initialize offline storage for this user
             await this.initUser(user.id)
-            
+
             return { data: user, error: null }
         } catch (error) {
             console.error('Error ensuring user:', error)

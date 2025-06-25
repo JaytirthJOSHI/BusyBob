@@ -14,11 +14,11 @@ export class MultiAgentSystem {
     this.performanceMetrics = new PerformanceMetrics()
     this.learningEngine = new LearningEngine()
     this.realTimeCollaboration = new RealTimeCollaboration()
-    
+
     // Enhanced agent types with specialized roles
     this.agentTypes = {
       PLANNER: 'planner',
-      EXECUTOR: 'executor', 
+      EXECUTOR: 'executor',
       RESEARCHER: 'researcher',
       ANALYST: 'analyst',
       COORDINATOR: 'coordinator',
@@ -27,14 +27,14 @@ export class MultiAgentSystem {
       CREATOR: 'creator',
       VALIDATOR: 'validator'
     }
-    
+
     this.init()
   }
 
   async init() {
     try {
       console.log('🤖 Initializing Enhanced Multi-Agent System...')
-      
+
       // Initialize core systems
       await Promise.all([
         this.createAgents(),
@@ -44,10 +44,10 @@ export class MultiAgentSystem {
         this.learningEngine.init(),
         this.realTimeCollaboration.init()
       ])
-      
+
       // Create enhanced workflow engine
       this.workflow = new AgentWorkflow(this.agents, this.memory, this.tools, this.performanceMetrics)
-      
+
       this.isInitialized = true
       console.log('✅ Enhanced Multi-Agent System initialized with advanced capabilities')
     } catch (error) {
@@ -69,7 +69,7 @@ export class MultiAgentSystem {
         collaborationStyle: 'proactive'
       },
       {
-        id: 'task-executor', 
+        id: 'task-executor',
         type: this.agentTypes.EXECUTOR,
         name: 'Task Executor',
         description: 'Intelligent task execution with progress tracking',
@@ -81,7 +81,7 @@ export class MultiAgentSystem {
       {
         id: 'mood-analyst',
         type: this.agentTypes.ANALYST,
-        name: 'Mood Analyst', 
+        name: 'Mood Analyst',
         description: 'Advanced mood analysis with predictive insights',
         capabilities: ['mood_analysis', 'pattern_recognition', 'predictive_insights', 'wellness_recommendations'],
         context: await this.getMoodContext(),
@@ -199,32 +199,32 @@ export class MultiAgentSystem {
   async processRequest(prompt) {
     try {
       console.log('🤖 Multi-agent system processing request:', prompt)
-      
+
       // Special handling for task completion requests
       if (prompt.toLowerCase().includes('task') && prompt.toLowerCase().includes('complete')) {
         return await this.handleTaskCompletion(prompt)
       }
-      
+
       // Route to appropriate agent based on prompt content
       const agent = this.routeToAgent(prompt)
-      
+
       if (!agent) {
         return {
           success: false,
           error: 'No suitable agent found for this request'
         }
       }
-      
+
       const startTime = Date.now()
       const result = await agent.process(prompt)
       const duration = Date.now() - startTime
-      
+
       // Update performance metrics
       this.performanceMetrics.recordTask(agent.name, duration, result.success)
-      
+
       // Update learning engine
       this.learningEngine.recordInteraction(prompt, agent.name, result.success)
-      
+
       return result
     } catch (error) {
       console.error('❌ Error in multi-agent system:', error)
@@ -240,33 +240,33 @@ export class MultiAgentSystem {
       // Get current tasks from the global tasks array
       const currentTasks = window.tasks || []
       const pendingTasks = currentTasks.filter(task => !task.completed)
-      
+
       if (pendingTasks.length === 0) {
         return {
           success: true,
           response: '🎉 Great job! You have no pending tasks. All caught up!'
         }
       }
-      
+
       // Analyze tasks and provide suggestions
       const suggestions = this.analyzeTasks(pendingTasks)
-      
+
       let response = `📋 You have ${pendingTasks.length} pending tasks:\n\n`
-      
+
       // Show top 3 priority tasks
       const topTasks = pendingTasks
         .sort((a, b) => this.getTaskPriority(b) - this.getTaskPriority(a))
         .slice(0, 3)
-      
+
       response += '🎯 **Priority Tasks:**\n'
       topTasks.forEach((task, index) => {
         const priority = this.getTaskPriority(task)
         const emoji = priority > 7 ? '🔴' : priority > 4 ? '🟡' : '🟢'
         response += `${emoji} ${task.title}${task.description ? ` - ${task.description}` : ''}\n`
       })
-      
+
       response += `\n💡 **Suggestions:**\n${suggestions}`
-      
+
       return {
         success: true,
         response: response
@@ -282,27 +282,27 @@ export class MultiAgentSystem {
 
   analyzeTasks(tasks) {
     const suggestions = []
-    
+
     // Check for overdue tasks
     const overdue = tasks.filter(task => new Date(task.due_date) < new Date())
     if (overdue.length > 0) {
       suggestions.push(`⚠️ You have ${overdue.length} overdue task(s). Focus on these first!`)
     }
-    
+
     // Check for high priority tasks
     const highPriority = tasks.filter(task => this.getTaskPriority(task) > 7)
     if (highPriority.length > 0) {
       suggestions.push(`🔥 ${highPriority.length} high-priority task(s) need attention`)
     }
-    
+
     // Suggest time management
     if (tasks.length > 5) {
       suggestions.push('⏰ Consider breaking down large tasks into smaller chunks')
     }
-    
+
     // Suggest breaks
     suggestions.push('☕ Remember to take short breaks between tasks')
-    
+
     return suggestions.join('\n')
   }
 
@@ -311,19 +311,19 @@ export class MultiAgentSystem {
     const dueDate = new Date(task.due_date)
     const now = new Date()
     const daysUntilDue = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24))
-    
+
     let priority = 5 // Default priority
-    
+
     // Adjust based on due date
     if (daysUntilDue < 0) priority += 5 // Overdue
     else if (daysUntilDue <= 1) priority += 4 // Due today/tomorrow
     else if (daysUntilDue <= 3) priority += 3 // Due this week
     else if (daysUntilDue <= 7) priority += 2 // Due next week
-    
+
     // Adjust based on existing priority field
     if (task.priority === 'high') priority += 2
     else if (task.priority === 'medium') priority += 1
-    
+
     return Math.min(priority, 10) // Cap at 10
   }
 
@@ -354,8 +354,8 @@ export class MultiAgentSystem {
     const completionRate = completedTasks.length / tasks.length
 
     const gradedTasks = completedTasks.filter(t => t.grade)
-    const averageGrade = gradedTasks.length > 0 
-      ? gradedTasks.reduce((sum, t) => sum + (t.grade || 0), 0) / gradedTasks.length 
+    const averageGrade = gradedTasks.length > 0
+      ? gradedTasks.reduce((sum, t) => sum + (t.grade || 0), 0) / gradedTasks.length
       : 0
 
     return { completionRate, averageGrade }
@@ -366,7 +366,7 @@ export class MultiAgentSystem {
     if (!user) return {}
 
     const tasks = await supabase.from('tasks').select('*').eq('user_id', user.id)
-    
+
     return {
       totalTasks: tasks.data?.length || 0,
       completedTasks: tasks.data?.filter(t => t.completed).length || 0,
@@ -378,7 +378,7 @@ export class MultiAgentSystem {
 
   analyzeTaskCategories(tasks) {
     if (!tasks) return {}
-    
+
     const categories = {}
     tasks.forEach(task => {
       const category = task.category || 'general'
@@ -388,7 +388,7 @@ export class MultiAgentSystem {
       categories[category].total++
       if (task.completed) categories[category].completed++
     })
-    
+
     return categories
   }
 
@@ -397,7 +397,7 @@ export class MultiAgentSystem {
     if (!user) return {}
 
     const moods = await supabase.from('feelings').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-    
+
     return {
       totalMoodEntries: moods.data?.length || 0,
       recentMoods: moods.data?.slice(0, 7) || [],
@@ -408,15 +408,15 @@ export class MultiAgentSystem {
 
   calculateMoodTrend(moods) {
     if (!moods || moods.length < 2) return 'stable'
-    
+
     const recentMoods = moods.slice(0, 7).map(m => m.rating)
     const olderMoods = moods.slice(7, 14).map(m => m.rating)
-    
+
     if (recentMoods.length === 0 || olderMoods.length === 0) return 'stable'
-    
+
     const recentAvg = recentMoods.reduce((a, b) => a + b, 0) / recentMoods.length
     const olderAvg = olderMoods.reduce((a, b) => a + b, 0) / olderMoods.length
-    
+
     if (recentAvg > olderAvg + 0.5) return 'improving'
     if (recentAvg < olderAvg - 0.5) return 'declining'
     return 'stable'
@@ -424,23 +424,23 @@ export class MultiAgentSystem {
 
   analyzeMoodPatterns(moods) {
     if (!moods || moods.length === 0) return {}
-    
+
     const patterns = {
       weeklyPattern: {},
       timeOfDayPattern: {},
       activityPattern: {}
     }
-    
+
     moods.forEach(mood => {
       const date = new Date(mood.created_at)
       const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' })
       const hour = date.getHours()
       const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
-      
+
       patterns.weeklyPattern[dayOfWeek] = (patterns.weeklyPattern[dayOfWeek] || 0) + mood.rating
       patterns.timeOfDayPattern[timeOfDay] = (patterns.timeOfDayPattern[timeOfDay] || 0) + mood.rating
     })
-    
+
     return patterns
   }
 
@@ -449,7 +449,7 @@ export class MultiAgentSystem {
     if (!user) return {}
 
     const musicConnections = await supabase.from('music_connections').select('*').eq('user_id', user.id).single()
-    
+
     return {
       hasSpotify: !!musicConnections.data?.spotify_token,
       preferredGenres: musicConnections.data?.preferred_genres || [],
@@ -463,7 +463,7 @@ export class MultiAgentSystem {
     if (!user) return {}
 
     const journalEntries = await supabase.from('journal_entries').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-    
+
     return {
       totalEntries: journalEntries.data?.length || 0,
       recentEntries: journalEntries.data?.slice(0, 5) || [],
@@ -474,11 +474,11 @@ export class MultiAgentSystem {
 
   calculateWritingStreak(entries) {
     if (!entries || entries.length === 0) return 0
-    
+
     let streak = 0
     const today = new Date().toDateString()
     const yesterday = new Date(Date.now() - 86400000).toDateString()
-    
+
     for (let i = 0; i < entries.length; i++) {
       const entryDate = new Date(entries[i].created_at).toDateString()
       if (entryDate === today || entryDate === yesterday) {
@@ -487,13 +487,13 @@ export class MultiAgentSystem {
         break
       }
     }
-    
+
     return streak
   }
 
   analyzeJournalThemes(entries) {
     if (!entries || entries.length === 0) return []
-    
+
     const themes = {}
     entries.forEach(entry => {
       const words = entry.content.toLowerCase().split(/\s+/)
@@ -503,7 +503,7 @@ export class MultiAgentSystem {
         }
       })
     })
-    
+
     return Object.entries(themes)
       .sort(([,a], [,b]) => b - a)
       .slice(0, 10)
@@ -529,19 +529,19 @@ export class MultiAgentSystem {
 
   identifyOptimizationOpportunities() {
     const opportunities = []
-    
+
     // Analyze task completion patterns
     const taskCompletionRate = this.collaborationHistory.filter(h => h.success).length / this.collaborationHistory.length
     if (taskCompletionRate < 0.8) {
       opportunities.push('Improve task completion success rate')
     }
-    
+
     // Analyze response times
     const avgResponseTime = this.collaborationHistory.reduce((sum, h) => sum + h.duration, 0) / this.collaborationHistory.length
     if (avgResponseTime > 5000) {
       opportunities.push('Optimize agent response times')
     }
-    
+
     return opportunities
   }
 
@@ -553,7 +553,7 @@ export class MultiAgentSystem {
       supabase.from('ai_notes').select('*').eq('user_id', user.id),
       supabase.from('journal_entries').select('*').eq('user_id', user.id)
     ])
-    
+
     return {
       totalAINotes: aiNotes.data?.length || 0,
       totalJournalEntries: journalEntries.data?.length || 0,
@@ -568,14 +568,14 @@ export class MultiAgentSystem {
       preferredStyle: 'informal',
       preferredTopics: []
     }
-    
+
     // Analyze content length preferences
     const allContent = [...(aiNotes || []), ...(journalEntries || [])]
     const avgLength = allContent.reduce((sum, item) => sum + (item.content?.length || 0), 0) / allContent.length
-    
+
     if (avgLength < 100) preferences.preferredLength = 'short'
     else if (avgLength > 500) preferences.preferredLength = 'long'
-    
+
     return preferences
   }
 
@@ -585,14 +585,14 @@ export class MultiAgentSystem {
       preferredFormats: {},
       inspirationSources: []
     }
-    
+
     const allContent = [...(aiNotes || []), ...(journalEntries || [])]
-    
+
     allContent.forEach(item => {
       const hour = new Date(item.created_at).getHours()
       patterns.creativePeakHours[hour] = (patterns.creativePeakHours[hour] || 0) + 1
     })
-    
+
     return patterns
   }
 
@@ -792,18 +792,18 @@ class Agent {
 
   async process(input, tools, memory) {
     this.isActive = true
-    
+
     try {
       // Agent-specific processing logic
       const result = await this.executeCapability(input, tools, memory)
-      
+
       // Record in agent memory
       this.memory.push({
         input,
         result,
         timestamp: Date.now()
       })
-      
+
       return result
     } finally {
       this.isActive = false
@@ -843,9 +843,9 @@ class AgentMemory {
       result,
       timestamp: Date.now()
     }
-    
+
     this.episodicMemory.push(memory)
-    
+
     // Maintain memory size
     if (this.episodicMemory.length > this.maxEpisodicMemories) {
       this.episodicMemory = this.episodicMemory.slice(-this.maxEpisodicMemories)
@@ -855,8 +855,8 @@ class AgentMemory {
   getRelevantMemories(query, limit = 10) {
     // Simple relevance scoring - in a real system, this would use embeddings
     return this.episodicMemory
-      .filter(memory => 
-        memory.interaction.includes(query) || 
+      .filter(memory =>
+        memory.interaction.includes(query) ||
         memory.result.response.includes(query)
       )
       .slice(-limit)
@@ -906,22 +906,22 @@ class AgentWorkflow {
 
   async execute(task) {
     console.log('🔄 Starting agent workflow execution')
-    
+
     // Step 1: Planning phase
     const planner = this.agents.get('academic-planner')
     const plan = await planner.process(task.userMessage, this.tools, this.memory)
-    
+
     // Step 2: Execution phase
     const executor = this.agents.get('task-executor')
     const execution = await executor.process(plan, this.tools, this.memory)
-    
+
     // Step 3: Analysis phase (if needed)
     let analysis = null
     if (task.context.needsAnalysis) {
       const analyst = this.agents.get('mood-analyst')
       analysis = await analyst.process(execution, this.tools, this.memory)
     }
-    
+
     // Step 4: Coordination phase
     const coordinator = this.agents.get('music-coordinator')
     const coordination = await coordinator.process({
@@ -929,14 +929,14 @@ class AgentWorkflow {
       execution,
       analysis
     }, this.tools, this.memory)
-    
+
     // Record all interactions in memory
     [plan, execution, analysis, coordination].forEach(result => {
       if (result) {
         this.memory.record(result.agent, task.userMessage, result)
       }
     })
-    
+
     return {
       success: true,
       plan,
@@ -977,24 +977,24 @@ class EnhancedAgent {
 
   async process(input, tools, memory) {
     const startTime = Date.now()
-    
+
     try {
       // Analyze input and determine best approach
       const analysis = await this.analyzeInput(input)
-      
+
       // Select appropriate capability
       const capability = this.selectCapability(analysis)
-      
+
       // Execute with context and tools
       const result = await this.executeCapability(capability, input, tools, memory)
-      
+
       // Record performance
       const duration = Date.now() - startTime
       this.recordPerformance(capability, duration, result.success)
-      
+
       // Update learning progress
       this.updateLearningProgress(result)
-      
+
       return result
     } catch (error) {
       console.error(`Error in agent ${this.name}:`, error)
@@ -1010,7 +1010,7 @@ class EnhancedAgent {
       entities: this.extractEntities(input),
       urgency: this.assessUrgency(input)
     }
-    
+
     return analysis
   }
 
@@ -1018,11 +1018,11 @@ class EnhancedAgent {
     const wordCount = input.split(' ').length
     const hasSpecialTerms = /(task|schedule|plan|analyze|create|find)/i.test(input)
     const hasNumbers = /\d+/.test(input)
-    
+
     let complexity = 'simple'
     if (wordCount > 20 || hasSpecialTerms) complexity = 'medium'
     if (wordCount > 50 || (hasSpecialTerms && hasNumbers)) complexity = 'complex'
-    
+
     return complexity
   }
 
@@ -1035,11 +1035,11 @@ class EnhancedAgent {
       analyze: /(analyze|examine|review|check)/i,
       plan: /(plan|schedule|organize|arrange)/i
     }
-    
+
     for (const [intent, pattern] of Object.entries(intents)) {
       if (pattern.test(input)) return intent
     }
-    
+
     return 'general'
   }
 
@@ -1050,14 +1050,14 @@ class EnhancedAgent {
       priorities: input.match(/(high|medium|low|urgent|important)/gi) || [],
       categories: input.match(/(academic|personal|work|study|health)/gi) || []
     }
-    
+
     return entities
   }
 
   assessUrgency(input) {
     const urgentTerms = /(urgent|asap|immediately|now|quick|fast)/i
     const timeTerms = /(today|tomorrow|this week|deadline)/i
-    
+
     if (urgentTerms.test(input)) return 'high'
     if (timeTerms.test(input)) return 'medium'
     return 'low'
@@ -1073,7 +1073,7 @@ class EnhancedAgent {
       analyze: 'mood_analysis',
       plan: 'task_planning'
     }
-    
+
     const intent = analysis.intent
     return capabilityMap[intent] || this.capabilities[0]
   }
@@ -1081,7 +1081,7 @@ class EnhancedAgent {
   async executeCapability(capability, input, tools, memory) {
     // Execute the selected capability
     const tool = tools.getTool(capability)
-    
+
     if (tool) {
       return await tool.execute({ input, context: this.context, memory })
     } else {
@@ -1099,10 +1099,10 @@ class EnhancedAgent {
       agent: this.name,
       timestamp: new Date().toISOString()
     }
-    
+
     // Store in memory
     this.memory.set(`${capability}_${Date.now()}`, result)
-    
+
     return result
   }
 
@@ -1113,7 +1113,7 @@ class EnhancedAgent {
       success,
       timestamp: Date.now()
     })
-    
+
     // Keep only recent history
     if (this.performanceHistory.length > 100) {
       this.performanceHistory = this.performanceHistory.slice(-50)
@@ -1126,17 +1126,17 @@ class EnhancedAgent {
     } else {
       this.learningProgress += this.learningRate * 0.05
     }
-    
+
     this.learningProgress = Math.min(this.learningProgress, 1.0)
   }
 
   getPerformanceMetrics() {
     const recent = this.performanceHistory.slice(-10)
     if (recent.length === 0) return { avgDuration: 0, successRate: 0 }
-    
+
     const avgDuration = recent.reduce((sum, p) => sum + p.duration, 0) / recent.length
     const successRate = recent.filter(p => p.success).length / recent.length
-    
+
     return { avgDuration, successRate }
   }
 }
@@ -1168,17 +1168,17 @@ class PerformanceMetrics {
 
   endTask() {
     if (!this.currentTask) return {}
-    
+
     const duration = Date.now() - this.currentTask.startTime
     this.metrics.taskDurations.push(duration)
-    
+
     const metrics = {
       duration,
       agentCount: this.currentTask.agents.length,
       stepCount: this.currentTask.steps.length,
       timestamp: Date.now()
     }
-    
+
     this.currentTask = null
     return metrics
   }
@@ -1187,7 +1187,7 @@ class PerformanceMetrics {
     if (!this.metrics.agentPerformance.has(agentId)) {
       this.metrics.agentPerformance.set(agentId, [])
     }
-    
+
     this.metrics.agentPerformance.get(agentId).push({
       duration,
       success,
@@ -1197,10 +1197,10 @@ class PerformanceMetrics {
 
   getSystemMetrics() {
     const recentTasks = this.metrics.taskDurations.slice(-20)
-    const avgTaskDuration = recentTasks.length > 0 
-      ? recentTasks.reduce((sum, d) => sum + d, 0) / recentTasks.length 
+    const avgTaskDuration = recentTasks.length > 0
+      ? recentTasks.reduce((sum, d) => sum + d, 0) / recentTasks.length
       : 0
-    
+
     const agentMetrics = {}
     for (const [agentId, performance] of this.metrics.agentPerformance) {
       const recent = performance.slice(-10)
@@ -1209,7 +1209,7 @@ class PerformanceMetrics {
         successRate: recent.filter(p => p.success).length / recent.length
       }
     }
-    
+
     return {
       avgTaskDuration,
       agentMetrics,
@@ -1221,7 +1221,7 @@ class PerformanceMetrics {
   calculateSystemHealth() {
     const recentTasks = this.metrics.taskDurations.slice(-10)
     const avgDuration = recentTasks.reduce((sum, d) => sum + d, 0) / recentTasks.length
-    
+
     if (avgDuration < 2000) return 'excellent'
     if (avgDuration < 5000) return 'good'
     if (avgDuration < 10000) return 'fair'
@@ -1256,7 +1256,7 @@ class LearningEngine {
       recommendations: this.generateRecommendations(task),
       improvements: this.suggestImprovements(task)
     }
-    
+
     this.learningData.set(task.id, insights)
     return insights
   }
@@ -1267,14 +1267,14 @@ class LearningEngine {
       taskComplexity: this.analyzeTaskComplexity(task),
       userPreferences: this.analyzeUserPreferences(task)
     }
-    
+
     return patterns
   }
 
   analyzeAgentCollaboration(task) {
     const agentCount = task.agents.length
     const collaborationPattern = agentCount > 2 ? 'multi-agent' : 'single-agent'
-    
+
     return {
       pattern: collaborationPattern,
       efficiency: this.calculateCollaborationEfficiency(task),
@@ -1285,7 +1285,7 @@ class LearningEngine {
   calculateCollaborationEfficiency(task) {
     const duration = task.results.length > 0 ? task.results[task.results.length - 1].timestamp - task.startTime : 0
     const agentCount = task.agents.length
-    
+
     // Simple efficiency calculation
     return agentCount > 0 ? duration / agentCount : 0
   }
@@ -1300,11 +1300,11 @@ class LearningEngine {
   analyzeTaskComplexity(task) {
     const wordCount = task.userMessage.split(' ').length
     const hasSpecialTerms = /(analyze|create|plan|find|update)/i.test(task.userMessage)
-    
+
     let complexity = 'simple'
     if (wordCount > 15 || hasSpecialTerms) complexity = 'medium'
     if (wordCount > 30 || (hasSpecialTerms && wordCount > 20)) complexity = 'complex'
-    
+
     return {
       level: complexity,
       factors: { wordCount, hasSpecialTerms },
@@ -1327,7 +1327,7 @@ class LearningEngine {
       preferredAgents: this.detectPreferredAgents(task),
       interactionPattern: this.detectInteractionPattern(task)
     }
-    
+
     return preferences
   }
 
@@ -1344,7 +1344,7 @@ class LearningEngine {
     task.agents.forEach(agent => {
       agentUsage[agent] = (agentUsage[agent] || 0) + 1
     })
-    
+
     return Object.entries(agentUsage)
       .sort(([,a], [,b]) => b - a)
       .slice(0, 3)
@@ -1360,46 +1360,46 @@ class LearningEngine {
 
   generateRecommendations(task) {
     const recommendations = []
-    
+
     // Performance recommendations
     if (task.results.length > 5) {
       recommendations.push('Consider task decomposition for better performance')
     }
-    
+
     // Agent recommendations
     if (task.agents.length === 0) {
       recommendations.push('No agents involved - consider agent collaboration')
     }
-    
+
     // User experience recommendations
     const avgResponseTime = task.results.reduce((sum, r) => sum + (r.duration || 0), 0) / task.results.length
     if (avgResponseTime > 5000) {
       recommendations.push('Response time could be optimized')
     }
-    
+
     return recommendations
   }
 
   suggestImprovements(task) {
     const improvements = []
-    
+
     // Agent selection improvements
     if (task.agents.length > 3) {
       improvements.push('Optimize agent selection for task complexity')
     }
-    
+
     // Tool usage improvements
     const toolUsage = task.results.filter(r => r.tool).length
     if (toolUsage === 0) {
       improvements.push('Consider using specialized tools for better results')
     }
-    
+
     return improvements
   }
 
   async updateAgents(agents, task) {
     const insights = await this.extractInsights(task)
-    
+
     for (const [agentId, agent] of agents) {
       if (agent.updateLearningProgress) {
         agent.updateLearningProgress(insights)
@@ -1419,10 +1419,10 @@ class LearningEngine {
   calculateLearningEfficiency() {
     const recentInsights = Array.from(this.learningData.values()).slice(-10)
     if (recentInsights.length === 0) return 0
-    
-    const avgRecommendations = recentInsights.reduce((sum, insight) => 
+
+    const avgRecommendations = recentInsights.reduce((sum, insight) =>
       sum + insight.recommendations.length, 0) / recentInsights.length
-    
+
     return Math.min(avgRecommendations / 5, 1.0) // Normalize to 0-1
   }
 }
@@ -1447,7 +1447,7 @@ class RealTimeCollaboration {
   setupCommunicationChannels() {
     // Set up communication channels for different agent types
     const channels = ['planning', 'execution', 'analysis', 'coordination', 'validation']
-    
+
     channels.forEach(channel => {
       this.communicationChannels.set(channel, {
         messages: [],
@@ -1459,7 +1459,7 @@ class RealTimeCollaboration {
 
   async startCollaborationSession(agents, task) {
     const sessionId = `session_${Date.now()}`
-    
+
     const session = {
       id: sessionId,
       agents: agents,
@@ -1473,20 +1473,20 @@ class RealTimeCollaboration {
         collaborationEfficiency: 0
       }
     }
-    
+
     this.collaborationSessions.set(sessionId, session)
     this.collaborationMetrics.totalSessions++
     this.collaborationMetrics.activeSessions++
-    
+
     console.log(`🤝 Started collaboration session ${sessionId} with ${agents.length} agents`)
-    
+
     return sessionId
   }
 
   async sendMessage(sessionId, fromAgent, toAgent, message, messageType = 'collaboration') {
     const session = this.collaborationSessions.get(sessionId)
     if (!session) return false
-    
+
     const collaborationMessage = {
       id: `msg_${Date.now()}`,
       from: fromAgent,
@@ -1495,42 +1495,42 @@ class RealTimeCollaboration {
       type: messageType,
       timestamp: Date.now()
     }
-    
+
     session.messages.push(collaborationMessage)
     session.metrics.messageCount++
-    
+
     // Update agent participation
     if (!session.metrics.agentParticipation.has(fromAgent)) {
       session.metrics.agentParticipation.set(fromAgent, 0)
     }
-    session.metrics.agentParticipation.set(fromAgent, 
+    session.metrics.agentParticipation.set(fromAgent,
       session.metrics.agentParticipation.get(fromAgent) + 1)
-    
+
     return true
   }
 
   async endCollaborationSession(sessionId) {
     const session = this.collaborationSessions.get(sessionId)
     if (!session) return false
-    
+
     session.status = 'completed'
     session.endTime = Date.now()
     session.duration = session.endTime - session.startTime
-    
+
     // Calculate collaboration efficiency
     session.metrics.collaborationEfficiency = this.calculateCollaborationEfficiency(session)
-    
+
     this.collaborationMetrics.activeSessions--
-    
+
     // Update average session duration
     const completedSessions = Array.from(this.collaborationSessions.values())
       .filter(s => s.status === 'completed')
-    
+
     if (completedSessions.length > 0) {
-      this.collaborationMetrics.avgSessionDuration = 
+      this.collaborationMetrics.avgSessionDuration =
         completedSessions.reduce((sum, s) => sum + s.duration, 0) / completedSessions.length
     }
-    
+
     console.log(`✅ Completed collaboration session ${sessionId}`)
     return true
   }
@@ -1539,23 +1539,23 @@ class RealTimeCollaboration {
     const agentCount = session.agents.length
     const messageCount = session.messages.length
     const duration = session.duration
-    
+
     if (agentCount === 0 || duration === 0) return 0
-    
+
     // Simple efficiency calculation based on message density and agent participation
     const messageDensity = messageCount / duration * 1000 // messages per second
     const participationBalance = this.calculateParticipationBalance(session.metrics.agentParticipation)
-    
+
     return (messageDensity * 0.6 + participationBalance * 0.4) / 10 // Normalize to 0-1
   }
 
   calculateParticipationBalance(participation) {
     const values = Array.from(participation.values())
     if (values.length === 0) return 0
-    
+
     const avg = values.reduce((sum, v) => sum + v, 0) / values.length
     const variance = values.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / values.length
-    
+
     // Lower variance means more balanced participation
     return Math.max(0, 1 - variance / avg)
   }
@@ -1591,7 +1591,7 @@ export class MultiAgentWidgets {
           <span class="mr-2">🚧</span>
           Development Features
         </h3>
-        
+
         <!-- AI Team Status -->
         <div class="mb-6">
           <h4 class="font-medium text-gray-800 dark:text-gray-200 mb-3">🤖 AI Team Status</h4>
@@ -1599,7 +1599,7 @@ export class MultiAgentWidgets {
             ${this.renderAgentStatus()}
           </div>
         </div>
-        
+
         <!-- Quick Actions -->
         <div class="mb-6">
           <h4 class="font-medium text-gray-800 dark:text-gray-200 mb-3">⚡ Quick Actions</h4>
@@ -1618,7 +1618,7 @@ export class MultiAgentWidgets {
             </button>
           </div>
         </div>
-        
+
         <!-- System Metrics -->
         <div>
           <h4 class="font-medium text-gray-800 dark:text-gray-200 mb-3">📊 System Metrics</h4>
@@ -1632,7 +1632,7 @@ export class MultiAgentWidgets {
 
   renderAgentStatus() {
     if (!this.system || !this.system.agents) return '<div>Agents not initialized</div>'
-    
+
     return Array.from(this.system.agents.values()).map(agent => `
       <div class="flex items-center space-x-2 p-2 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <div class="w-2 h-2 rounded-full ${this.getAgentStatusColor(agent)}"></div>
@@ -1650,14 +1650,14 @@ export class MultiAgentWidgets {
 
   updateMetrics() {
     if (!this.system) return
-    
+
     const metricsDiv = document.getElementById('system-metrics-widget')
     if (!metricsDiv) return
-    
+
     try {
       const status = this.system.getSystemStatus()
       const performance = this.system.performanceMetrics?.getSystemMetrics()
-      
+
       metricsDiv.innerHTML = `
         <div class="space-y-2">
           <div class="flex justify-between">

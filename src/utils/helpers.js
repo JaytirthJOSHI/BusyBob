@@ -23,11 +23,11 @@ export const theme = {
 export const dateUtils = {
   formatDate(dateStr) {
     const date = new Date(dateStr)
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     })
   },
 
@@ -37,9 +37,9 @@ export const dateUtils = {
       const [hours, minutes] = timeStr.split(':')
       date.setHours(parseInt(hours), parseInt(minutes))
     }
-    
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       hour: timeStr ? 'numeric' : undefined,
       minute: timeStr ? '2-digit' : undefined
@@ -47,23 +47,23 @@ export const dateUtils = {
   },
 
   getCurrentDate() {
-    return new Date().toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     })
   },
 
   isOverdue(dateStr, timeStr = null) {
     const now = new Date()
     const dueDate = new Date(dateStr)
-    
+
     if (timeStr) {
       const [hours, minutes] = timeStr.split(':')
       dueDate.setHours(parseInt(hours), parseInt(minutes))
     }
-    
+
     return dueDate < now
   }
 }
@@ -113,7 +113,7 @@ export const ui = {
 
     const flashMessage = document.createElement('div')
     flashMessage.className = `flash-message px-6 py-4 rounded-lg shadow-lg z-50 transform transition-all duration-300 ease-in-out translate-y-0 opacity-100`
-    
+
     let bgColor, textColor, icon
     switch (type) {
       case 'success':
@@ -184,7 +184,7 @@ export const animations = {
   fadeIn(element, duration = 300) {
     element.style.opacity = '0'
     element.style.transition = `opacity ${duration}ms ease-in-out`
-    
+
     requestAnimationFrame(() => {
       element.style.opacity = '1'
     })
@@ -201,7 +201,7 @@ export const animations = {
     element.style.transform = transforms[direction]
     element.style.opacity = '0'
     element.style.transition = `all ${duration}ms ease-in-out`
-    
+
     requestAnimationFrame(() => {
       element.style.transform = 'translate(0)'
       element.style.opacity = '1'

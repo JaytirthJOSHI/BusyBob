@@ -41,7 +41,7 @@ export class TermsOfService {
               <a href="/terms-of-service.html" target="_blank" class="text-sm text-purple-600 hover:text-purple-800 underline">View Full Terms</a>
             </div>
           </div>
-          
+
           <div class="prose prose-gray dark:prose-invert max-w-none">
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
               <strong>Last updated:</strong> ${new Date().toLocaleDateString()}

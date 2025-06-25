@@ -1,9 +1,9 @@
 import { auth, db, supabase } from '../lib/supabase.js'
-import { 
-    parseGradebook, 
-    parseAssignments, 
+import {
+    parseGradebook,
+    parseAssignments,
     calculateGPA,
-    getGradeColor 
+    getGradeColor
 } from '../utils/grades-parser.js'
 
 export class Canvas {
@@ -25,7 +25,7 @@ export class Canvas {
 
     async init() {
         console.log('🎨 Initializing Canvas component...')
-        
+
         const storedCredentials = await this.getStoredCredentials()
         if (storedCredentials) {
             this.canvasUrl = storedCredentials.canvasUrl
@@ -42,14 +42,14 @@ export class Canvas {
         try {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) return null
-            
+
             const { data, error } = await supabase.from('canvas_credentials')
                 .select('*')
                 .eq('user_id', user.id)
                 .single()
-            
+
             if (error || !data) return null
-            
+
             return {
                 canvasUrl: data.canvas_url,
                 accessToken: data.access_token
@@ -63,14 +63,14 @@ export class Canvas {
     async storeCredentials(canvasUrl, accessToken) {
         try {
             console.log('🔐 Attempting to store Canvas credentials...')
-            
+
             const authResult = await auth.getCurrentUser()
             if (!authResult || !authResult.data || !authResult.data.user) {
                 throw new Error('You must be logged in to save Canvas credentials. Please log in and try again.')
             }
-            
+
             const { data: { user } } = authResult
-            
+
             const { error } = await supabase.from('canvas_credentials')
                 .upsert({
                     user_id: user.id,
@@ -78,11 +78,11 @@ export class Canvas {
                     access_token: accessToken,
                     updated_at: new Date().toISOString()
                 })
-            
+
             if (error) {
                 throw error
             }
-            
+
             console.log('✅ Canvas credentials stored successfully')
         } catch (error) {
             console.error('❌ Error storing Canvas credentials:', error)
@@ -94,12 +94,12 @@ export class Canvas {
         if (!this.canvasUrl || !this.accessToken) {
             throw new Error('Canvas credentials are not set.');
         }
-        
+
         const { data: { session } } = await auth.getSession()
         if (!session) {
             throw new Error('User not authenticated');
         }
-        
+
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 const response = await fetch('/api/canvas', {
@@ -122,11 +122,11 @@ export class Canvas {
                     } catch (e) {
                         errorMessage = response.statusText || errorMessage;
                     }
-                    
+
                     if (attempt === retries) {
                         throw new Error(errorMessage);
                     }
-                    
+
                     console.log(`Attempt ${attempt} failed for ${action}, retrying in ${attempt * 1000}ms...`);
                     await new Promise(resolve => setTimeout(resolve, attempt * 1000));
                     continue;
@@ -147,7 +147,7 @@ export class Canvas {
                 if (attempt === retries) {
                     throw error;
                 }
-                
+
                 console.log(`Attempt ${attempt} failed for ${action}, retrying in ${attempt * 1000}ms...`);
                 await new Promise(resolve => setTimeout(resolve, attempt * 1000));
             }
@@ -166,7 +166,7 @@ export class Canvas {
 
         await Promise.all(dataPromises.map(p => p.catch(e => {
             console.error('Data loading failed for one of the items:', e);
-            return e; 
+            return e;
         })));
 
         this.render();
@@ -222,7 +222,7 @@ export class Canvas {
                 this.fetchCanvasData('getDiscussions', { courseId }),
                 this.fetchCanvasData('getAnnouncements', { courseId })
             ]);
-            
+
             return { assignments, submissions, discussions, announcements };
         } catch (error) {
             console.error('Failed to load course details:', error);
@@ -247,7 +247,7 @@ export class Canvas {
             <div class="canvas-connection-form">
                 <h2>Connect to Canvas</h2>
                 <p>Follow the steps below to connect your Canvas account to BusyBob.</p>
-                
+
                 <div class="connection-steps">
                     <div class="step active" data-step="1">
                         <div class="step-header">
@@ -269,7 +269,7 @@ export class Canvas {
                             </div>
                             <div class="form-group">
                                 <label for="canvas-login-url">Canvas URL</label>
-                                <input type="url" id="canvas-login-url" name="canvasLoginUrl" required 
+                                <input type="url" id="canvas-login-url" name="canvasLoginUrl" required
                                        placeholder="https://canvas.instructure.com/courses/11026154">
                                 <small>Enter any Canvas URL - we'll extract the base domain automatically</small>
                             </div>
@@ -292,7 +292,7 @@ export class Canvas {
                         </div>
                         <div class="step-content">
                             <p>Now we'll help you create an access token in Canvas. This is a secure way to connect BusyBob to your account.</p>
-                            
+
                             <div class="canvas-url-display">
                                 <strong>Your Canvas URL:</strong>
                                 <span id="display-canvas-url" class="url-display">-</span>
@@ -303,12 +303,12 @@ export class Canvas {
                                     Open Canvas Settings
                                 </a>
                             </div>
-                            
+
                             <div class="canvas-link-display">
                                 <strong>Canvas Settings Link:</strong>
                                 <span id="display-canvas-link" class="url-display">-</span>
                             </div>
-                            
+
                             <div class="token-instructions">
                                 <div class="instruction-step">
                                     <div class="step-icon">1</div>
@@ -317,7 +317,7 @@ export class Canvas {
                                         <p>Click the "Open Canvas Settings" button above to go directly to your Canvas settings</p>
                                     </div>
                                 </div>
-                                
+
                                 <div class="instruction-step">
                                     <div class="step-icon">2</div>
                                     <div class="step-text">
@@ -325,7 +325,7 @@ export class Canvas {
                                         <p>Scroll down to the "Approved Integrations" section</p>
                                     </div>
                                 </div>
-                                
+
                                 <div class="instruction-step">
                                     <div class="step-icon">3</div>
                                     <div class="step-text">
@@ -333,7 +333,7 @@ export class Canvas {
                                         <p>Click "+ New Access Token"</p>
                                     </div>
                                 </div>
-                                
+
                                 <div class="instruction-step">
                                     <div class="step-icon">4</div>
                                     <div class="step-text">
@@ -342,7 +342,7 @@ export class Canvas {
                                         <p>Expires: <code>Never</code> (or choose a date)</p>
                                     </div>
                                 </div>
-                                
+
                                 <div class="instruction-step">
                                     <div class="step-icon">5</div>
                                     <div class="step-text">
@@ -354,14 +354,14 @@ export class Canvas {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="canvas-token">Access Token</label>
-                                <input type="password" id="canvas-token" name="accessToken" required 
+                                <input type="password" id="canvas-token" name="accessToken" required
                                        placeholder="Paste your Canvas access token here">
                                 <small>Paste the token you just generated in Canvas</small>
                             </div>
-                            
+
                             <div class="step-buttons">
                                 <button class="btn btn-secondary prev-step" data-prev="1">Back</button>
                                 <button class="btn btn-primary next-step" data-next="3">Next: Test Connection</button>
@@ -376,7 +376,7 @@ export class Canvas {
                         </div>
                         <div class="step-content">
                             <p>Let's test your connection and save your credentials securely.</p>
-                            
+
                             <div class="connection-summary">
                                 <div class="summary-item">
                                     <strong>Canvas URL:</strong>
@@ -387,7 +387,7 @@ export class Canvas {
                                     <span id="summary-token">••••••••••••••••</span>
                                 </div>
                             </div>
-                            
+
                             <div class="step-buttons">
                                 <button class="btn btn-secondary prev-step" data-prev="2">Back</button>
                                 <button type="submit" class="btn btn-primary" id="connect-canvas-btn">
@@ -398,7 +398,7 @@ export class Canvas {
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="help-section">
                     <h4>Need Help?</h4>
                     <div class="help-links">
@@ -416,7 +416,7 @@ export class Canvas {
                         </a>
                     </div>
                 </div>
-                
+
                 <!-- Help Modals -->
                 <div id="token-help-modal" class="help-modal" style="display: none;">
                     <div class="help-content">
@@ -505,7 +505,7 @@ export class Canvas {
                     <h2>Canvas Dashboard</h2>
                     <button id="refresh-canvas" class="btn btn-secondary">Refresh</button>
                 </div>
-                
+
                 <div class="canvas-tabs">
                     <button class="tab-btn ${this.activeTab === 'dashboard' ? 'active' : ''}" data-tab="dashboard">
                         Dashboard
@@ -520,7 +520,7 @@ export class Canvas {
                         Calendar
                     </button>
                 </div>
-                
+
                 <div class="canvas-tab-content">
                     ${this.renderActiveTab()}
                 </div>
@@ -561,7 +561,7 @@ export class Canvas {
                         `).join('') || 'No active courses'}
                     </div>
                 </div>
-                
+
                 <div class="dashboard-card">
                     <h3>Upcoming Assignments (${this.dashboard.upcoming_assignments?.length || 0})</h3>
                     <div class="assignment-list">
@@ -679,12 +679,12 @@ export class Canvas {
         const nextButtons = document.querySelectorAll('.next-step');
         const prevButtons = document.querySelectorAll('.prev-step');
         const connectButton = document.getElementById('connect-canvas-btn');
-        
+
         // Help modal elements
         const tokenHelpLink = document.getElementById('show-token-help');
         const tokenHelpModal = document.getElementById('token-help-modal');
         const closeTokenHelp = document.getElementById('close-token-help');
-        
+
         const securityInfoLink = document.getElementById('show-security-info');
         const securityInfoModal = document.getElementById('security-info-modal');
         const closeSecurityInfo = document.getElementById('close-security-info');
@@ -695,11 +695,11 @@ export class Canvas {
                 e.preventDefault();
                 const currentStep = parseInt(btn.closest('.step').dataset.step);
                 const nextStep = parseInt(btn.dataset.next);
-                
+
                 // Validate current step before proceeding
                 if (currentStep === 1) {
                     const canvasLoginUrl = document.getElementById('canvas-login-url').value.trim();
-                    
+
                     if (!canvasLoginUrl) {
                         this.showMessage('Please enter your Canvas login URL.', 'error');
                         return;
@@ -708,16 +708,16 @@ export class Canvas {
                         this.showMessage('Please enter a valid Canvas login URL.', 'error');
                         return;
                     }
-                    
+
                     // Extract base URL and create settings link
                     const baseUrl = this.extractBaseUrl(canvasLoginUrl);
                     const settingsLink = `${baseUrl}/profile/settings#:~:text=Approved%20Integrations`;
-                    
+
                     // Update summary and display
                     document.getElementById('summary-url').textContent = baseUrl;
                     document.getElementById('display-canvas-url').textContent = baseUrl;
                     document.getElementById('display-canvas-link').textContent = settingsLink;
-                    
+
                     // Update Canvas settings link
                     const settingsLinkElement = document.getElementById('open-canvas-settings');
                     if (settingsLinkElement) {
@@ -730,7 +730,7 @@ export class Canvas {
                         return;
                     }
                 }
-                
+
                 this.showStep(nextStep);
             });
         });
@@ -743,11 +743,11 @@ export class Canvas {
                 if (url && this.isValidCanvasUrl(url)) {
                     const baseUrl = this.extractBaseUrl(url);
                     const settingsLink = `${baseUrl}/profile/settings#:~:text=Approved%20Integrations`;
-                    
+
                     // Show the extracted displays
                     document.querySelector('.extracted-url-display').style.display = 'flex';
                     document.querySelector('.settings-link-display').style.display = 'flex';
-                    
+
                     // Update the displays
                     document.getElementById('extracted-canvas-url').textContent = baseUrl;
                     document.getElementById('settings-link').textContent = settingsLink;
@@ -832,8 +832,8 @@ export class Canvas {
     isValidCanvasLink(link) {
         try {
             const urlObj = new URL(link);
-            return urlObj.protocol === 'https:' && 
-                   (urlObj.hostname.includes('instructure.com') || 
+            return urlObj.protocol === 'https:' &&
+                   (urlObj.hostname.includes('instructure.com') ||
                     urlObj.hostname.includes('canvas') ||
                     urlObj.hostname.includes('edu'));
         } catch {
@@ -875,7 +875,7 @@ export class Canvas {
 
     async handleConnection(e) {
         e.preventDefault();
-        
+
         const canvasLoginUrl = document.getElementById('canvas-login-url').value.trim();
         const accessToken = document.getElementById('canvas-token').value.trim();
 
@@ -894,33 +894,33 @@ export class Canvas {
             const connectBtn = document.getElementById('connect-canvas-btn');
             const btnText = connectBtn.querySelector('.btn-text');
             const btnLoading = connectBtn.querySelector('.btn-loading');
-            
+
             btnText.classList.add('hidden');
             btnLoading.classList.remove('hidden');
             connectBtn.disabled = true;
 
             this.showMessage('Connecting to Canvas...', 'info');
-            
+
             // Extract base URL from login URL
             const baseUrl = this.extractBaseUrl(canvasLoginUrl);
             await this.storeCredentials(baseUrl, accessToken);
-            
+
             this.canvasUrl = baseUrl;
             this.accessToken = accessToken;
             this.isConnected = true;
-            
+
             await this.loadAllData();
-            
+
             this.showMessage('Successfully connected to Canvas!', 'success');
         } catch (error) {
             console.error('Connection failed:', error);
             this.showMessage(`Connection failed: ${error.message}`, 'error');
-            
+
             // Reset button state
             const connectBtn = document.getElementById('connect-canvas-btn');
             const btnText = connectBtn.querySelector('.btn-text');
             const btnLoading = connectBtn.querySelector('.btn-loading');
-            
+
             btnText.classList.remove('hidden');
             btnLoading.classList.add('hidden');
             connectBtn.disabled = false;
@@ -931,7 +931,7 @@ export class Canvas {
         try {
             this.showMessage('Loading course details...', 'info');
             const details = await this.loadCourseDetails(courseId);
-            
+
             // Create a modal to display course details
             this.showCourseModal(courseId, details);
         } catch (error) {
@@ -1084,9 +1084,9 @@ export class Canvas {
         const messageEl = document.createElement('div');
         messageEl.className = `message message-${type}`;
         messageEl.textContent = message;
-        
+
         document.body.appendChild(messageEl);
-        
+
         // Remove after 3 seconds
         setTimeout(() => {
             if (messageEl.parentNode) {

@@ -311,7 +311,7 @@ async function fetchStudentData(studentId, credentials) {
   if (!validateStudentId(studentId)) {
     throw new SecurityError('Invalid student ID')
   }
-  
+
   // Use secure authentication
   const authenticatedClient = await createSecureClient(credentials)
   return await authenticatedClient.getStudentData(studentId)
@@ -356,14 +356,14 @@ class StudentDataHandler {
   constructor() {
     this.encryptionKey = process.env.STUDENT_DATA_ENCRYPTION_KEY
   }
-  
+
   async storeGrades(studentId, grades) {
     // Encrypt sensitive educational data
     const encryptedGrades = await this.encrypt(grades)
-    
+
     // Store with appropriate access controls
     return await this.database.storeWithAccessControls(
-      studentId, 
+      studentId,
       encryptedGrades,
       { educationalUseOnly: true }
     )

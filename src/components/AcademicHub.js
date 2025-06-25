@@ -1,12 +1,12 @@
 import { auth, db, supabase } from '../lib/supabase.js'
 import districts from '../lib/districts.js'
-import { 
-    parseGradebook, 
-    parseAssignments, 
-    parseAttendance, 
+import {
+    parseGradebook,
+    parseAssignments,
+    parseAttendance,
     parseSchedule,
     calculateGPA,
-    getGradeColor 
+    getGradeColor
 } from '../utils/grades-parser.js'
 
 export class AcademicHub {
@@ -44,11 +44,11 @@ export class AcademicHub {
 
     async init() {
         console.log('🎓 Initializing Academic Hub...')
-        
+
         await this.loadStoredCredentials()
-        
+
         // Only try to load data if we have actual credentials
-        if ((this.isCanvasConnected && this.canvasUrl && this.canvasAccessToken) || 
+        if ((this.isCanvasConnected && this.canvasUrl && this.canvasAccessToken) ||
             (this.isStudentVueConnected && this.districtUrl && this.username && this.password)) {
             await this.loadAllData()
         } else {
@@ -156,17 +156,17 @@ export class AcademicHub {
         if (!this.canvasUrl || !this.canvasAccessToken) {
             throw new Error('Canvas credentials are not set.')
         }
-        
+
         // Additional validation
         if (!this.isCanvasConnected) {
             throw new Error('Canvas is not connected.')
         }
-        
+
         const { data: { user } } = await auth.getCurrentUser()
         if (!user) {
             throw new Error('User not authenticated')
         }
-        
+
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 const response = await fetch(`/api/canvas/${endpoint}`, {
@@ -189,11 +189,11 @@ export class AcademicHub {
                     } catch (e) {
                         errorMessage = response.statusText || errorMessage
                     }
-                    
+
                     if (attempt === retries) {
                         throw new Error(errorMessage)
                     }
-                    
+
                     console.log(`Attempt ${attempt} failed for ${endpoint}, retrying in ${attempt * 1000}ms...`)
                     await new Promise(resolve => setTimeout(resolve, attempt * 1000))
                     continue
@@ -206,7 +206,7 @@ export class AcademicHub {
                     console.error(`Canvas API error for ${endpoint}:`, error)
                     throw error
                 }
-                
+
                 console.log(`Attempt ${attempt} failed for ${endpoint}, retrying in ${attempt * 1000}ms...`)
                 await new Promise(resolve => setTimeout(resolve, attempt * 1000))
             }
@@ -243,16 +243,16 @@ export class AcademicHub {
             const allAssignments = []
             for (const course of this.canvasCourses) {
                 try {
-                    const assignments = await this.fetchCanvasData('assignments', { 
+                    const assignments = await this.fetchCanvasData('assignments', {
                         courseId: course.id,
-                        includeSubmissions: true 
+                        includeSubmissions: true
                     })
                     allAssignments.push(...assignments)
                 } catch (error) {
                     console.error(`Failed to load assignments for course ${course.id}:`, error)
                 }
             }
-            
+
             this.canvasAssignments = allAssignments
             console.log('Canvas assignments loaded:', this.canvasAssignments)
         } catch (error) {
@@ -286,7 +286,7 @@ export class AcademicHub {
             const now = new Date()
             const endDate = new Date()
             endDate.setDate(now.getDate() + 30) // Next 30 days
-            
+
             this.canvasCalendarEvents = await this.fetchCanvasData('calendar', {
                 startDate: now.toISOString(),
                 endDate: endDate.toISOString()
@@ -314,7 +314,7 @@ export class AcademicHub {
                     console.error(`Failed to load discussions for course ${course.id}:`, error)
                 }
             }
-            
+
             this.canvasDiscussions = allDiscussions
             console.log('Canvas discussions loaded:', this.canvasDiscussions)
         } catch (error) {
@@ -339,7 +339,7 @@ export class AcademicHub {
                     console.error(`Failed to load announcements for course ${course.id}:`, error)
                 }
             }
-            
+
             this.canvasAnnouncements = allAnnouncements
             console.log('Canvas announcements loaded:', this.canvasAnnouncements)
         } catch (error) {
@@ -353,12 +353,12 @@ export class AcademicHub {
         if (!this.districtUrl || !this.username || !this.password) {
             throw new Error('StudentVue credentials are not set.')
         }
-        
+
         // Additional validation
         if (!this.isStudentVueConnected) {
             throw new Error('StudentVue is not connected.')
         }
-        
+
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 const response = await fetch('/api/studentvue', {
@@ -382,11 +382,11 @@ export class AcademicHub {
                     } catch (e) {
                         errorMessage = response.statusText || errorMessage
                     }
-                    
+
                     if (attempt === retries) {
                         throw new Error(errorMessage)
                     }
-                    
+
                     console.log(`Attempt ${attempt} failed for ${action}, retrying in ${attempt * 1000}ms...`)
                     await new Promise(resolve => setTimeout(resolve, attempt * 1000))
                     continue
@@ -407,7 +407,7 @@ export class AcademicHub {
                 if (attempt === retries) {
                     throw error
                 }
-                
+
                 console.log(`Attempt ${attempt} failed for ${action}, retrying in ${attempt * 1000}ms...`)
                 await new Promise(resolve => setTimeout(resolve, attempt * 1000))
             }
@@ -489,7 +489,7 @@ export class AcademicHub {
                 <div class="mb-8">
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Academic Hub</h1>
                     <p class="text-gray-600 dark:text-gray-400">Manage all your academic data in one place</p>
-                    
+
                     <!-- Connection Status -->
                     <div class="flex items-center space-x-4 mt-4">
                         ${this.isCanvasConnected ? `
@@ -705,7 +705,7 @@ export class AcademicHub {
                         ${this.renderStudentVueGrades()}
                     </div>
                 ` : ''}
-                
+
                 ${this.isCanvasConnected && this.canvasGrades ? `
                     <div class="bg-white dark:bg-gray-700 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Canvas Grades</h3>
@@ -774,7 +774,7 @@ export class AcademicHub {
                         ${this.renderStudentVueAssignments()}
                     </div>
                 ` : ''}
-                
+
                 ${this.isCanvasConnected && this.canvasAssignments ? `
                     <div class="bg-white dark:bg-gray-700 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Canvas Assignments</h3>
@@ -953,7 +953,7 @@ export class AcademicHub {
                         ${this.renderCanvasDiscussions()}
                     </div>
                 ` : ''}
-                
+
                 ${this.isCanvasConnected && this.canvasAnnouncements ? `
                     <div class="bg-white dark:bg-gray-700 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Canvas Announcements</h3>

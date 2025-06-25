@@ -138,7 +138,7 @@
         width: 3.5rem;
         height: 3.5rem;
     }
-    
+
     .ai-agent-window {
         bottom: 8rem;
         right: 1rem;
@@ -147,7 +147,7 @@
         max-width: none;
         height: 28rem;
     }
-    
+
     .ai-agent-window.show {
         transform: scale(1);
         transform-origin: bottom center;
@@ -160,12 +160,12 @@
         width: 3rem;
         height: 3rem;
     }
-    
+
     .ai-agent-toggle svg {
         width: 1.25rem;
         height: 1.25rem;
     }
-    
+
     .ai-agent-window {
         bottom: 7.5rem;
         height: 24rem;
@@ -348,141 +348,141 @@
     .glass-effect {
         backdrop-filter: blur(8px);
     }
-    
+
     .card-hover:hover {
         transform: none;
     }
-    
+
     /* Better touch targets for mobile */
     button, .nav-link, .quick-action-btn {
         min-height: 44px;
         min-width: 44px;
     }
-    
+
     /* Improve form inputs on mobile */
     input, select, textarea {
         font-size: 16px !important; /* Prevents zoom on iOS */
     }
-    
+
     /* Better spacing for mobile */
     .container {
         padding-left: 1rem;
         padding-right: 1rem;
     }
-    
+
     /* Improve task items on mobile */
     .task-item {
         padding: 0.75rem;
     }
-    
+
     /* Better mood rating on mobile */
     .mood-label > div {
         min-width: 48px;
         min-height: 48px;
     }
-    
+
     /* Improve navigation on mobile */
     nav {
         padding-bottom: env(safe-area-inset-bottom);
     }
-    
+
     /* Better button spacing on mobile */
     .btn-gradient {
         padding: 0.75rem 1rem;
     }
-    
+
     /* Improve chart containers on mobile */
     canvas {
         max-height: 200px;
     }
-    
+
     /* Better modal/overlay handling on mobile */
     .fixed {
         position: fixed;
     }
-    
+
     /* Improve text readability on mobile */
     .text-sm {
         font-size: 0.875rem;
         line-height: 1.25rem;
     }
-    
+
     /* Better grid layouts on mobile */
     .grid {
         gap: 0.75rem;
     }
-    
+
     /* Improve card padding on mobile */
     .card-hover {
         padding: 1rem;
     }
-    
+
     /* Smooth page transitions for mobile */
     .page-transition {
         transition: opacity 0.2s ease-out, transform 0.2s ease-out;
     }
-    
+
     .page-transition.hidden {
         opacity: 0;
         transform: translateX(20px);
         pointer-events: none;
     }
-    
+
     /* Better touch feedback animations */
     .nav-link:active {
         transform: scale(0.95);
         transition: transform 0.1s ease-out;
     }
-    
+
     .quick-action-btn:active {
         transform: scale(0.98);
         transition: transform 0.1s ease-out;
     }
-    
+
     /* Smooth form interactions */
     .form-input:focus {
         transform: none;
         transition: all 0.2s ease-out;
     }
-    
+
     /* Better button press feedback */
     .btn-gradient:active {
         transform: scale(0.98);
         transition: transform 0.1s ease-out;
     }
-    
+
     /* Smooth mood rating interactions */
     .mood-label:active > div {
         transform: scale(0.9);
         transition: transform 0.1s ease-out;
     }
-    
+
     /* Better card interactions on mobile */
     .card-hover {
         transition: all 0.2s ease-out;
     }
-    
+
     .card-hover:active {
         transform: scale(0.99);
     }
-    
+
     /* Smooth navigation transitions */
     nav {
         transition: transform 0.3s ease-out;
     }
-    
+
     /* Better loading states for mobile */
     .loading {
         animation: mobilePulse 1.5s ease-in-out infinite;
     }
-    
+
     /* Mobile-specific theme toggle improvements */
     #theme-toggle {
         top: env(safe-area-inset-top, 1rem);
         right: 1rem;
         padding: 0.5rem;
     }
-    
+
     #theme-toggle svg {
         width: 1.25rem;
         height: 1.25rem;
@@ -507,21 +507,21 @@
         padding-left: 0.75rem;
         padding-right: 0.75rem;
     }
-    
+
     /* Smaller text for very small screens */
     h1 {
         font-size: 1.25rem;
     }
-    
+
     h2 {
         font-size: 1.125rem;
     }
-    
+
     /* Better form layout on very small screens */
     .grid-cols-1 > div {
         margin-bottom: 0.75rem;
     }
-    
+
     /* Improve button sizes on very small screens */
     .btn-gradient {
         padding: 0.625rem 0.875rem;
@@ -536,42 +536,42 @@
         transform: none;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
-    
+
     /* Better touch feedback */
     button:active, .nav-link:active, .quick-action-btn:active {
         transform: scale(0.98);
     }
-    
+
     /* Improve scrolling on touch devices */
     .overflow-y-auto {
         -webkit-overflow-scrolling: touch;
     }
-    
+
     /* Swipe-friendly interactions */
     .task-item {
         transition: transform 0.2s ease-out;
     }
-    
+
     .task-item:active {
         transform: translateX(10px);
     }
-    
+
     /* Better scroll momentum */
     .overflow-y-auto {
         scroll-behavior: smooth;
     }
-    
+
     /* Improve tap targets */
     input[type="checkbox"], input[type="radio"] {
         min-width: 24px;
         min-height: 24px;
     }
-    
+
     /* Better form field focus */
     .form-input:focus {
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
-    
+
     /* Better touch feedback for theme toggle */
     #theme-toggle:active {
         transform: scale(0.95);
@@ -1075,35 +1075,35 @@
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .courses-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .canvas-tabs {
         gap: 0.25rem;
     }
-    
+
     .tab-btn {
         padding: 0.5rem 1rem;
         font-size: 0.875rem;
     }
-    
+
     .canvas-header {
         flex-direction: column;
         gap: 1rem;
         align-items: stretch;
     }
-    
+
     .modal-content {
         width: 95%;
         margin: 1rem;
     }
-    
+
     .course-tabs {
         gap: 0.25rem;
     }
-    
+
     .course-tab {
         padding: 0.5rem 1rem;
         font-size: 0.875rem;
