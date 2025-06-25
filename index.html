@@ -285,6 +285,11 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Development Features Section -->
+                        <div class="lg:col-span-3" id="development-widgets-container">
+                            <!-- Development widgets will be loaded here -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -443,5 +448,86 @@
     <!-- External JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="src/main.js"></script>
+
+    <!-- Toolbox Window -->
+    <div id="toolbox-window" class="fixed top-4 right-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 w-80 max-h-96 overflow-hidden">
+            <!-- Toolbox Header -->
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold text-lg">🛠️ Toolbox</h3>
+                    <button id="close-toolbox" class="text-white hover:text-gray-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <p class="text-sm opacity-90 mt-1">Quick access to tools and features</p>
+            </div>
+            
+            <!-- Toolbox Content -->
+            <div class="p-4 space-y-3">
+                <!-- Academic Hub Tool -->
+                <div id="academic-hub-tool" class="tool-item">
+                    <button class="w-full text-left p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors" onclick="openTool('academic-hub')">
+                        <div class="flex items-center">
+                            <span class="text-lg mr-3">📚</span>
+                            <div>
+                                <div class="font-medium">Academic Hub</div>
+                                <div class="text-xs opacity-75">Canvas & StudentVue Integration</div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- AI Notes Tool -->
+                <div id="ai-notes-tool" class="tool-item">
+                    <button class="w-full text-left p-3 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors" onclick="openTool('ai-notes')">
+                        <div class="flex items-center">
+                            <span class="text-lg mr-3">🤖</span>
+                            <div>
+                                <div class="font-medium">AI Notes</div>
+                                <div class="text-xs opacity-75">Smart Note Taking</div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Music Tool -->
+                <div id="music-tool" class="tool-item">
+                    <button class="w-full text-left p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors" onclick="openTool('music')">
+                        <div class="flex items-center">
+                            <span class="text-lg mr-3">🎵</span>
+                            <div>
+                                <div class="font-medium">Music Player</div>
+                                <div class="text-xs opacity-75">Spotify Integration</div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Development Tools -->
+                <div id="dev-tools-tool" class="tool-item">
+                    <button class="w-full text-left p-3 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors" onclick="openTool('dev-tools')">
+                        <div class="flex items-center">
+                            <span class="text-lg mr-3">🔧</span>
+                            <div>
+                                <div class="font-medium">Development Tools</div>
+                                <div class="text-xs opacity-75">AI Agents & Debug</div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toolbox Toggle Button -->
+    <button id="toolbox-toggle" class="fixed bottom-4 right-4 z-50 w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center text-white">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+        </svg>
+    </button>
+
 </body>
 </html>

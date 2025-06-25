@@ -150,5 +150,5 @@ export class PrivacyPolicy {
         </div>
       </div>
     `
-  }
+  } 
 }

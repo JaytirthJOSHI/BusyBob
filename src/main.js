@@ -16,6 +16,7 @@ import { TermsOfService } from './components/TermsOfService.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 import { kidMode } from './utils/kid-mode.js'
 import { offlineStatus } from './components/OfflineStatus.js'
+import { MultiAgentSystem, MultiAgentWidgets } from './components/MultiAgentSystem.js'
 
 console.log('🚀 Main.js loaded - starting initialization...')
 
@@ -36,6 +37,7 @@ let aiNotes = null
 let settings = null
 let privacyPolicy = null
 let termsOfService = null
+let multiAgentSystem = null
 
 const moodManager = {
     feelings: [],
@@ -368,6 +370,19 @@ async function initializeApp() {
             await kidMode.init()
             await applyKidModeStyles()
             
+            // Initialize Enhanced Multi-Agent System
+            console.log('🤖 Initializing Enhanced Multi-Agent System...')
+            multiAgentSystem = new MultiAgentSystem()
+            await multiAgentSystem.init()
+            
+            // Initialize Multi-Agent System Widgets
+            console.log('🎨 Initializing Multi-Agent System Widgets...')
+            window.multiAgentWidgets = new MultiAgentWidgets(multiAgentSystem)
+            
+            // Initialize Toolbox
+            console.log('🛠️ Initializing Toolbox...')
+            window.toolbox.init()
+            
             showMainApp()
         } else {
             console.log('🏠 No user found, showing landing page')
@@ -394,6 +409,11 @@ async function initializeApp() {
                 console.log('🛡️ Initializing Kid Mode for new session...')
                 await kidMode.init()
                 await applyKidModeStyles()
+                
+                // Initialize Enhanced Multi-Agent System for new session
+                console.log('🤖 Initializing Enhanced Multi-Agent System for new session...')
+                multiAgentSystem = new MultiAgentSystem()
+                await multiAgentSystem.init()
                 
                 // Don't auto-redirect - let user choose when to enter the app
                 console.log('User signed in:', currentUser.email)
@@ -505,6 +525,54 @@ async function initializeApp() {
             } else {
                 console.log('❌ Offline storage not initialized')
                 return null
+            }
+        }
+        
+        // Add global function for Multi-Agent System
+        window.getMultiAgentSystemStatus = () => {
+            if (multiAgentSystem) {
+                const status = multiAgentSystem.getSystemStatus()
+                console.log('🤖 Multi-Agent System Status:', status)
+                return status
+            } else {
+                console.log('❌ Multi-Agent System not initialized')
+                return null
+            }
+        }
+        
+        // Add global function to test Multi-Agent System
+        window.testMultiAgentSystem = async function(prompt) {
+            try {
+                if (!window.multiAgentSystem) {
+                    console.error('Multi-agent system not initialized')
+                    ui.showMessage('AI system not ready. Please refresh the page.', 'error')
+                    return
+                }
+                
+                console.log('🤖 Testing multi-agent system with prompt:', prompt)
+                
+                // Show loading state
+                ui.showMessage('🤖 AI team is working on your request...', 'info')
+                
+                const result = await window.multiAgentSystem.processRequest(prompt)
+                
+                console.log('✅ Multi-agent system result:', result)
+                
+                // Show result in a nice format
+                const message = result.success 
+                    ? `✅ ${result.response}`
+                    : `❌ ${result.error || 'Something went wrong'}`
+                
+                ui.showMessage(message, result.success ? 'success' : 'error')
+                
+                // Update metrics
+                if (window.multiAgentWidgets) {
+                    window.multiAgentWidgets.updateMetrics()
+                }
+                
+            } catch (error) {
+                console.error('❌ Error testing multi-agent system:', error)
+                ui.showMessage('Error testing AI system. Please try again.', 'error')
             }
         }
         
@@ -937,6 +1005,11 @@ function showPage(pageName) {
         window.pointsSystem.showInSection(pageName)
     }
     
+    // Cleanup development widgets if leaving home page
+    if (pageName !== 'home' && window.cleanupDevelopmentWidgets) {
+        window.cleanupDevelopmentWidgets()
+    }
+    
     // Load page-specific data
     switch (pageName) {
         case 'home':
@@ -1038,6 +1111,34 @@ function loadHomeData() {
     
     // Load upcoming tasks
     loadUpcomingTasks()
+    
+    // Load development widgets
+    loadDevelopmentWidgets()
+}
+
+function loadDevelopmentWidgets() {
+    const container = document.getElementById('development-widgets-container')
+    if (!container || !window.multiAgentWidgets) return
+    
+    try {
+        container.innerHTML = window.multiAgentWidgets.generateDevelopmentWidgets()
+        
+        // Update metrics after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            window.multiAgentWidgets.updateMetrics()
+        }, 100)
+        
+        // Set up periodic metrics updates
+        if (window.developmentMetricsInterval) {
+            clearInterval(window.developmentMetricsInterval)
+        }
+        window.developmentMetricsInterval = setInterval(() => {
+            window.multiAgentWidgets.updateMetrics()
+        }, 10000) // Update every 10 seconds
+    } catch (error) {
+        console.error('Error loading development widgets:', error)
+        container.innerHTML = '<div class="text-red-500 p-4">Error loading development features</div>'
+    }
 }
 
 function loadUpcomingTasks() {
@@ -1703,3 +1804,130 @@ window.loadHomeData = loadHomeData
 // Global Kid Mode functions
 window.kidMode = kidMode
 window.applyKidModeStyles = applyKidModeStyles
+
+// Toolbox functionality
+window.toolbox = {
+    isVisible: false,
+    toolVisibility: {
+        'academic-hub': true,
+        'ai-notes': true,
+        'music': true,
+        'dev-tools': true
+    },
+    
+    init() {
+        this.loadToolVisibility()
+        this.setupEventListeners()
+        this.updateToolVisibility()
+    },
+    
+    setupEventListeners() {
+        // Toggle button
+        document.getElementById('toolbox-toggle')?.addEventListener('click', () => this.toggle())
+        
+        // Close button
+        document.getElementById('close-toolbox')?.addEventListener('click', () => this.hide())
+        
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            const toolbox = document.getElementById('toolbox-window')
+            const toggle = document.getElementById('toolbox-toggle')
+            if (this.isVisible && !toolbox?.contains(e.target) && !toggle?.contains(e.target)) {
+                this.hide()
+            }
+        })
+    },
+    
+    toggle() {
+        this.isVisible = !this.isVisible
+        const toolbox = document.getElementById('toolbox-window')
+        if (this.isVisible) {
+            toolbox?.classList.remove('hidden')
+        } else {
+            toolbox?.classList.add('hidden')
+        }
+    },
+    
+    show() {
+        this.isVisible = true
+        document.getElementById('toolbox-window')?.classList.remove('hidden')
+    },
+    
+    hide() {
+        this.isVisible = false
+        document.getElementById('toolbox-window')?.classList.add('hidden')
+    },
+    
+    loadToolVisibility() {
+        try {
+            const saved = localStorage.getItem('toolbox-visibility')
+            if (saved) {
+                this.toolVisibility = { ...this.toolVisibility, ...JSON.parse(saved) }
+            }
+        } catch (error) {
+            console.error('Error loading tool visibility:', error)
+        }
+    },
+    
+    saveToolVisibility() {
+        try {
+            localStorage.setItem('toolbox-visibility', JSON.stringify(this.toolVisibility))
+        } catch (error) {
+            console.error('Error saving tool visibility:', error)
+        }
+    },
+    
+    updateToolVisibility() {
+        Object.entries(this.toolVisibility).forEach(([toolId, isVisible]) => {
+            const toolElement = document.getElementById(`${toolId}-tool`)
+            if (toolElement) {
+                toolElement.style.display = isVisible ? 'block' : 'none'
+            }
+        })
+    },
+    
+    setToolVisibility(toolId, isVisible) {
+        this.toolVisibility[toolId] = isVisible
+        this.saveToolVisibility()
+        this.updateToolVisibility()
+    }
+}
+
+// Global function to open tools
+window.openTool = function(toolId) {
+    console.log('🛠️ Opening tool:', toolId)
+    
+    // Hide toolbox first
+    window.toolbox.hide()
+    
+    switch (toolId) {
+        case 'academic-hub':
+            showPage('academic-hub')
+            break
+        case 'ai-notes':
+            showPage('ai-notes')
+            break
+        case 'music':
+            showPage('music')
+            break
+        case 'dev-tools':
+            // Show development widgets on home page
+            showPage('home')
+            // Scroll to development section
+            setTimeout(() => {
+                const devSection = document.getElementById('development-widgets-container')
+                devSection?.scrollIntoView({ behavior: 'smooth' })
+            }, 100)
+            break
+        default:
+            console.warn('Unknown tool:', toolId)
+    }
+}
+
+// Cleanup function for development widgets
+window.cleanupDevelopmentWidgets = function() {
+    if (window.developmentMetricsInterval) {
+        clearInterval(window.developmentMetricsInterval)
+        window.developmentMetricsInterval = null
+    }
+}

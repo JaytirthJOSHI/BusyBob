@@ -1642,7 +1642,7 @@ export class Settings {
             // Save and apply
             localStorage.setItem('interface-settings', JSON.stringify(defaultSettings))
             this.applyInterfaceSettings(defaultSettings)
-            
+
             // Reset toolbox visibility
             if (window.toolbox) {
                 window.toolbox.toolVisibility = {
