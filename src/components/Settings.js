@@ -181,6 +181,36 @@ export class Settings {
                             ${this.renderSpotifyConnection()}
                         </div>
 
+                        <!-- Database Test Section -->
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-medium text-gray-900 dark:text-white">Offline Database</h3>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">Test and debug offline storage functionality</p>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button id="test-database" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                        Test Database
+                                    </button>
+                                    <button id="clear-offline-data" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                        Clear Data
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="database-test-results" class="mt-4 hidden">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                                    <pre id="test-results" class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap"></pre>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- More connected accounts can be added here -->
                         <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4 opacity-50">
                             <div class="flex items-center justify-between">
@@ -787,6 +817,14 @@ export class Settings {
                 window.toolbox.setToolVisibility('dev-tools', e.target.checked)
             }
         })
+
+        // Spotify connection
+        document.getElementById('connect-spotify')?.addEventListener('click', () => this.connectSpotify())
+        document.getElementById('disconnect-spotify')?.addEventListener('click', () => this.disconnectSpotify())
+
+        // Database test buttons
+        document.getElementById('test-database')?.addEventListener('click', () => this.testDatabase())
+        document.getElementById('clear-offline-data')?.addEventListener('click', () => this.clearOfflineData())
     }
 
     async loadUserEmail() {
@@ -1210,31 +1248,67 @@ export class Settings {
 
     async disconnectSpotify() {
         try {
-            console.log('🎵 Disconnecting from Spotify...')
-
             const { data: { user } } = await auth.getCurrentUser()
-            if (!user) throw new Error('User not authenticated')
+            if (!user) return
 
-            // Remove Spotify connection from database
-            const { error } = await supabase
+            await supabase
                 .from('music_connections')
                 .delete()
                 .eq('user_id', user.id)
                 .eq('provider', 'spotify')
 
-            if (error) throw error
-
-            // Update local state
             this.spotifyConnected = false
             this.spotifyProfile = null
-
-            // Re-render the connected accounts section
-            this.init()
-
+            
             this.showMessage('Spotify disconnected successfully', 'success')
+            this.render()
         } catch (error) {
-            console.error('❌ Error disconnecting Spotify:', error)
+            console.error('Error disconnecting Spotify:', error)
             this.showMessage('Failed to disconnect Spotify', 'error')
+        }
+    }
+
+    async testDatabase() {
+        try {
+            const resultsContainer = document.getElementById('database-test-results')
+            const resultsText = document.getElementById('test-results')
+            
+            resultsContainer.classList.remove('hidden')
+            resultsText.textContent = 'Testing database...\n'
+            
+            // Test if the global test function exists
+            if (window.testOfflineDatabase) {
+                const result = await window.testOfflineDatabase()
+                resultsText.textContent += JSON.stringify(result, null, 2)
+                
+                if (result.success) {
+                    this.showMessage('Database test completed successfully!', 'success')
+                } else {
+                    this.showMessage('Database test failed: ' + result.error, 'error')
+                }
+            } else {
+                resultsText.textContent += 'Test function not available. Please refresh the page.'
+                this.showMessage('Test function not available', 'error')
+            }
+        } catch (error) {
+            console.error('Error testing database:', error)
+            this.showMessage('Error testing database: ' + error.message, 'error')
+        }
+    }
+
+    async clearOfflineData() {
+        try {
+            if (confirm('Are you sure you want to clear all offline data? This will remove all locally stored tasks, journal entries, and other data. This action cannot be undone.')) {
+                if (window.offlineStorage) {
+                    await window.offlineStorage.clearCurrentUserData()
+                    this.showMessage('Offline data cleared successfully', 'success')
+                } else {
+                    this.showMessage('Offline storage not available', 'error')
+                }
+            }
+        } catch (error) {
+            console.error('Error clearing offline data:', error)
+            this.showMessage('Error clearing offline data: ' + error.message, 'error')
         }
     }
 

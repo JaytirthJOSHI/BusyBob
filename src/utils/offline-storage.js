@@ -155,59 +155,93 @@ class OfflineStorage {
     }
 
     async init(userId, sessionToken = null) {
-        // 🔒 SECURITY: Validate user ID format
-        if (!this.validateUserId(userId)) {
-            throw new OfflineStorageError('Invalid user ID format', 'INVALID_USER_ID')
-        }
-
-        // 🔒 SECURITY: Validate session if provided
-        if (sessionToken && !this.validateSessionToken(sessionToken)) {
-            throw new OfflineStorageError('Invalid session token', 'INVALID_SESSION')
-        }
-
-        // 🔒 SECURITY: Verify user exists in Supabase before allowing offline access
         try {
-            const { data: { user }, error } = await auth.getCurrentUser()
-
-            if (error || !user || user.id !== userId) {
-                throw new OfflineStorageError('User verification failed', 'USER_NOT_FOUND')
+            console.log('🚀 Starting offline storage initialization...', { userId: this.redactUserId(userId) })
+            
+            // 🔒 SECURITY: Validate user ID format
+            if (!this.validateUserId(userId)) {
+                console.error('❌ Invalid user ID format:', userId)
+                throw new OfflineStorageError('Invalid user ID format', 'INVALID_USER_ID')
             }
+            console.log('✅ User ID validation passed')
+
+            // 🔒 SECURITY: Validate session if provided
+            if (sessionToken && !this.validateSessionToken(sessionToken)) {
+                console.error('❌ Invalid session token')
+                throw new OfflineStorageError('Invalid session token', 'INVALID_SESSION')
+            }
+            console.log('✅ Session token validation passed')
+
+            // 🔒 SECURITY: Verify user exists in Supabase before allowing offline access
+            try {
+                console.log('🔍 Verifying user in Supabase...')
+                const { data: { user }, error } = await auth.getCurrentUser()
+
+                if (error || !user || user.id !== userId) {
+                    console.error('❌ User verification failed:', { error, userId, user })
+                    throw new OfflineStorageError('User verification failed', 'USER_NOT_FOUND')
+                }
+                console.log('✅ User verification passed')
+            } catch (error) {
+                console.error('❌ Failed to verify user during init', error)
+                throw new OfflineStorageError('Failed to verify user', 'USER_VERIFICATION_ERROR', error)
+            }
+
+            this.currentUserId = userId
+            this.sessionToken = sessionToken
+            this.initTimestamp = Date.now()
+
+            // 🔒 SECURITY: Auto-refresh session if token is provided
+            if (sessionToken) {
+                this.logger.info('Session token provided during init', {
+                    userId: this.redactUserId(userId),
+                    tokenLength: sessionToken.length
+                })
+            }
+
+            console.log('💾 Opening IndexedDB...')
+            this.db = await this.openDB()
+            console.log('✅ IndexedDB opened successfully')
+
+            console.log('📥 Loading sync queue...')
+            await this.loadSyncQueue()
+            console.log('✅ Sync queue loaded')
+
+            // If we're online, sync any pending changes
+            if (this.isOnline) {
+                console.log('🌐 Online - syncing pending changes...')
+                await this.syncPendingChanges()
+                console.log('✅ Pending changes synced')
+            } else {
+                console.log('📱 Offline - skipping sync')
+            }
+
+            this.logger.info('Offline storage initialized', { userId: this.redactUserId(userId) })
+            console.log('🎉 Offline storage initialization completed successfully')
         } catch (error) {
-            this.logger.error('Failed to verify user during init', error)
-            throw new OfflineStorageError('Failed to verify user', 'USER_VERIFICATION_ERROR', error)
+            console.error('❌ Offline storage initialization failed:', error)
+            throw error
         }
-
-        this.currentUserId = userId
-        this.sessionToken = sessionToken
-        this.initTimestamp = Date.now()
-
-        // 🔒 SECURITY: Auto-refresh session if token is provided
-        if (sessionToken) {
-            this.logger.info('Session token provided during init', {
-                userId: this.redactUserId(userId),
-                tokenLength: sessionToken.length
-            })
-        }
-
-        this.db = await this.openDB()
-        await this.loadSyncQueue()
-
-        // If we're online, sync any pending changes
-        if (this.isOnline) {
-            await this.syncPendingChanges()
-        }
-
-        this.logger.info('Offline storage initialized', { userId: this.redactUserId(userId) })
     }
 
     async openDB() {
         return new Promise((resolve, reject) => {
+            console.log('🔧 Opening IndexedDB...', { dbName: this.dbName, version: this.dbVersion })
+            
             const request = indexedDB.open(this.dbName, this.dbVersion)
 
-            request.onerror = () => reject(request.error)
-            request.onsuccess = () => resolve(request.result)
+            request.onerror = () => {
+                console.error('❌ IndexedDB open error:', request.error)
+                reject(request.error)
+            }
+            
+            request.onsuccess = () => {
+                console.log('✅ IndexedDB opened successfully')
+                resolve(request.result)
+            }
 
             request.onupgradeneeded = (event) => {
+                console.log('🔄 IndexedDB upgrade needed, creating stores...')
                 const db = event.target.result
 
                 // Create object stores for each data type
@@ -215,11 +249,15 @@ class OfflineStorage {
 
                 stores.forEach(storeName => {
                     if (!db.objectStoreNames.contains(storeName)) {
+                        console.log('📦 Creating store:', storeName)
                         const store = db.createObjectStore(storeName, { keyPath: 'id' })
                         store.createIndex('user_id', 'user_id', { unique: false })
                         store.createIndex('updated_at', 'updated_at', { unique: false })
+                    } else {
+                        console.log('✅ Store already exists:', storeName)
                     }
                 })
+                console.log('🎉 IndexedDB upgrade completed')
             }
         })
     }

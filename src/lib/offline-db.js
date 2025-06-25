@@ -20,20 +20,36 @@ export const db = {
     },
 
     async initUser(userId) {
-        // 🔒 SECURITY: Get session token for secure initialization
-        let sessionToken = null
         try {
-            const { data: { session } } = await auth.getSession()
-            sessionToken = session?.access_token
+            console.log('🔧 Initializing user in offline database...', { userId })
+            
+            // 🔒 SECURITY: Get session token for secure initialization
+            let sessionToken = null
+            try {
+                const { data: { session } } = await auth.getSession()
+                sessionToken = session?.access_token
+                console.log('🔑 Session token obtained:', !!sessionToken)
+            } catch (error) {
+                console.warn('⚠️ Failed to get session token:', error)
+            }
+
+            console.log('💾 Calling offlineDB.init...')
+            await offlineDB.init(userId, sessionToken)
+            console.log('✅ offlineDB.init completed successfully')
+
+            // Sync data from server if online
+            if (this.isOnline) {
+                console.log('📥 Syncing data from server...')
+                await this.syncFromServer()
+                console.log('✅ Server sync completed')
+            } else {
+                console.log('📱 Offline mode - skipping server sync')
+            }
+            
+            console.log('🎉 User initialization completed successfully')
         } catch (error) {
-            console.warn('Failed to get session token:', error)
-        }
-
-        await offlineDB.init(userId, sessionToken)
-
-        // Sync data from server if online
-        if (this.isOnline) {
-            await this.syncFromServer()
+            console.error('❌ Error initializing user:', error)
+            throw error
         }
     },
 
@@ -365,6 +381,8 @@ export const db = {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) throw new Error('User not authenticated')
 
+            console.log('🔍 Ensuring user exists and offline database is initialized...', { userId: user.id })
+
             if (this.isOnline) {
                 const { data: existingUser } = await supabase
                     .from('users')
@@ -373,6 +391,7 @@ export const db = {
                     .single()
 
                 if (!existingUser) {
+                    console.log('👤 Creating new user record in database...')
                     const { error } = await supabase
                         .from('users')
                         .insert({
@@ -383,15 +402,20 @@ export const db = {
                         })
 
                     if (error) throw error
+                    console.log('✅ User record created successfully')
+                } else {
+                    console.log('✅ User record already exists')
                 }
             }
 
             // Initialize offline storage for this user
+            console.log('💾 Initializing offline storage for user...')
             await this.initUser(user.id)
+            console.log('✅ Offline storage initialized successfully')
 
             return { data: user, error: null }
         } catch (error) {
-            console.error('Error ensuring user:', error)
+            console.error('❌ Error ensuring user:', error)
             return { data: null, error }
         }
     },

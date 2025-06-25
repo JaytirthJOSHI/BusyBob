@@ -332,6 +332,10 @@ async function initializeApp() {
             console.error('❌ Error initializing AI Agent:', aiError)
         }
 
+        // Expose database globally for debugging
+        window.db = db
+        window.offlineStorage = offlineStorage
+
         // Set up theme toggle
         console.log('🌙 Setting up theme toggle...')
         document.getElementById('theme-toggle').addEventListener('click', theme.toggle)
@@ -351,6 +355,15 @@ async function initializeApp() {
         if (user) {
             console.log('👤 User is authenticated, showing main app')
             currentUser = user
+
+            // Initialize offline database for existing user
+            try {
+                console.log('💾 Initializing offline database for existing user...')
+                await db.ensureUser()
+                console.log('✅ Offline database initialized for existing user')
+            } catch (dbError) {
+                console.error('❌ Error initializing offline database for existing user:', dbError)
+            }
 
             // Refresh offline storage session for existing user
             if (window.offlineStorage) {
@@ -394,6 +407,15 @@ async function initializeApp() {
             console.log('Auth state change:', event, session)
             if (event === 'SIGNED_IN' && session) {
                 currentUser = session.user
+
+                // Initialize offline database for new sign-in
+                try {
+                    console.log('💾 Initializing offline database for new sign-in...')
+                    await db.ensureUser()
+                    console.log('✅ Offline database initialized for new sign-in')
+                } catch (dbError) {
+                    console.error('❌ Error initializing offline database for new sign-in:', dbError)
+                }
 
                 // Refresh offline storage session
                 if (window.offlineStorage && currentUser) {
@@ -477,6 +499,15 @@ async function initializeApp() {
 
                 // Get the session for demo user
                 const { data: { session } } = await auth.getSession()
+
+                // Initialize offline database for demo user
+                try {
+                    console.log('💾 Initializing offline database for demo user...')
+                    await db.ensureUser()
+                    console.log('✅ Offline database initialized for demo user')
+                } catch (dbError) {
+                    console.error('❌ Error initializing offline database for demo user:', dbError)
+                }
 
                 // Refresh offline storage session for demo user
                 if (window.offlineStorage && session) {
@@ -573,6 +604,71 @@ async function initializeApp() {
             } catch (error) {
                 console.error('❌ Error testing multi-agent system:', error)
                 ui.showMessage('Error testing AI system. Please try again.', 'error')
+            }
+        }
+
+        // Add global function to test offline database
+        window.testOfflineDatabase = async () => {
+            try {
+                console.log('🧪 Testing offline database...')
+                
+                // Test if db is available
+                if (!window.db) {
+                    console.error('❌ Database not available')
+                    return { error: 'Database not available' }
+                }
+
+                // Test if user is authenticated
+                const { data: { user } } = await auth.getCurrentUser()
+                if (!user) {
+                    console.error('❌ User not authenticated')
+                    return { error: 'User not authenticated' }
+                }
+
+                console.log('✅ User authenticated:', user.id)
+
+                // Test offline database initialization
+                await db.ensureUser()
+                console.log('✅ Offline database initialized')
+
+                // Test getting tasks
+                const { data: tasks, error: tasksError } = await db.getTasks()
+                if (tasksError) {
+                    console.error('❌ Error getting tasks:', tasksError)
+                    return { error: 'Failed to get tasks', details: tasksError }
+                }
+
+                console.log('✅ Tasks retrieved:', tasks?.length || 0)
+
+                // Test getting feelings
+                const { data: feelings, error: feelingsError } = await db.getFeelings()
+                if (feelingsError) {
+                    console.error('❌ Error getting feelings:', feelingsError)
+                    return { error: 'Failed to get feelings', details: feelingsError }
+                }
+
+                console.log('✅ Feelings retrieved:', feelings?.length || 0)
+
+                // Test getting journal entries
+                const { data: entries, error: entriesError } = await db.getJournalEntries()
+                if (entriesError) {
+                    console.error('❌ Error getting journal entries:', entriesError)
+                    return { error: 'Failed to get journal entries', details: entriesError }
+                }
+
+                console.log('✅ Journal entries retrieved:', entries?.length || 0)
+
+                return {
+                    success: true,
+                    user: user.id,
+                    tasks: tasks?.length || 0,
+                    feelings: feelings?.length || 0,
+                    journalEntries: entries?.length || 0
+                }
+
+            } catch (error) {
+                console.error('❌ Test failed:', error)
+                return { error: error.message, details: error }
             }
         }
 
