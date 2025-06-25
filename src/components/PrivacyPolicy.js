@@ -8,7 +8,29 @@ export class PrivacyPolicy {
     if (container) {
       container.innerHTML = this.getPrivacyPolicyHTML()
       this.setupEventListeners()
+    } else {
+      // Fallback: show a modal or alert with a direct link to the static HTML
+      this.showFallback()
     }
+  }
+
+  showFallback() {
+    // Remove any existing fallback
+    const existing = document.getElementById('privacy-policy-fallback')
+    if (existing) existing.remove()
+    // Create a fallback div
+    const fallback = document.createElement('div')
+    fallback.id = 'privacy-policy-fallback'
+    fallback.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm'
+    fallback.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-lg mx-4 text-center">
+        <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Privacy Policy</h2>
+        <p class="mb-4 text-gray-700 dark:text-gray-300">Unable to display the in-app Privacy Policy. Please use the direct link below:</p>
+        <a href="/privacy-policy.html" target="_blank" class="inline-block bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">View Privacy Policy</a>
+        <p class="mt-6 text-xs text-gray-400">If you believe this is an error, please contact support.</p>
+      </div>
+    `
+    document.body.appendChild(fallback)
   }
 
   setupEventListeners() {
@@ -37,8 +59,7 @@ export class PrivacyPolicy {
               </svg>
             </button>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Privacy Policy</h1>
-            <div class="flex items-center gap-2">
-              <p class="text-sm text-blue-600 dark:text-blue-400 font-medium">✅ Direct URL access working</p>
+            <div class="flex items-center gap-2 ml-4">
               <a href="/privacy-policy.html" target="_blank" class="text-sm text-purple-600 hover:text-purple-800 underline">View Full Policy</a>
             </div>
           </div>
@@ -150,5 +171,5 @@ export class PrivacyPolicy {
         </div>
       </div>
     `
-  } 
+  }
 }
