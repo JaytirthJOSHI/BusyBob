@@ -208,4 +208,4 @@ npm test
 - [ ] I have considered the privacy and security implications
 - [ ] I am committed to addressing any feedback promptly
 
-**Educational Mission Statement:** This change supports BusyBob's mission to help students succeed academically while maintaining the highest standards of privacy, security, and educational best practices. 
+**Educational Mission Statement:** This change supports BusyBob's mission to help students succeed academically while maintaining the highest standards of privacy, security, and educational best practices.

@@ -103,4 +103,4 @@ Add any other context, screenshots, examples, or inspiration for this feature re
 
 ---
 
-**Note:** Features that significantly improve academic outcomes and student success will be prioritized. Please ensure your request aligns with BusyBob's mission to help students manage their academic life effectively and safely. 
+**Note:** Features that significantly improve academic outcomes and student success will be prioritized. Please ensure your request aligns with BusyBob's mission to help students manage their academic life effectively and safely.

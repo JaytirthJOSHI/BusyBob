@@ -214,4 +214,4 @@ async function initializeApp() {
 
 // Call when app starts
 document.addEventListener('DOMContentLoaded', initializeApp)
-*/ 
+*/

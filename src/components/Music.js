@@ -559,4 +559,4 @@ export class Music {
     async refreshSpotifyToken(refreshToken) {
         // Implement token refresh
     }
-} 
+}

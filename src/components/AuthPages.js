@@ -61,7 +61,7 @@ export class AuthPages {
               <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or continue with email</span>
             </div>
           </div>
-
+ 
           <form id="login-form" class="space-y-6">
             <div>
               <label for="login-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
@@ -79,7 +79,7 @@ export class AuthPages {
               Sign In
             </button>
           </form>
-
+ 
           <div class="mt-6 text-center">
             <p class="text-sm text-gray-600 dark:text-gray-400">
               Don't have an account? 

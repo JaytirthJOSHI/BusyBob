@@ -183,4 +183,4 @@ CREATE TRIGGER update_music_connections_updated_at
 CREATE TRIGGER update_focus_playlists_updated_at
     BEFORE UPDATE ON focus_playlists
     FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column(); 
+    EXECUTE FUNCTION update_updated_at_column();

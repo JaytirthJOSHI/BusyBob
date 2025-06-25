@@ -345,6 +345,5 @@ export class KidMode {
         return sanitized
     }
 }
-
 // Global instance
 export const kidMode = new KidMode()

@@ -272,7 +272,7 @@ async function initializeApp() {
             document.getElementById('theme-toggle').addEventListener('click', theme.toggle)
             
             // Show main app and navigate to legal page
-            showMainApp()
+            await showMainApp()
             setTimeout(() => {
                 showPage(page)
                 console.log(`✅ Navigated to ${page} page`)
@@ -350,6 +350,19 @@ async function initializeApp() {
             console.log('👤 User is authenticated, showing main app')
             currentUser = user
             
+            // Refresh offline storage session for existing user
+            if (window.offlineStorage) {
+                try {
+                    const { data: { session } } = await auth.getSession()
+                    if (session) {
+                        await window.offlineStorage.refreshSessionFromApp(session.access_token)
+                        console.log('🔄 Offline storage session refreshed for existing user')
+                    }
+                } catch (error) {
+                    console.warn('Failed to refresh offline storage session for existing user:', error)
+                }
+            }
+            
             // Initialize Kid Mode
             console.log('🛡️ Initializing Kid Mode...')
             await kidMode.init()
@@ -366,6 +379,16 @@ async function initializeApp() {
             console.log('Auth state change:', event, session)
             if (event === 'SIGNED_IN' && session) {
                 currentUser = session.user
+                
+                // Refresh offline storage session
+                if (window.offlineStorage && currentUser) {
+                    try {
+                        await window.offlineStorage.refreshSessionFromApp(session.access_token)
+                        console.log('🔄 Offline storage session refreshed')
+                    } catch (error) {
+                        console.warn('Failed to refresh offline storage session:', error)
+                    }
+                }
                 
                 // Initialize Kid Mode for new session
                 console.log('🛡️ Initializing Kid Mode for new session...')
@@ -432,6 +455,19 @@ async function initializeApp() {
                     throw error
                 }
                 
+                // Get the session for demo user
+                const { data: { session } } = await auth.getSession()
+                
+                // Refresh offline storage session for demo user
+                if (window.offlineStorage && session) {
+                    try {
+                        await window.offlineStorage.refreshSessionFromApp(session.access_token)
+                        console.log('🔄 Offline storage session refreshed for demo user')
+                    } catch (refreshError) {
+                        console.warn('Failed to refresh offline storage session for demo user:', refreshError)
+                    }
+                }
+                
                 // Ensure user record exists in users table
                 await db.ensureUser()
                 
@@ -459,6 +495,18 @@ async function initializeApp() {
         })
         
         console.log('🎉 App initialization complete!')
+        
+        // Add global debug function for offline storage
+        window.checkOfflineStorageStatus = () => {
+            if (window.offlineStorage) {
+                const status = window.offlineStorage.getSessionStatus()
+                console.log('🔍 Offline Storage Session Status:', status)
+                return status
+            } else {
+                console.log('❌ Offline storage not initialized')
+                return null
+            }
+        }
         
     } catch (error) {
         console.error('❌ Error during app initialization:', error)
@@ -548,30 +596,28 @@ function setupNavigationListeners() {
 // Authentication functions
 async function handleLogin(event) {
     event.preventDefault()
-    const formData = new FormData(event.target)
-    const email = formData.get('email')
-    const password = formData.get('password')
     
-    // Validate inputs
-    if (!validation.email(email)) {
-        ui.showMessage('Please enter a valid email address', 'error')
-        return
-    }
-    
-    if (!validation.password(password)) {
-        ui.showMessage('Password must be at least 6 characters long', 'error')
-        return
-    }
+    const email = document.getElementById('login-email').value
+    const password = document.getElementById('login-password').value
     
     try {
         const { data, error } = await auth.signIn(email, password)
-        
         if (error) throw error
         
-        // Show success message with continue button
+        // Refresh offline storage session after successful login
+        if (window.offlineStorage && data.session) {
+            try {
+                await window.offlineStorage.refreshSessionFromApp(data.session.access_token)
+                console.log('🔄 Offline storage session refreshed after login')
+            } catch (refreshError) {
+                console.warn('Failed to refresh offline storage session after login:', refreshError)
+            }
+        }
+        
         showSignInSuccess()
     } catch (error) {
-        ui.showMessage(error.message, 'error')
+        console.error('Login error:', error)
+        ui.showMessage('Login failed: ' + error.message, 'error')
     }
 }
 
@@ -626,46 +672,29 @@ function showSignInSuccess() {
 
 async function handleSignup(event) {
     event.preventDefault()
-    const formData = new FormData(event.target)
-    const name = formData.get('name')
-    const email = formData.get('email')
-    const password = formData.get('password')
     
-    // Validate inputs
-    if (!validation.required(name)) {
-        ui.showMessage('Please enter your full name', 'error')
-        return
-    }
-    
-    if (!validation.email(email)) {
-        ui.showMessage('Please enter a valid email address', 'error')
-        return
-    }
-    
-    if (!validation.password(password)) {
-        ui.showMessage('Password must be at least 6 characters long', 'error')
-        return
-    }
+    const email = document.getElementById('signup-email').value
+    const password = document.getElementById('signup-password').value
+    const name = document.getElementById('signup-name').value
     
     try {
         const { data, error } = await auth.signUp(email, password, name)
-        
         if (error) throw error
         
-        // Check if user needs email confirmation
-        if (data.user && !data.session) {
-            ui.showMessage('Account created! Please check your email to verify your account, then sign in.', 'success')
-            authPages.showLogin()
-        } else if (data.user && data.session) {
-            // Auto sign-in is enabled in Supabase
-            ui.showMessage('Welcome to Busy BOB! Let\'s get you organized.', 'success')
-            // The auth state change listener will handle the redirect
-        } else {
-            ui.showMessage('Account created successfully! You can now sign in.', 'success')
-            authPages.showLogin()
+        // Refresh offline storage session after successful signup
+        if (window.offlineStorage && data.session) {
+            try {
+                await window.offlineStorage.refreshSessionFromApp(data.session.access_token)
+                console.log('🔄 Offline storage session refreshed after signup')
+            } catch (refreshError) {
+                console.warn('Failed to refresh offline storage session after signup:', refreshError)
+            }
         }
+        
+        showSignInSuccess()
     } catch (error) {
-        ui.showMessage(error.message, 'error')
+        console.error('Signup error:', error)
+        ui.showMessage('Signup failed: ' + error.message, 'error')
     }
 }
 
@@ -848,7 +877,7 @@ function showAuthPages(page = 'login') {
     }
 }
 
-function showMainApp() {
+async function showMainApp() {
     document.getElementById('auth-container').classList.add('hidden')
     document.getElementById('main-app').classList.remove('hidden')
     
@@ -857,6 +886,16 @@ function showMainApp() {
         const userName = currentUser.user_metadata?.name || currentUser.email
         document.getElementById('user-name').textContent = userName
         document.getElementById('welcome-name').textContent = userName.split(' ')[0]
+    }
+    
+    // 🔒 SECURITY: Ensure secure user initialization
+    try {
+        await db.ensureUser()
+        console.log('✅ User database initialized securely')
+    } catch (error) {
+        console.error('❌ Failed to initialize user securely:', error)
+        ui.showMessage('Security initialization failed. Please sign out and back in.', 'error')
+        return
     }
     
     // Initialize Enhanced AI agent only when showing main app
@@ -870,7 +909,7 @@ function showMainApp() {
     console.log('📱 Offline status available in Settings')
     
     // Load data and show home page
-    loadAllData()
+    await loadAllData()
     showPage('home')
 }
 
@@ -1050,18 +1089,13 @@ function renderTasks() {
     if (!taskList) return
     
     taskList.innerHTML = tasks.length > 0 
-        ? tasks.map(task => createTaskHTML(task)).join('')
-        : '<p class="text-gray-500 dark:text-gray-400 text-center py-8">No tasks yet. Create your first task above!</p>'
+        ? tasks.map(task => createSimpleTaskHTML(task)).join('')
+        : '<p class="text-gray-500 dark:text-gray-400 text-center py-8">No tasks yet. Add your first task above!</p>'
 }
 
-function createTaskHTML(task) {
-    const isOverdue = dateUtils.isOverdue(task.due_date, task.due_time) && !task.completed
-    const priorityClass = task.priority === 'high' ? 'priority-high' : 
-                         task.priority === 'medium' ? 'priority-medium' : 'priority-low'
-    const statusClass = task.completed ? 'status-completed' : isOverdue ? 'status-overdue' : ''
-    
+function createSimpleTaskHTML(task) {
     return `
-        <div class="task-item border rounded-lg p-3 sm:p-4 ${priorityClass} ${statusClass} card-hover" data-task-id="${task.id}">
+        <div class="todo-item border rounded-lg p-3 sm:p-4 bg-white dark:bg-gray-700 card-hover" data-task-id="${task.id}">
             <div class="flex items-start justify-between">
                 <div class="flex items-start space-x-3 flex-1 min-w-0">
                     <input type="checkbox" ${task.completed ? 'checked' : ''} 
@@ -1069,16 +1103,7 @@ function createTaskHTML(task) {
                            class="h-5 w-5 sm:h-4 sm:w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 flex-shrink-0">
                     <div class="flex-1 min-w-0">
                         <h3 class="font-medium text-gray-900 dark:text-white ${task.completed ? 'line-through opacity-75' : ''} text-sm sm:text-base break-words">${task.title}</h3>
-                        <div class="flex flex-wrap items-center gap-2 mt-1 sm:mt-2">
-                            <span class="text-xs px-2 py-1 rounded-full ${taskUtils.getCategoryColor(task.category)} whitespace-nowrap">${task.category}</span>
-                            <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                ${dateUtils.formatDateTime(task.due_date, task.due_time)}
-                            </span>
-                            <span class="text-xs ${taskUtils.getPriorityColor(task.priority)} whitespace-nowrap">
-                                ${taskUtils.getPriorityIcon(task.priority)} ${task.priority.toUpperCase()}
-                            </span>
-                        </div>
-                        ${task.description ? `<p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2 break-words">${task.description}</p>` : ''}
+                        ${task.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${task.description}</p>` : ''}
                     </div>
                 </div>
                 <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 p-2 ml-2 flex-shrink-0">
@@ -1104,18 +1129,48 @@ function loadSelectedDateTasks(date) {
     
     if (!selectedTasksContainer || !titleElement) return
     
-    const dateStr = date.toISOString().split('T')[0]
-    const dayTasks = tasks.filter(task => task.due_date === dateStr)
+    // Show all tasks instead of just selected date tasks
+    titleElement.textContent = "All Tasks"
     
-    titleElement.textContent = date.toDateString() === new Date().toDateString() 
-        ? "Today's Tasks" 
-        : `Tasks for ${dateUtils.formatDate(dateStr)}`
-    
-    if (dayTasks.length > 0) {
-        selectedTasksContainer.innerHTML = dayTasks.map(task => createTaskHTML(task)).join('')
+    if (tasks.length > 0) {
+        selectedTasksContainer.innerHTML = tasks.map(task => createCalendarTaskHTML(task)).join('')
     } else {
-        selectedTasksContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-4">No tasks for this date.</p>'
+        selectedTasksContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-4">No tasks yet. Add tasks from the Calendar!</p>'
     }
+}
+
+function createCalendarTaskHTML(task) {
+    const isOverdue = task.due_date && dateUtils.isOverdue(task.due_date, task.due_time) && !task.completed
+    const priorityClass = task.priority === 'high' ? 'border-l-4 border-l-red-500' : 
+                         task.priority === 'medium' ? 'border-l-4 border-l-yellow-500' : 'border-l-4 border-l-green-500'
+    
+    return `
+        <div class="task-item border rounded-lg p-3 sm:p-4 bg-white dark:bg-gray-700 ${priorityClass} card-hover" data-task-id="${task.id}">
+            <div class="flex items-start justify-between">
+                <div class="flex items-start space-x-3 flex-1 min-w-0">
+                    <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                           onchange="toggleTask(${task.id})"
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-medium text-gray-900 dark:text-white ${task.completed ? 'line-through opacity-75' : ''} text-sm break-words">${task.title}</h3>
+                        ${task.description ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${task.description}</p>` : ''}
+                        <div class="flex flex-wrap items-center gap-2 mt-2">
+                            <span class="text-xs px-2 py-1 rounded-full ${taskUtils.getCategoryColor(task.category)} whitespace-nowrap">${task.category}</span>
+                            ${task.due_date ? `<span class="text-xs text-gray-500 dark:text-gray-400">
+                                ${dateUtils.formatDateTime(task.due_date, task.due_time)}
+                            </span>` : ''}
+                            ${isOverdue ? '<span class="text-xs text-red-500 font-medium">OVERDUE</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+                <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 p-1 ml-2 flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `
 }
 
 async function loadJournalData() {
@@ -1245,12 +1300,12 @@ async function handleTaskSubmit(event) {
     
     const taskData = {
         title: formData.get('title'),
-        description: formData.get('description'),
-        category: formData.get('category'),
-        priority: formData.get('priority'),
-        due_date: formData.get('due_date'),
-        due_time: formData.get('due_time'),
-        stress_level: parseInt(formData.get('stress_level')),
+        description: formData.get('description') || '',
+        category: 'general',
+        priority: 'medium',
+        due_date: null,
+        due_time: null,
+        stress_level: 3,
         completed: false
     }
     
@@ -1266,7 +1321,7 @@ async function handleTaskSubmit(event) {
             calendar.setTasks(tasks)
         }
         
-        ui.showMessage('Task created successfully!', 'success')
+        ui.showMessage('Task added!', 'success')
         event.target.reset()
         
         // Add success animation
@@ -1276,13 +1331,7 @@ async function handleTaskSubmit(event) {
         }
     } catch (error) {
         console.error('Error creating task:', error)
-        console.error('Error details:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code
-        })
-        ui.showMessage(`Error creating task: ${error.message || 'Unknown error'}`, 'error')
+        ui.showMessage(`Error adding task: ${error.message || 'Unknown error'}`, 'error')
     }
 }
 
@@ -1355,51 +1404,11 @@ async function toggleTask(taskId) {
         // Update calendar
         if (calendar) {
             calendar.setTasks(tasks);
+            calendar.refreshTaskSidebar();
         }
         
         // Refresh home data
         loadHomeData();
-        
-        // Award points for task completion
-        if (updatedTask.completed && window.pointsSystem) {
-            try {
-                const now = new Date()
-                const currentHour = now.getHours()
-                let points = window.pointsSystem.getPointValue('taskCompleted')
-                let reason = 'Task completed'
-                
-                // Bonus points for early completion
-                if (task.due_date) {
-                    const dueDate = new Date(task.due_date)
-                    if (now < dueDate) {
-                        points = window.pointsSystem.getPointValue('taskCompletedEarly')
-                        reason = 'Task completed early'
-                    }
-                }
-                
-                // Bonus points for urgent tasks
-                if (task.priority === 'high') {
-                    points = window.pointsSystem.getPointValue('urgentTaskCompleted')
-                    reason = 'Urgent task completed'
-                }
-                
-                // Early bird bonus
-                if (currentHour < 9) {
-                    points += 10
-                    reason += ' (Early Bird bonus!)'
-                }
-                
-                // Night owl bonus  
-                if (currentHour >= 21) {
-                    points += 10
-                    reason += ' (Night Owl bonus!)'
-                }
-                
-                await window.pointsSystem.awardPoints(points, reason, 'tasks')
-            } catch (pointsError) {
-                console.error('Error awarding points:', pointsError)
-            }
-        }
         
         // Show feedback
         if (updatedTask.completed) {
@@ -1433,6 +1442,7 @@ async function deleteTask(taskId) {
         // Update calendar
         if (calendar) {
             calendar.setTasks(tasks)
+            calendar.refreshTaskSidebar()
         }
         
         ui.showMessage('Task deleted', 'success')

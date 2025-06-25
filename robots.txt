@@ -19,5 +19,5 @@ Allow: /og-image.png
 # Sitemap location
 Sitemap: https://busybob.site/sitemap.xml
 
-# Crawl delay (optional - be friendly to crawlers)
+# Crawl delay (optional - be friendly to crawlers) lol
 Crawl-delay: 1

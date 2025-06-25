@@ -405,4 +405,4 @@ By contributing to BusyBob, you agree that your contributions will be licensed u
 
 ---
 
-**Remember:** BusyBob serves students and educators. Every contribution should prioritize user privacy, educational value, and student success. Thank you for helping make academic management better for everyone! 🎓✨ 
+**Remember:** BusyBob serves students and educators. Every contribution should prioritize user privacy, educational value, and student success. Thank you for helping make academic management better for everyone! 🎓✨

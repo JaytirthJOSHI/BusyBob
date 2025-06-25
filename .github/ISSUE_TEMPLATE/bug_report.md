@@ -69,4 +69,4 @@ Have you tested this in multiple environments?
 - [ ] Checked console for errors
 
 ### 💡 Possible Solution
-If you have ideas on how to fix this, please share them here. 
+If you have ideas on how to fix this, please share them here.

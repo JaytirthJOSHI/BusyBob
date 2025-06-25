@@ -11,12 +11,14 @@ export class Calendar {
     this.events = []
     this.view = 'month' // month, week, day
     this.showCalendarSettings = false
+    this.showTaskForm = false
     
     this.init()
   }
 
   async init() {
     await this.loadConnectedCalendars()
+    await this.loadTasks()
     this.render()
   }
 
@@ -36,6 +38,25 @@ export class Calendar {
       localStorage.setItem('connectedCalendars', JSON.stringify(this.connectedCalendars))
     } catch (error) {
       console.error('Error saving connected calendars:', error)
+    }
+  }
+
+  async loadTasks() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      this.tasks = data || []
+    } catch (error) {
+      console.error('Error loading tasks:', error)
+      this.tasks = []
     }
   }
 
@@ -398,55 +419,83 @@ export class Calendar {
     this.render()
   }
 
+  toggleTaskForm() {
+    this.showTaskForm = !this.showTaskForm
+    if (this.showTaskForm) {
+      // Set default due date to selected date or today
+      const defaultDate = this.selectedDate || new Date()
+      const dateInput = document.getElementById('calendar-task-due-date')
+      if (dateInput) {
+        dateInput.value = defaultDate.toISOString().split('T')[0]
+      }
+    }
+    this.render()
+  }
+
+  async handleTaskSubmit(event) {
+    event.preventDefault()
+    const formData = new FormData(event.target)
+    
+    const taskData = {
+      title: formData.get('title'),
+      description: formData.get('description'),
+      category: formData.get('category'),
+      priority: formData.get('priority'),
+      due_date: formData.get('due_date'),
+      due_time: formData.get('due_time'),
+      stress_level: 3,
+      completed: false
+    }
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([{
+          user_id: user.id,
+          ...taskData,
+          created_at: new Date().toISOString()
+        }])
+        .select()
+
+      if (error) throw error
+      
+      this.tasks.push(data[0])
+      this.toggleTaskForm()
+      this.render()
+      this.refreshTaskSidebar()
+      
+      // Show success message
+      this.showMessage('Task created successfully!', 'success')
+      event.target.reset()
+    } catch (error) {
+      console.error('Error creating task:', error)
+      this.showMessage(`Error creating task: ${error.message}`, 'error')
+    }
+  }
+
+  refreshTaskSidebar() {
+    // Trigger the main.js function to refresh the task sidebar
+    if (typeof loadSelectedDateTasks === 'function') {
+      loadSelectedDateTasks(this.selectedDate || new Date())
+    }
+  }
+
   showMessage(message, type = 'info') {
-    // Create a toast notification
+    // Create a simple toast notification
     const toast = document.createElement('div')
-    toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transform transition-all duration-300 translate-x-full`
-    
-    const colors = {
-      success: 'bg-green-500 text-white',
-      error: 'bg-red-500 text-white',
-      warning: 'bg-yellow-500 text-white',
-      info: 'bg-blue-500 text-white'
-    }
-    
-    const icons = {
-      success: '✓',
-      error: '✕',
-      warning: '⚠',
-      info: 'ℹ'
-    }
-    
-    toast.className += ` ${colors[type]}`
-    
-    toast.innerHTML = `
-      <div class="flex items-center space-x-2">
-        <span class="text-lg">${icons[type]}</span>
-        <span class="font-medium">${message}</span>
-        <button class="ml-auto text-white/80 hover:text-white" onclick="this.parentElement.parentElement.remove()">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-    `
+    toast.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white ${
+      type === 'success' ? 'bg-green-500' : 
+      type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+    }`
+    toast.textContent = message
     
     document.body.appendChild(toast)
-    
-    // Animate in
     setTimeout(() => {
-      toast.classList.remove('translate-x-full')
-    }, 100)
-    
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-      toast.classList.add('translate-x-full')
-      setTimeout(() => {
-        if (toast.parentElement) {
-          toast.remove()
-        }
-      }, 300)
-    }, 5000)
+      document.body.removeChild(toast)
+    }, 3000)
   }
 
   render() {
@@ -463,8 +512,13 @@ export class Calendar {
         <!-- Calendar Header -->
         <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold">Calendar</h2>
+            <h2 class="text-2xl font-bold">Calendar & Tasks</h2>
             <div class="flex items-center space-x-2">
+              <button id="addTaskBtn" class="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+              </button>
               <button id="calendarSettingsBtn" class="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -478,31 +532,26 @@ export class Calendar {
             <h3 class="text-xl font-semibold">
               ${monthNames[month]} ${year}
             </h3>
+            
             <div class="flex items-center space-x-2">
               <button id="prevMonth" class="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
               </button>
-              <button id="todayBtn" class="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-sm font-medium">
+              <button id="todayBtn" class="px-3 py-1 rounded-md text-sm font-medium bg-white/20 hover:bg-white/30 transition-colors">
                 Today
               </button>
               <button id="nextMonth" class="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
               </button>
             </div>
           </div>
-        </div>
-
-        <!-- Calendar Settings Panel -->
-        ${this.showCalendarSettings ? this.renderCalendarSettings() : ''}
-
-        <!-- View Toggle -->
-        <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-          <div class="flex items-center justify-between">
-            <div class="flex space-x-1 bg-gray-200 dark:bg-gray-600 rounded-lg p-1">
+          
+          <div class="flex items-center justify-between mt-4">
+            <div class="flex items-center space-x-2">
               <button id="viewMonth" class="px-3 py-1 rounded-md text-sm font-medium transition-colors ${this.view === 'month' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}">
                 Month
               </button>
@@ -525,6 +574,12 @@ export class Calendar {
           </div>
         </div>
 
+        <!-- Task Form (Hidden by default) -->
+        ${this.showTaskForm ? this.renderTaskForm() : ''}
+
+        <!-- Calendar Settings (Hidden by default) -->
+        ${this.showCalendarSettings ? this.renderCalendarSettings() : ''}
+
         <!-- Calendar Grid -->
         <div class="p-6">
           ${this.view === 'month' ? this.renderMonthView() : 
@@ -535,6 +590,83 @@ export class Calendar {
     `
 
     this.addEventListeners()
+  }
+
+  renderTaskForm() {
+    return `
+      <div class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 p-6">
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Add New Task</h4>
+            <button id="closeTaskFormBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          
+          <form id="calendar-task-form" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="sm:col-span-2">
+                <label for="calendar-task-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Task Title</label>
+                <input type="text" name="title" id="calendar-task-title" required
+                  class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              </div>
+              
+              <div>
+                <label for="calendar-task-category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+                <select name="category" id="calendar-task-category"
+                  class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <option value="general">General</option>
+                  <option value="study">Study</option>
+                  <option value="work">Work</option>
+                  <option value="personal">Personal</option>
+                  <option value="health">Health</option>
+                </select>
+              </div>
+              
+              <div>
+                <label for="calendar-task-priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+                <select name="priority" id="calendar-task-priority"
+                  class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              
+              <div>
+                <label for="calendar-task-due-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Date</label>
+                <input type="date" name="due_date" id="calendar-task-due-date" required
+                  class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              </div>
+              
+              <div>
+                <label for="calendar-task-due-time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Time</label>
+                <input type="time" name="due_time" id="calendar-task-due-time"
+                  class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              </div>
+            </div>
+            
+            <div>
+              <label for="calendar-task-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+              <textarea name="description" id="calendar-task-description" rows="3"
+                class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                placeholder="Optional description..."></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+              <button type="button" id="cancelTaskBtn" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                Create Task
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `
   }
 
   renderCalendarSettings() {
@@ -769,6 +901,12 @@ export class Calendar {
     document.getElementById('viewMonth')?.addEventListener('click', () => this.changeView('month'))
     document.getElementById('viewWeek')?.addEventListener('click', () => this.changeView('week'))
     document.getElementById('viewDay')?.addEventListener('click', () => this.changeView('day'))
+
+    // Task form buttons
+    document.getElementById('addTaskBtn')?.addEventListener('click', () => this.toggleTaskForm())
+    document.getElementById('closeTaskFormBtn')?.addEventListener('click', () => this.toggleTaskForm())
+    document.getElementById('cancelTaskBtn')?.addEventListener('click', () => this.toggleTaskForm())
+    document.getElementById('calendar-task-form')?.addEventListener('submit', (e) => this.handleTaskSubmit(e))
 
     // Settings button
     document.getElementById('calendarSettingsBtn')?.addEventListener('click', () => this.toggleCalendarSettings())

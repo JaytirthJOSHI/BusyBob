@@ -20,7 +20,16 @@ export const db = {
     },
 
     async initUser(userId) {
-        await offlineDB.init(userId)
+        // 🔒 SECURITY: Get session token for secure initialization
+        let sessionToken = null
+        try {
+            const { data: { session } } = await auth.getSession()
+            sessionToken = session?.access_token
+        } catch (error) {
+            console.warn('Failed to get session token:', error)
+        }
+
+        await offlineDB.init(userId, sessionToken)
         
         // Sync data from server if online
         if (this.isOnline) {

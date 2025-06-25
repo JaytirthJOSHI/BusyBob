@@ -173,4 +173,3 @@ BEGIN
   ORDER BY rank DESC, n.created_at DESC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-

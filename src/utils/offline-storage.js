@@ -127,6 +127,10 @@ class OfflineStorage {
         this.retryTimeouts = new Map()
         this.performanceMonitor = new PerformanceMonitor()
         this.logger = new Logger()
+        this.sessionToken = null
+        this.initTimestamp = null
+        this.maxSessionDuration = 7 * 24 * 60 * 60 * 1000 // 7 days (more reasonable for web app)
+        this.rateLimiters = new Map()
         
         // Listen for online/offline events
         window.addEventListener('online', () => {
@@ -150,8 +154,41 @@ class OfflineStorage {
         }, CONFIG.SYNC_INTERVAL_MS)
     }
 
-    async init(userId) {
+    async init(userId, sessionToken = null) {
+        // 🔒 SECURITY: Validate user ID format
+        if (!this.validateUserId(userId)) {
+            throw new OfflineStorageError('Invalid user ID format', 'INVALID_USER_ID')
+        }
+
+        // 🔒 SECURITY: Validate session if provided
+        if (sessionToken && !this.validateSessionToken(sessionToken)) {
+            throw new OfflineStorageError('Invalid session token', 'INVALID_SESSION')
+        }
+
+        // 🔒 SECURITY: Verify user exists in Supabase before allowing offline access
+        try {
+            const { data: { user }, error } = await auth.getCurrentUser()
+            
+            if (error || !user || user.id !== userId) {
+                throw new OfflineStorageError('User verification failed', 'USER_NOT_FOUND')
+            }
+        } catch (error) {
+            this.logger.error('Failed to verify user during init', error)
+            throw new OfflineStorageError('Failed to verify user', 'USER_VERIFICATION_ERROR', error)
+        }
+
         this.currentUserId = userId
+        this.sessionToken = sessionToken
+        this.initTimestamp = Date.now()
+        
+        // 🔒 SECURITY: Auto-refresh session if token is provided
+        if (sessionToken) {
+            this.logger.info('Session token provided during init', { 
+                userId: this.redactUserId(userId),
+                tokenLength: sessionToken.length 
+            })
+        }
+        
         this.db = await this.openDB()
         await this.loadSyncQueue()
         
@@ -160,7 +197,7 @@ class OfflineStorage {
             await this.syncPendingChanges()
         }
         
-        console.log('📱 Offline storage initialized for user:', userId)
+        this.logger.info('Offline storage initialized', { userId: this.redactUserId(userId) })
     }
 
     async openDB() {
@@ -221,10 +258,180 @@ class OfflineStorage {
         const sanitized = {}
         for (const [key, value] of Object.entries(data)) {
             if (typeof key === 'string' && !key.startsWith('__')) {
-                sanitized[key] = value
+                // 🔒 SECURITY: Sanitize both key and value
+                const cleanKey = this.sanitizeString(key)
+                if (cleanKey) {
+                    sanitized[cleanKey] = this.sanitizeValue(value)
+                }
             }
         }
         return sanitized
+    }
+
+    // 🔒 SECURITY: User ID validation
+    validateUserId(userId) {
+        if (!userId || typeof userId !== 'string') return false
+        
+        // UUID format validation (Supabase uses UUIDs)
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        return uuidRegex.test(userId)
+    }
+
+    // 🔒 SECURITY: Session token validation
+    validateSessionToken(sessionToken) {
+        if (!sessionToken || typeof sessionToken !== 'string') return false
+        if (sessionToken.length < 32) return false // Minimum token length
+        
+        // Check session age
+        if (this.initTimestamp && (Date.now() - this.initTimestamp) > this.maxSessionDuration) {
+            this.logger.warn('Session expired')
+            return false
+        }
+        
+        return true
+    }
+
+    // 🔒 SECURITY: Session validation for write operations only
+    validateSessionForWrite() {
+        if (!this.validateSessionToken(this.sessionToken)) {
+            throw new OfflineStorageError('Session expired - write operations require valid session', 'SESSION_EXPIRED')
+        }
+    }
+
+    // 🔒 SECURITY: Session validation for read operations (more lenient)
+    validateSessionForRead() {
+        // For read operations, we only require a valid user ID
+        if (!this.currentUserId) {
+            throw new OfflineStorageError('User not authenticated', 'NOT_AUTHENTICATED')
+        }
+        
+        // Warn if session is expired but don't block read operations
+        if (this.sessionToken && !this.validateSessionToken(this.sessionToken)) {
+            this.logger.warn('Session expired but allowing read operations', { 
+                userId: this.redactUserId(this.currentUserId) 
+            })
+        }
+    }
+
+    // 🔒 SECURITY: Refresh session token
+    refreshSession(sessionToken = null) {
+        if (sessionToken) {
+            this.sessionToken = sessionToken
+        }
+        this.initTimestamp = Date.now()
+        this.logger.info('Session refreshed', { userId: this.redactUserId(this.currentUserId) })
+    }
+
+    // 🔒 SECURITY: Enhanced value sanitization
+    sanitizeValue(value) {
+        if (value === null || value === undefined) return value
+        
+        if (typeof value === 'string') {
+            return this.sanitizeString(value)
+        }
+        
+        if (typeof value === 'object' && !Array.isArray(value)) {
+            return this.sanitizeData(value) // Recursive sanitization
+        }
+        
+        if (Array.isArray(value)) {
+            return value.map(item => this.sanitizeValue(item))
+        }
+        
+        // Numbers, booleans pass through
+        if (typeof value === 'number' || typeof value === 'boolean') {
+            return value
+        }
+        
+        // Reject other types
+        this.logger.warn('Rejected unsupported data type', { type: typeof value })
+        return null
+    }
+
+    // 🔒 SECURITY: String sanitization with XSS protection
+    sanitizeString(str) {
+        if (typeof str !== 'string') return null
+        
+        // Remove potential XSS vectors
+        const cleaned = str
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+            .replace(/javascript:/gi, '') // Remove javascript: URLs
+            .replace(/on\w+\s*=/gi, '') // Remove event handlers
+            .replace(/data:text\/html/gi, '') // Remove data URLs
+            .replace(/vbscript:/gi, '') // Remove vbscript URLs
+            .trim()
+        
+        // Length validation
+        if (cleaned.length > 10000) { // 10KB limit per string
+            throw new OfflineStorageError('String too long', 'STRING_TOO_LONG')
+        }
+        
+        return cleaned
+    }
+
+    // 🔒 SECURITY: Permission system
+    hasTablePermission(tableName, operation) {
+        const permissions = {
+            'tasks': ['read', 'write', 'delete'],
+            'journal_entries': ['read', 'write', 'delete'],
+            'feelings': ['read', 'write'],
+            'kid_mode_settings': ['read', 'write'],
+            'studentvue_credentials': ['read', 'write'],
+            'canvas_credentials': ['read', 'write'],
+            'music_connections': ['read', 'write'],
+            'ai_notes': ['read', 'write', 'delete'],
+            'sync_queue': ['read', 'write'], // Internal use only
+            'user_metadata': ['read', 'write'],
+            'users': ['read'] // Read-only for verification
+        }
+
+        const tablePerms = permissions[tableName]
+        return tablePerms && tablePerms.includes(operation)
+    }
+
+    // 🔒 SECURITY: Rate limiting
+    async checkRateLimit(operation) {
+        const key = `${operation}_${this.currentUserId}`
+        const now = Date.now()
+        const windowMs = 60000 // 1 minute window
+        const maxRequests = 100 // Max 100 operations per minute
+
+        if (!this.rateLimiters.has(key)) {
+            this.rateLimiters.set(key, { count: 1, windowStart: now })
+            return
+        }
+
+        const limiter = this.rateLimiters.get(key)
+        
+        if (now - limiter.windowStart > windowMs) {
+            // Reset window
+            limiter.count = 1
+            limiter.windowStart = now
+        } else {
+            limiter.count++
+            if (limiter.count > maxRequests) {
+                throw new OfflineStorageError('Rate limit exceeded', 'RATE_LIMIT_EXCEEDED')
+            }
+        }
+    }
+
+    // 🔒 SECURITY: Data redaction for logging
+    redactUserId(userId) {
+        if (!userId || userId.length < 8) return '[REDACTED]'
+        return userId.substring(0, 4) + '****' + userId.substring(userId.length - 4)
+    }
+
+    redactSensitiveData(data) {
+        const sensitiveFields = ['password', 'token', 'secret', 'key', 'auth', 'credential', 'ssn', 'credit_card']
+        const redacted = { ...data }
+        
+        for (const field of sensitiveFields) {
+            if (field in redacted) {
+                redacted[field] = '[REDACTED]'
+            }
+        }
+        
+        return redacted
     }
 
     // Data size validation
@@ -291,6 +498,9 @@ class OfflineStorage {
         const timerKey = this.performanceMonitor.startTimer(`saveData_${tableName}`)
         
         try {
+            // 🔒 SECURITY: Check session validity for write operations
+            this.validateSessionForWrite()
+
             // Validate inputs
             this.validateTableName(tableName)
             this.validateData(data)
@@ -298,6 +508,14 @@ class OfflineStorage {
             if (!this.currentUserId || !this.db) {
                 throw new OfflineStorageError('Storage not initialized', 'NOT_INITIALIZED')
             }
+
+            // 🔒 SECURITY: Check table permissions
+            if (!this.hasTablePermission(tableName, 'write')) {
+                throw new OfflineStorageError('Insufficient permissions', 'PERMISSION_DENIED')
+            }
+
+            // 🔒 SECURITY: Rate limiting
+            await this.checkRateLimit('saveData')
 
             // Check storage quota before saving
             const hasQuota = await this.checkStorageQuota()
@@ -324,7 +542,8 @@ class OfflineStorage {
             this.logger.debug(`Saving ${tableName} record`, { 
                 id: record.id, 
                 sizeBytes,
-                offline_created: record.offline_created 
+                offline_created: record.offline_created,
+                userId: this.redactUserId(this.currentUserId)
             })
 
             const tx = this.db.transaction([tableName], 'readwrite')
@@ -343,7 +562,8 @@ class OfflineStorage {
             this.logger.info(`Saved ${tableName} offline`, { 
                 id: record.id,
                 sizeBytes,
-                skipSync 
+                skipSync,
+                userId: this.redactUserId(this.currentUserId)
             })
 
             // Add to sync queue if not already syncing
@@ -374,6 +594,9 @@ class OfflineStorage {
         if (!this.currentUserId || !this.db) return []
 
         try {
+            // 🔒 SECURITY: Check session validity for read operations (more lenient)
+            this.validateSessionForRead()
+
             const tx = this.db.transaction([tableName], 'readonly')
             const store = tx.objectStore(tableName)
             const index = store.index('user_id')
@@ -417,6 +640,9 @@ class OfflineStorage {
         if (!this.currentUserId || !this.db) return false
 
         try {
+            // 🔒 SECURITY: Check session validity for write operations
+            this.validateSessionForWrite()
+
             const tx = this.db.transaction([tableName], 'readwrite')
             const store = tx.objectStore(tableName)
             await store.delete(id)
@@ -435,12 +661,33 @@ class OfflineStorage {
 
     // Sync queue management
     async queueForSync(tableName, operation, data) {
+        // 🔒 SECURITY: Validate operation type
+        const allowedOperations = ['upsert', 'delete']
+        if (!allowedOperations.includes(operation)) {
+            throw new OfflineStorageError('Invalid sync operation', 'INVALID_OPERATION')
+        }
+
+        // 🔒 SECURITY: Validate table name
+        this.validateTableName(tableName)
+
+        // 🔒 SECURITY: Check permissions
+        const requiredPermission = operation === 'delete' ? 'delete' : 'write'
+        if (!this.hasTablePermission(tableName, requiredPermission)) {
+            throw new OfflineStorageError('Insufficient sync permissions', 'SYNC_PERMISSION_DENIED')
+        }
+
+        // 🔒 SECURITY: Rate limit sync operations
+        await this.checkRateLimit('sync')
+
+        // 🔒 SECURITY: Sanitize sync data
+        const sanitizedData = this.sanitizeData(data)
+
         const syncItem = {
             id: `sync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             user_id: this.currentUserId,
             table_name: tableName,
-            operation, // 'upsert', 'delete'
-            data,
+            operation,
+            data: sanitizedData,
             created_at: new Date().toISOString(),
             attempts: 0,
             max_attempts: CONFIG.MAX_SYNC_ATTEMPTS
@@ -449,11 +696,15 @@ class OfflineStorage {
         this.syncQueue.push(syncItem)
         await this.saveSyncQueue()
         
-        console.log(`📤 Queued for sync: ${tableName} ${operation}`)
+        this.logger.info('Queued for sync', { 
+            table: tableName, 
+            operation, 
+            userId: this.redactUserId(this.currentUserId) 
+        })
         
         // Try to sync immediately if online
         if (this.isOnline) {
-            setTimeout(() => this.syncPendingChanges(), 100)
+            setTimeout(() => this.syncPendingChanges(), CONFIG.INITIAL_SYNC_DELAY_MS)
         }
     }
 
@@ -782,8 +1033,10 @@ class OfflineStorage {
                 }
             }
             
-            return {
+            // 🔒 SECURITY: Redact sensitive information
+            const safeDiagnostics = {
                 ...info,
+                currentUserId: this.redactUserId(info.currentUserId),
                 tables,
                 config: {
                     maxRecordSize: CONFIG.MAX_RECORD_SIZE_BYTES,
@@ -791,11 +1044,24 @@ class OfflineStorage {
                     maxSyncAttempts: CONFIG.MAX_SYNC_ATTEMPTS,
                     syncInterval: CONFIG.SYNC_INTERVAL_MS
                 },
+                performance: {
+                    ...info.performance,
+                    metrics: info.performance.metrics.map(m => ({
+                        ...m,
+                        // Remove any potentially sensitive operation names/IDs
+                        operation: m.operation.replace(/[a-f0-9-]{36}/gi, '[UUID]')
+                    }))
+                },
                 timestamp: new Date().toISOString()
             }
+            
+            return safeDiagnostics
         } catch (error) {
             this.logger.error('Failed to generate diagnostics', error)
-            return { error: error.message, timestamp: new Date().toISOString() }
+            return { 
+                error: 'Diagnostics unavailable', 
+                timestamp: new Date().toISOString() 
+            }
         }
     }
 
@@ -820,6 +1086,32 @@ class OfflineStorage {
         // Exponential backoff: 1s, 2s, 4s, 8s, max 30s
         return Math.min(1000 * Math.pow(2, attempts), CONFIG.MAX_RETRY_DELAY_MS)
     }
+
+    // Public API methods for session management
+    async refreshSessionFromApp(sessionToken) {
+        if (sessionToken && typeof sessionToken === 'string') {
+            this.refreshSession(sessionToken)
+            return true
+        }
+        return false
+    }
+
+    // Get current session status for debugging
+    getSessionStatus() {
+        const now = Date.now()
+        const sessionAge = this.initTimestamp ? now - this.initTimestamp : 0
+        const isExpired = this.initTimestamp ? sessionAge > this.maxSessionDuration : true
+        
+        return {
+            hasUserId: !!this.currentUserId,
+            hasSessionToken: !!this.sessionToken,
+            sessionAge: sessionAge,
+            maxDuration: this.maxSessionDuration,
+            isExpired: isExpired,
+            canRead: !!this.currentUserId,
+            canWrite: !isExpired && !!this.sessionToken
+        }
+    }
 }
 
 // Create singleton instance
@@ -828,8 +1120,8 @@ export const offlineStorage = new OfflineStorage()
 // Convenience functions for common operations
 export const offlineDB = {
     // Initialize offline storage
-    async init(userId) {
-        return await offlineStorage.init(userId)
+    async init(userId, sessionToken = null) {
+        return await offlineStorage.init(userId, sessionToken)
     },
 
     // Tasks
@@ -932,4 +1224,4 @@ export const offlineDB = {
     setLogLevel(level) {
         return offlineStorage.logger.setLevel(level)
     }
-} 
+}

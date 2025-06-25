@@ -1,14 +1,27 @@
+/* Import additional component styles */
+@import url('./enhanced-agent.css');
+@import url('./pomodoro-timer.css');
+
+/* Base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 /* Main stylesheet for Mindful Student app */
-@import './enhanced-agent.css';
 
 /* Flash messages */
 .flash-message {
     position: fixed;
     top: 1rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 50;
-    min-width: 250px;
+    right: 1rem;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: 500;
+    z-index: 1000;
+    animation: slideInRight 0.3s ease-out;
 }
 
 /* AI Agent specific styles */
@@ -1369,10 +1382,6 @@
     padding: 3rem;
     color: rgb(107 114 128);
 }
-
-/* Import additional component styles */
-@import url('./enhanced-agent.css');
-@import url('./pomodoro-timer.css');
 
 /* Modal and Help Styles */
 .help-modal {
