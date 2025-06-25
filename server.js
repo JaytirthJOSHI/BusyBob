@@ -20,6 +20,22 @@ const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET || 'your-mic
 
 // Middleware
 app.use(express.json());
+
+// API Routes
+app.use('/api/studentvue', studentVueRouter);
+app.use('/api/canvas', canvasRouter);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0',
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// Static file serving (after API routes)
 app.use(express.static('.'));
 
 // Session middleware for storing Spotify tokens temporarily
@@ -29,10 +45,6 @@ app.use(session({
     saveUninitialized: false,
     cookie: { secure: false, maxAge: 10 * 60 * 1000 } // 10 minutes, not secure for localhost
 }));
-
-// API Routes
-app.use('/api/studentvue', studentVueRouter);
-app.use('/api/canvas', canvasRouter);
 
 // Google OAuth callback
 app.get('/auth/google/callback', async (req, res) => {
