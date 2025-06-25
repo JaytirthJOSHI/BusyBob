@@ -1,5 +1,6 @@
 import { auth, supabase } from './lib/supabase.js'
 import { db } from './lib/offline-db.js'
+import { offlineStorage } from './utils/offline-storage.js'
 import { Calendar } from './components/Calendar.js'
 import { EnhancedAIAgent } from './components/EnhancedAIAgent.js'
 import { PomodoroTimer } from './components/PomodoroTimer.js'
@@ -1315,7 +1316,7 @@ function loadUpcomingTasks() {
             <div class="text-center py-8">
                 <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                     </svg>
                 </div>
                 <p class="text-gray-500 dark:text-gray-400 text-sm">No upcoming tasks</p>
@@ -1423,7 +1424,7 @@ function createCalendarTaskHTML(task) {
                 </div>
                 <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 p-1 ml-2 flex-shrink-0">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
