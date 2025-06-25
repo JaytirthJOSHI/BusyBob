@@ -1299,12 +1299,8 @@ export class Settings {
     async clearOfflineData() {
         try {
             if (confirm('Are you sure you want to clear all offline data? This will remove all locally stored tasks, journal entries, and other data. This action cannot be undone.')) {
-                if (window.offlineStorage) {
-                    await window.offlineStorage.clearCurrentUserData()
-                    this.showMessage('Offline data cleared successfully', 'success')
-                } else {
-                    this.showMessage('Offline storage not available', 'error')
-                }
+                await db.clearUserData()
+                this.showMessage('Offline data cleared successfully', 'success')
             }
         } catch (error) {
             console.error('Error clearing offline data:', error)

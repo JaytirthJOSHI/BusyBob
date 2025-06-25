@@ -1,6 +1,5 @@
 import { auth, supabase } from './lib/supabase.js'
 import { db } from './lib/offline-db.js'
-import { offlineStorage } from './utils/offline-storage.js'
 import { Calendar } from './components/Calendar.js'
 import { EnhancedAIAgent } from './components/EnhancedAIAgent.js'
 import { PomodoroTimer } from './components/PomodoroTimer.js'
@@ -347,7 +346,6 @@ async function initializeApp() {
 
         // Expose database globally for debugging
         window.db = db
-        window.offlineStorage = offlineStorage
 
         // Set up theme toggle
         console.log('🌙 Setting up theme toggle...')
@@ -376,19 +374,6 @@ async function initializeApp() {
                 console.log('✅ Offline database initialized for existing user')
             } catch (dbError) {
                 console.error('❌ Error initializing offline database for existing user:', dbError)
-            }
-
-            // Refresh offline storage session for existing user
-            if (window.offlineStorage) {
-                try {
-                    const { data: { session } } = await auth.getSession()
-                    if (session) {
-                        await window.offlineStorage.refreshSessionFromApp(session.access_token)
-                        console.log('🔄 Offline storage session refreshed for existing user')
-                    }
-                } catch (error) {
-                    console.warn('Failed to refresh offline storage session for existing user:', error)
-                }
             }
 
             // Initialize Kid Mode
@@ -428,16 +413,6 @@ async function initializeApp() {
                     console.log('✅ Offline database initialized for new sign-in')
                 } catch (dbError) {
                     console.error('❌ Error initializing offline database for new sign-in:', dbError)
-                }
-
-                // Refresh offline storage session
-                if (window.offlineStorage && currentUser) {
-                    try {
-                        await window.offlineStorage.refreshSessionFromApp(session.access_token)
-                        console.log('🔄 Offline storage session refreshed')
-                    } catch (error) {
-                        console.warn('Failed to refresh offline storage session:', error)
-                    }
                 }
 
                 // Initialize Kid Mode for new session
@@ -522,19 +497,6 @@ async function initializeApp() {
                     console.error('❌ Error initializing offline database for demo user:', dbError)
                 }
 
-                // Refresh offline storage session for demo user
-                if (window.offlineStorage && session) {
-                    try {
-                        await window.offlineStorage.refreshSessionFromApp(session.access_token)
-                        console.log('🔄 Offline storage session refreshed for demo user')
-                    } catch (refreshError) {
-                        console.warn('Failed to refresh offline storage session for demo user:', refreshError)
-                    }
-                }
-
-                // Ensure user record exists in users table
-                await db.ensureUser()
-
                 // Populate demo data
                 await db.populateDemoData()
 
@@ -559,18 +521,6 @@ async function initializeApp() {
         })
 
         console.log('🎉 App initialization complete!')
-
-        // Add global debug function for offline storage
-        window.checkOfflineStorageStatus = () => {
-            if (window.offlineStorage) {
-                const status = window.offlineStorage.getSessionStatus()
-                console.log('🔍 Offline Storage Session Status:', status)
-                return status
-            } else {
-                console.log('❌ Offline storage not initialized')
-                return null
-            }
-        }
 
         // Add global function for Multi-Agent System
         window.getMultiAgentSystemStatus = () => {
@@ -617,71 +567,6 @@ async function initializeApp() {
             } catch (error) {
                 console.error('❌ Error testing multi-agent system:', error)
                 ui.showMessage('Error testing AI system. Please try again.', 'error')
-            }
-        }
-
-        // Add global function to test offline database
-        window.testOfflineDatabase = async () => {
-            try {
-                console.log('🧪 Testing offline database...')
-                
-                // Test if db is available
-                if (!window.db) {
-                    console.error('❌ Database not available')
-                    return { error: 'Database not available' }
-                }
-
-                // Test if user is authenticated
-                const { data: { user } } = await auth.getCurrentUser()
-                if (!user) {
-                    console.error('❌ User not authenticated')
-                    return { error: 'User not authenticated' }
-                }
-
-                console.log('✅ User authenticated:', user.id)
-
-                // Test offline database initialization
-                await db.ensureUser()
-                console.log('✅ Offline database initialized')
-
-                // Test getting tasks
-                const { data: tasks, error: tasksError } = await db.getTasks()
-                if (tasksError) {
-                    console.error('❌ Error getting tasks:', tasksError)
-                    return { error: 'Failed to get tasks', details: tasksError }
-                }
-
-                console.log('✅ Tasks retrieved:', tasks?.length || 0)
-
-                // Test getting feelings
-                const { data: feelings, error: feelingsError } = await db.getFeelings()
-                if (feelingsError) {
-                    console.error('❌ Error getting feelings:', feelingsError)
-                    return { error: 'Failed to get feelings', details: feelingsError }
-                }
-
-                console.log('✅ Feelings retrieved:', feelings?.length || 0)
-
-                // Test getting journal entries
-                const { data: entries, error: entriesError } = await db.getJournalEntries()
-                if (entriesError) {
-                    console.error('❌ Error getting journal entries:', entriesError)
-                    return { error: 'Failed to get journal entries', details: entriesError }
-                }
-
-                console.log('✅ Journal entries retrieved:', entries?.length || 0)
-
-                return {
-                    success: true,
-                    user: user.id,
-                    tasks: tasks?.length || 0,
-                    feelings: feelings?.length || 0,
-                    journalEntries: entries?.length || 0
-                }
-
-            } catch (error) {
-                console.error('❌ Test failed:', error)
-                return { error: error.message, details: error }
             }
         }
 
@@ -857,16 +742,6 @@ async function handleSignup(event) {
     try {
         const { data, error } = await auth.signUp(email, password, name)
         if (error) throw error
-
-        // Refresh offline storage session after successful signup
-        if (window.offlineStorage && data.session) {
-            try {
-                await window.offlineStorage.refreshSessionFromApp(data.session.access_token)
-                console.log('🔄 Offline storage session refreshed after signup')
-            } catch (refreshError) {
-                console.warn('Failed to refresh offline storage session after signup:', refreshError)
-            }
-        }
 
         showSignInSuccess()
     } catch (error) {
