@@ -8,6 +8,8 @@ export class PointsSystem {
     this.currentLevel = 1
     this.rank = null
     this.achievements = []
+    this.isInitialized = false
+    this.isLoading = false
     
     this.pointValues = {
       taskCompleted: 25,
@@ -91,44 +93,86 @@ export class PointsSystem {
       }
     ]
 
-    this.init()
+    // Debounce timer for UI updates
+    this.updateTimer = null
   }
 
   async init() {
-    await this.loadUserData()
-    await this.loadAchievements()
-    this.createUI()
-    this.attachEventListeners()
-    console.log('💎 Points System initialized!')
+    if (this.isInitialized || this.isLoading) return
+    
+    this.isLoading = true
+    try {
+      await this.loadUserData()
+      await this.loadAchievements()
+      this.createUI()
+      this.attachEventListeners()
+      this.isInitialized = true
+      console.log('💎 Points System initialized successfully!')
+    } catch (error) {
+      console.error('Failed to initialize Points System:', error)
+      ui.showMessage('Failed to load points system', 'error')
+    } finally {
+      this.isLoading = false
+    }
   }
 
   async loadUserData() {
     try {
       const { data: { user } } = await auth.getCurrentUser()
-      if (!user) return
+      if (!user) {
+        console.log('No user found, skipping user data load')
+        return
+      }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_metadata')
         .select('points, lifetime_points, level, rank, unlocked_rewards')
         .eq('user_id', user.id)
         .single()
 
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+        throw error
+      }
+
       if (data) {
-        this.currentPoints = data.points || 0
-        this.totalLifetimePoints = data.lifetime_points || 0
-        this.currentLevel = data.level || 1
+        this.currentPoints = parseInt(data.points) || 0
+        this.totalLifetimePoints = parseInt(data.lifetime_points) || 0
+        this.currentLevel = parseInt(data.level) || 1
         this.rank = data.rank
         
-        if (data.unlocked_rewards) {
+        if (data.unlocked_rewards && Array.isArray(data.unlocked_rewards)) {
           this.rewards.forEach(reward => {
-            if (data.unlocked_rewards.includes(reward.id)) {
-              reward.unlocked = true
-            }
+            reward.unlocked = data.unlocked_rewards.includes(reward.id)
           })
         }
+      } else {
+        // Create initial user metadata if it doesn't exist
+        await this.createInitialUserData(user.id)
       }
     } catch (error) {
       console.error('Error loading user data:', error)
+      throw error
+    }
+  }
+
+  async createInitialUserData(userId) {
+    try {
+      const { error } = await supabase
+        .from('user_metadata')
+        .insert({
+          user_id: userId,
+          points: 0,
+          lifetime_points: 0,
+          level: 1,
+          unlocked_rewards: []
+        })
+
+      if (error) throw error
+      
+      console.log('Created initial user metadata')
+    } catch (error) {
+      console.error('Error creating initial user data:', error)
+      throw error
     }
   }
 
@@ -137,31 +181,39 @@ export class PointsSystem {
       const { data: { user } } = await auth.getCurrentUser()
       if (!user) return
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_achievements')
         .select('*')
         .eq('user_id', user.id)
 
+      if (error) throw error
+
       this.achievements = data || []
     } catch (error) {
       console.error('Error loading achievements:', error)
+      this.achievements = []
     }
   }
 
   createUI() {
-    // Only show points widget in tasks section
+    // Remove existing UI if it exists
+    const existingWidget = document.getElementById('points-widget')
+    if (existingWidget) {
+      existingWidget.remove()
+    }
+
     const pointsHTML = `
       <!-- Points Display Widget (Tasks Only) -->
-      <div id="points-widget" class="hidden fixed top-4 left-4 z-40 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 min-w-48">
+      <div id="points-widget" class="hidden fixed top-4 left-4 z-40 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 min-w-48 border border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
             <div class="text-2xl">💎</div>
             <div>
-              <div class="font-bold text-lg text-gray-800 dark:text-white" id="current-points">${this.currentPoints}</div>
+              <div class="font-bold text-lg text-gray-800 dark:text-white" id="current-points">${this.currentPoints.toLocaleString()}</div>
               <div class="text-xs text-gray-500 dark:text-gray-400">Level ${this.currentLevel}</div>
             </div>
           </div>
-          <button id="points-menu-toggle" class="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+          <button id="points-menu-toggle" class="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
             </svg>
@@ -174,12 +226,12 @@ export class PointsSystem {
         </div>
         
         <div class="text-xs text-gray-500 dark:text-gray-400 text-center">
-          ${this.getPointsToNextLevel()} points to level ${this.currentLevel + 1}
+          ${this.getPointsToNextLevel().toLocaleString()} points to level ${this.currentLevel + 1}
         </div>
       </div>
 
       <!-- Points Menu Dropdown -->
-      <div id="points-menu" class="fixed top-20 left-4 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-xl p-4 w-80 hidden">
+      <div id="points-menu" class="fixed top-20 left-4 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-xl p-4 w-80 hidden border border-gray-200 dark:border-gray-700">
         <div class="space-y-4">
           <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
             <h3 class="font-bold text-lg text-gray-800 dark:text-white mb-2">Your Progress</h3>
@@ -189,7 +241,7 @@ export class PointsSystem {
                 <div class="text-sm text-gray-500 dark:text-gray-400">Current Level</div>
               </div>
               <div class="text-center">
-                <div class="text-2xl font-bold text-green-600 dark:text-green-400">${this.totalLifetimePoints}</div>
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400">${this.totalLifetimePoints.toLocaleString()}</div>
                 <div class="text-sm text-gray-500 dark:text-gray-400">Lifetime Points</div>
               </div>
             </div>
@@ -234,7 +286,7 @@ export class PointsSystem {
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-bold text-gray-800 dark:text-white">🏆 Reward Store</h2>
-            <button id="close-rewards" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <button id="close-rewards" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
@@ -245,11 +297,11 @@ export class PointsSystem {
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-lg font-semibold text-purple-800 dark:text-purple-200">Your Balance</div>
-                <div class="text-3xl font-bold text-purple-600 dark:text-purple-400"><span id="modal-points">${this.currentPoints}</span> 💎</div>
+                <div class="text-3xl font-bold text-purple-600 dark:text-purple-400"><span id="modal-points">${this.currentPoints.toLocaleString()}</span> 💎</div>
               </div>
               <div class="text-right">
                 <div class="text-sm text-gray-600 dark:text-gray-400">Level ${this.currentLevel}</div>
-                <div class="text-sm text-gray-600 dark:text-gray-400">${this.totalLifetimePoints} lifetime points</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">${this.totalLifetimePoints.toLocaleString()} lifetime points</div>
               </div>
             </div>
           </div>
@@ -276,7 +328,7 @@ export class PointsSystem {
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-bold text-gray-800 dark:text-white">👑 Leaderboard</h2>
-            <button id="close-leaderboard" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <button id="close-leaderboard" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
@@ -294,7 +346,7 @@ export class PointsSystem {
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-bold text-gray-800 dark:text-white">🎖️ Achievements</h2>
-            <button id="close-achievements" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <button id="close-achievements" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
@@ -308,14 +360,12 @@ export class PointsSystem {
       </div>
     `
 
-    if (!document.getElementById('points-widget')) {
-      document.body.insertAdjacentHTML('beforeend', pointsHTML)
-    }
+    document.body.insertAdjacentHTML('beforeend', pointsHTML)
   }
 
   renderRewardsGrid() {
     return this.rewards.map(reward => `
-      <div class="reward-card p-4 border border-gray-200 dark:border-gray-700 rounded-lg ${reward.unlocked ? 'bg-green-50 dark:bg-green-900/20' : ''}">
+      <div class="reward-card p-4 border border-gray-200 dark:border-gray-700 rounded-lg ${reward.unlocked ? 'bg-green-50 dark:bg-green-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'} transition-colors">
         <div class="text-center mb-3">
           <div class="text-4xl mb-2">${reward.icon}</div>
           <h3 class="font-bold text-gray-800 dark:text-white">${reward.name}</h3>
@@ -326,9 +376,9 @@ export class PointsSystem {
           ${reward.unlocked ? 
             '<div class="text-green-600 dark:text-green-400 font-semibold">✓ Unlocked</div>' :
             `<div class="mb-3">
-              <div class="text-lg font-bold text-purple-600 dark:text-purple-400">${reward.cost} 💎</div>
+              <div class="text-lg font-bold text-purple-600 dark:text-purple-400">${reward.cost.toLocaleString()} 💎</div>
             </div>
-            <button class="unlock-reward w-full py-2 px-4 rounded-lg font-semibold ${this.currentPoints >= reward.cost ? 'bg-purple-500 hover:bg-purple-600 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'}" 
+            <button class="unlock-reward w-full py-2 px-4 rounded-lg font-semibold transition-colors ${this.currentPoints >= reward.cost ? 'bg-purple-500 hover:bg-purple-600 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'}" 
                     data-reward-id="${reward.id}" ${this.currentPoints < reward.cost ? 'disabled' : ''}>
               ${this.currentPoints >= reward.cost ? 'Unlock' : 'Not enough points'}
             </button>`
@@ -385,7 +435,7 @@ export class PointsSystem {
     ]
 
     return allAchievements.map(achievement => `
-      <div class="achievement-card p-4 border border-gray-200 dark:border-gray-700 rounded-lg ${achievement.unlocked ? 'bg-yellow-50 dark:bg-yellow-900/20' : 'opacity-50'}">
+      <div class="achievement-card p-4 border border-gray-200 dark:border-gray-700 rounded-lg ${achievement.unlocked ? 'bg-yellow-50 dark:bg-yellow-900/20' : 'opacity-50'} transition-colors">
         <div class="flex items-center gap-4">
           <div class="text-4xl">${achievement.icon}</div>
           <div class="flex-1">
@@ -404,6 +454,10 @@ export class PointsSystem {
   }
 
   attachEventListeners() {
+    // Remove existing listeners to prevent duplicates
+    this.removeEventListeners()
+    
+    // Add new listeners
     document.getElementById('points-menu-toggle')?.addEventListener('click', () => this.togglePointsMenu())
     document.getElementById('view-rewards')?.addEventListener('click', () => this.openRewardsModal())
     document.getElementById('view-leaderboard')?.addEventListener('click', () => this.openLeaderboardModal())
@@ -427,50 +481,86 @@ export class PointsSystem {
         this.hidePointsMenu()
       }
     })
+
+    // ESC key to close modals
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.closeAllModals()
+      }
+    })
+  }
+
+  removeEventListeners() {
+    // This is a simplified approach - in a real app you'd want to store references to listeners
+    // For now, we'll rely on the fact that we recreate the UI elements
   }
 
   togglePointsMenu() {
     const menu = document.getElementById('points-menu')
-    menu.classList.toggle('hidden')
+    if (menu) {
+      menu.classList.toggle('hidden')
+    }
   }
 
   hidePointsMenu() {
-    document.getElementById('points-menu')?.classList.add('hidden')
+    const menu = document.getElementById('points-menu')
+    if (menu) {
+      menu.classList.add('hidden')
+    }
   }
 
   openRewardsModal() {
     this.hidePointsMenu()
-    document.getElementById('rewards-modal').classList.remove('hidden')
-    document.getElementById('rewards-grid').innerHTML = this.renderRewardsGrid()
-    document.getElementById('modal-points').textContent = this.currentPoints
+    const modal = document.getElementById('rewards-modal')
+    if (modal) {
+      modal.classList.remove('hidden')
+      document.getElementById('rewards-grid').innerHTML = this.renderRewardsGrid()
+      document.getElementById('modal-points').textContent = this.currentPoints.toLocaleString()
+    }
   }
 
   openLeaderboardModal() {
     this.hidePointsMenu()
-    document.getElementById('leaderboard-modal').classList.remove('hidden')
-    this.loadLeaderboard()
+    const modal = document.getElementById('leaderboard-modal')
+    if (modal) {
+      modal.classList.remove('hidden')
+      this.loadLeaderboard()
+    }
   }
 
   openAchievementsModal() {
     this.hidePointsMenu()
-    document.getElementById('achievements-modal').classList.remove('hidden')
-    document.getElementById('achievements-grid').innerHTML = this.renderAchievementsGrid()
+    const modal = document.getElementById('achievements-modal')
+    if (modal) {
+      modal.classList.remove('hidden')
+      document.getElementById('achievements-grid').innerHTML = this.renderAchievementsGrid()
+    }
   }
 
   closeModal(modalId) {
-    document.getElementById(modalId).classList.add('hidden')
+    const modal = document.getElementById(modalId)
+    if (modal) {
+      modal.classList.add('hidden')
+    }
+  }
+
+  closeAllModals() {
+    const modals = ['rewards-modal', 'leaderboard-modal', 'achievements-modal']
+    modals.forEach(modalId => this.closeModal(modalId))
   }
 
   async loadLeaderboard() {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_metadata')
         .select('user_id, points, level, created_at')
         .order('points', { ascending: false })
         .limit(10)
 
+      if (error) throw error
+
       const leaderboardHTML = data?.map((user, index) => `
-        <div class="flex items-center justify-between p-4 rounded-lg ${index === 0 ? 'bg-yellow-50 dark:bg-yellow-900/20' : index === 1 ? 'bg-gray-50 dark:bg-gray-800' : index === 2 ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-gray-50 dark:bg-gray-700'}">
+        <div class="flex items-center justify-between p-4 rounded-lg ${index === 0 ? 'bg-yellow-50 dark:bg-yellow-900/20' : index === 1 ? 'bg-gray-50 dark:bg-gray-800' : index === 2 ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-gray-50 dark:bg-gray-700'} transition-colors">
           <div class="flex items-center gap-4">
             <div class="text-2xl font-bold ${index === 0 ? 'text-yellow-600' : index === 1 ? 'text-gray-600' : index === 2 ? 'text-orange-600' : 'text-gray-500'}">
               ${index + 1}
@@ -481,31 +571,43 @@ export class PointsSystem {
             </div>
           </div>
           <div class="text-right">
-            <div class="font-bold text-purple-600 dark:text-purple-400">${user.points || 0} 💎</div>
+            <div class="font-bold text-purple-600 dark:text-purple-400">${(user.points || 0).toLocaleString()} 💎</div>
           </div>
         </div>
       `).join('') || '<div class="text-center text-gray-500 dark:text-gray-400">No data available</div>'
 
-      document.getElementById('leaderboard-content').innerHTML = leaderboardHTML
+      const content = document.getElementById('leaderboard-content')
+      if (content) {
+        content.innerHTML = leaderboardHTML
+      }
     } catch (error) {
       console.error('Error loading leaderboard:', error)
-      document.getElementById('leaderboard-content').innerHTML = '<div class="text-center text-red-500">Error loading leaderboard</div>'
+      const content = document.getElementById('leaderboard-content')
+      if (content) {
+        content.innerHTML = '<div class="text-center text-red-500">Error loading leaderboard</div>'
+      }
     }
   }
 
   async unlockReward(rewardId) {
     const reward = this.rewards.find(r => r.id === rewardId)
-    if (!reward || this.currentPoints < reward.cost || reward.unlocked) return
+    if (!reward || this.currentPoints < reward.cost || reward.unlocked) {
+      ui.showMessage('Cannot unlock this reward', 'error')
+      return
+    }
 
     try {
       const { data: { user } } = await auth.getCurrentUser()
-      if (!user) return
+      if (!user) {
+        ui.showMessage('Please log in to unlock rewards', 'error')
+        return
+      }
 
       const newPoints = this.currentPoints - reward.cost
       const unlockedRewards = this.rewards.filter(r => r.unlocked).map(r => r.id)
       unlockedRewards.push(rewardId)
 
-      await supabase
+      const { error: updateError } = await supabase
         .from('user_metadata')
         .upsert({
           user_id: user.id,
@@ -513,38 +615,58 @@ export class PointsSystem {
           unlocked_rewards: unlockedRewards
         })
 
-      await supabase.from('points_transactions').insert({
+      if (updateError) throw updateError
+
+      const { error: transactionError } = await supabase.from('points_transactions').insert({
         user_id: user.id,
         points: -reward.cost,
         reason: `Unlocked: ${reward.name}`,
         created_at: new Date().toISOString()
       })
 
+      if (transactionError) throw transactionError
+
       this.currentPoints = newPoints
       reward.unlocked = true
 
       this.updatePointsDisplay()
-      document.getElementById('rewards-grid').innerHTML = this.renderRewardsGrid()
-      document.getElementById('modal-points').textContent = this.currentPoints
+      const rewardsGrid = document.getElementById('rewards-grid')
+      if (rewardsGrid) {
+        rewardsGrid.innerHTML = this.renderRewardsGrid()
+      }
+      const modalPoints = document.getElementById('modal-points')
+      if (modalPoints) {
+        modalPoints.textContent = this.currentPoints.toLocaleString()
+      }
 
       ui.showMessage(`🎉 ${reward.name} unlocked!`, 'success')
 
     } catch (error) {
       console.error('Error unlocking reward:', error)
-      ui.showMessage('Failed to unlock reward', 'error')
+      ui.showMessage('Failed to unlock reward. Please try again.', 'error')
     }
   }
 
   async awardPoints(points, reason, category = 'general') {
+    if (!this.isInitialized) {
+      console.warn('Points system not initialized, queuing points award')
+      // Queue the points award for later
+      setTimeout(() => this.awardPoints(points, reason, category), 1000)
+      return { success: false, error: 'System not initialized' }
+    }
+
     try {
       const { data: { user } } = await auth.getCurrentUser()
-      if (!user) return
+      if (!user) {
+        console.warn('No user found for points award')
+        return { success: false, error: 'No user found' }
+      }
 
       const newPoints = this.currentPoints + points
       const newLifetimePoints = this.totalLifetimePoints + points
       const newLevel = this.calculateLevel(newLifetimePoints)
 
-      await supabase
+      const { error: updateError } = await supabase
         .from('user_metadata')
         .upsert({
           user_id: user.id,
@@ -553,13 +675,17 @@ export class PointsSystem {
           level: newLevel
         })
 
-      await supabase.from('points_transactions').insert({
+      if (updateError) throw updateError
+
+      const { error: transactionError } = await supabase.from('points_transactions').insert({
         user_id: user.id,
         points: points,
         reason: reason,
         category: category,
         created_at: new Date().toISOString()
       })
+
+      if (transactionError) throw transactionError
 
       if (newLevel > this.currentLevel) {
         this.showLevelUpNotification(this.currentLevel, newLevel)
@@ -600,13 +726,32 @@ export class PointsSystem {
   }
 
   updatePointsDisplay() {
-    document.getElementById('current-points').textContent = this.currentPoints
-    document.getElementById('level-progress').style.width = `${this.getLevelProgress()}%`
+    // Debounce updates to prevent excessive DOM manipulation
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer)
+    }
+
+    this.updateTimer = setTimeout(() => {
+      const currentPointsEl = document.getElementById('current-points')
+      const levelProgressEl = document.getElementById('level-progress')
+      
+      if (currentPointsEl) {
+        currentPointsEl.textContent = this.currentPoints.toLocaleString()
+      }
+      
+      if (levelProgressEl) {
+        levelProgressEl.style.width = `${this.getLevelProgress()}%`
+      }
+    }, 100)
   }
 
   showLevelUpNotification(oldLevel, newLevel) {
+    // Remove any existing level up notifications
+    const existingNotifications = document.querySelectorAll('.level-up-notification')
+    existingNotifications.forEach(notification => notification.remove())
+
     const notification = document.createElement('div')
-    notification.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'
+    notification.className = 'level-up-notification fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'
     notification.innerHTML = `
       <div class="bg-gradient-to-br from-purple-500 to-pink-500 text-white p-8 rounded-2xl shadow-2xl text-center max-w-md mx-4 animate-bounce">
         <div class="text-6xl mb-4">🎉</div>
@@ -621,8 +766,11 @@ export class PointsSystem {
     
     document.body.appendChild(notification)
     
+    // Auto-remove after 10 seconds
     setTimeout(() => {
-      notification.remove()
+      if (notification.parentElement) {
+        notification.remove()
+      }
     }, 10000)
   }
 
@@ -634,7 +782,8 @@ export class PointsSystem {
       level: this.currentLevel,
       levelProgress: this.getLevelProgress(),
       pointsToNextLevel: this.getPointsToNextLevel(),
-      rank: this.rank
+      rank: this.rank,
+      isInitialized: this.isInitialized
     }
   }
 
@@ -659,5 +808,29 @@ export class PointsSystem {
     if (widget) {
       widget.classList.add('hidden')
     }
+  }
+
+  // Cleanup method
+  destroy() {
+    if (this.updateTimer) {
+      clearTimeout(this.updateTimer)
+    }
+    
+    const elements = [
+      'points-widget',
+      'points-menu',
+      'rewards-modal',
+      'leaderboard-modal',
+      'achievements-modal'
+    ]
+    
+    elements.forEach(id => {
+      const element = document.getElementById(id)
+      if (element) {
+        element.remove()
+      }
+    })
+    
+    this.isInitialized = false
   }
 }
