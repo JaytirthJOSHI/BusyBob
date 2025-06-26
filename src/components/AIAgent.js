@@ -1,5 +1,6 @@
 import { auth, supabase } from '../lib/supabase.js'
 import { ui } from '../utils/helpers.js'
+import hybridAI from '../lib/hybrid-ai-service.js'
 
 export class AIAgent {
   constructor() {
@@ -7,7 +8,7 @@ export class AIAgent {
     this.messages = [
       {
         type: 'bot',
-        content: 'Hi! I\'m your BusyBob AI Assistant, powered by advanced AI to help you with academics, task management, mood tracking, and more. I can create tasks, log moods, write journal entries, and access your connected services (StudentVue, Canvas, Spotify) to provide personalized assistance. All actions require your approval. How can I help you today?',
+        content: 'Hi! I\'m your BusyBob AI Assistant, powered by Hack Club AI to help you with academics, task management, mood tracking, and more. I can create tasks, log moods, write journal entries, and access your connected services (StudentVue, Canvas, Spotify) to provide personalized assistance. All actions require your approval. How can I help you today?',
         timestamp: new Date()
       }
     ]
@@ -407,26 +408,13 @@ export class AIAgent {
       // Create the system message with context about BusyBob and user's data
       const systemMessage = this.createSystemMessage(context)
 
-      // Call Hack Club AI API
-      const response = await fetch('https://ai.hackclub.com/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: systemMessage },
-            { role: 'user', content: userMessage }
-          ]
-        })
-      })
+      // Use hybrid AI service (routes to Hack Club AI for chat)
+      const response = await hybridAI.generateChatCompletion([
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: userMessage }
+      ])
 
-      if (!response.ok) {
-        throw new Error(`AI API error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      const aiContent = data.choices[0]?.message?.content || "I'm sorry, I couldn't process that request."
+      const aiContent = response.content || "I'm sorry, I couldn't process that request."
 
       // Parse the AI response to extract any actions
       const parsedResponse = this.parseAIResponseForActions(aiContent, userMessage)
@@ -434,7 +422,7 @@ export class AIAgent {
       return parsedResponse
 
     } catch (error) {
-      console.error('Error calling AI API:', error)
+      console.error('Error calling hybrid AI service:', error)
       // Fallback to rule-based responses
       return await this.generateFallbackResponse(userMessage)
     }

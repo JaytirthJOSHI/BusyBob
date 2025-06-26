@@ -400,4 +400,4 @@ window.stopVoiceRecording = () => elevenLabsVoice.stopRecording();
 window.getAvailableVoices = () => elevenLabsVoice.getAvailableVoices();
 window.setVoice = (voiceId) => elevenLabsVoice.setCurrentVoice(voiceId);
 
-export default elevenLabsVoice; 
+export default elevenLabsVoice;

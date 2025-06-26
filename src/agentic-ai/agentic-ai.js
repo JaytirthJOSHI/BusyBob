@@ -1,6 +1,8 @@
 // BusyBob Agentic AI Integration
 // Main integration file that connects the multi-agent system with existing BusyBob features
 
+import hybridAI from '../lib/hybrid-ai-service.js'
+
 class BusyBobAgenticAI {
     constructor() {
         this.agentSystem = new AgenticAISystem();
@@ -184,85 +186,41 @@ class BusyBobAgenticAI {
     }
 
     async processMessage(message, userId) {
-        if (!this.currentSession) {
-            throw new Error('No active session. Please start a session first.');
-        }
-
-        const response = await this.agentSystem.processMessage(message, userId);
-        
-        // Track interaction
-        this.currentSession.interactions.push({
-            timestamp: new Date(),
-            message: message,
-            response: response,
-            agent: this.agentSystem.currentAgent?.name
-        });
-
-        // Execute any actions returned by the agent
-        if (response.actions && response.actions.length > 0) {
-            await this.executeActions(response.actions);
-        }
-
-        return response;
-    }
-
-    async executeActions(actions) {
-        for (const action of actions) {
-            try {
-                switch (action.type) {
-                    case 'schedule_creation':
-                        await this.createStudySchedule(action.data);
-                        break;
-                    case 'reminder_setup':
-                        await this.setupReminders(action.data);
-                        break;
-                    case 'concept_explanation':
-                        await this.saveConceptExplanation(action.data);
-                        break;
-                    case 'performance_analysis':
-                        await this.savePerformanceAnalysis(action.data);
-                        break;
-                    case 'general_action':
-                        console.log('Executing general action:', action.data);
-                        break;
+        try {
+            // Use hybrid AI service for message processing
+            const response = await hybridAI.generateChatCompletion([
+                {
+                    role: 'system',
+                    content: `You are an intelligent AI assistant for BusyBob, a student productivity platform. 
+                    Help students with academic tasks, planning, motivation, and productivity. 
+                    Be encouraging, practical, and student-focused.`
+                },
+                {
+                    role: 'user',
+                    content: message
                 }
-            } catch (error) {
-                console.error(`Error executing action ${action.type}:`, error);
-            }
+            ]);
+
+            return {
+                content: response.content,
+                actions: this.extractActions(response.content),
+                confidence: 0.9
+            };
+        } catch (error) {
+            console.error('Error processing message with hybrid AI service:', error);
+            return {
+                content: 'I apologize, but I encountered an error. Please try again.',
+                actions: [],
+                confidence: 0.0
+            };
         }
     }
 
-    async createStudySchedule(scheduleData) {
-        // Integrate with BusyBob's calendar system
-        console.log('📅 Creating study schedule:', scheduleData);
-        
-        // This would add events to the calendar
-        // For now, just log the action
-        return { success: true, message: 'Study schedule created' };
-    }
-
-    async setupReminders(reminderData) {
-        // Integrate with BusyBob's notification system
-        console.log('⏰ Setting up reminders:', reminderData);
-        
-        // This would create notifications
-        return { success: true, message: 'Reminders set up' };
-    }
-
-    async saveConceptExplanation(explanationData) {
-        // Integrate with BusyBob's notes system
-        console.log('📝 Saving concept explanation:', explanationData);
-        
-        // This would save to the notes system
-        return { success: true, message: 'Concept explanation saved' };
-    }
-
-    async savePerformanceAnalysis(analysisData) {
-        // Integrate with BusyBob's analytics system
-        console.log('📊 Saving performance analysis:', analysisData);
-        
-        // This would save to the analytics system
-        return { success: true, message: 'Performance analysis saved' };
+    extractActions(content) {
+        // Extract any actions from the AI response
+        const actions = [];
+        // Add action extraction logic here if needed
+        return actions;
     }
 
     // Integration methods with existing BusyBob features

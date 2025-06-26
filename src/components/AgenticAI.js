@@ -1,6 +1,8 @@
 // Agentic AI UI Component
 // Beautiful iOS-style interface for the multi-agent AI system
 
+import hybridAI from '../lib/hybrid-ai-service.js'
+
 class AgenticAIComponent {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
@@ -309,7 +311,7 @@ class AgenticAIComponent {
             // Show typing indicator
             this.showTypingIndicator();
             
-            // Process message with AI
+            // Process message with hybrid AI service
             const response = await this.agenticAI.processMessage(message, 'user_123');
             
             // Hide typing indicator

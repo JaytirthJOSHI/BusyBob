@@ -13,4 +13,4 @@ console.log('Or run this command to append it automatically:');
 console.log(`echo "VITE_GROQ_API_KEY=${GROQ_API_KEY}" >> .env`);
 console.log('');
 console.log('✅ After adding the API key, restart your development server:');
-console.log('npm run dev'); 
+console.log('npm run dev');

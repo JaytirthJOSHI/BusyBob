@@ -1,5 +1,6 @@
 import { auth, supabase } from '../lib/supabase.js'
 import { ui } from '../utils/helpers.js'
+import hybridAI from '../lib/hybrid-ai-service.js'
 
 // Enhanced AI Agent Architecture with Multi-Agent Collaboration
 export class EnhancedAIAgent {
@@ -61,39 +62,49 @@ export class EnhancedAIAgent {
     console.log('🎯 Enhanced AI Agent System ready!')
   }
 
-  async processRequest(userInput) {
+  async processMessage(message, context = {}) {
     try {
-      // Step 1: Analyze the request
-      const analysis = await this.analyzeRequest(userInput)
+      // Use hybrid AI service for message processing
+      const response = await hybridAI.generateChatCompletion([
+        {
+          role: 'system',
+          content: `You are an enhanced AI agent for BusyBob, a student productivity platform.
+          You have access to multiple specialized capabilities and can collaborate with other agents.
+          Help students with academic tasks, planning, motivation, and productivity.
+          Be encouraging, practical, and student-focused.`
+        },
+        {
+          role: 'user',
+          content: message
+        }
+      ]);
 
-      // Step 2: Create execution plan
-      const plan = await this.planningSystem.createPlan(analysis)
+      // Process the response through the agent system
+      const processedResponse = await this.processThroughAgents(response.content, context);
 
-      // Step 3: Execute with multi-agent collaboration
-      const result = await this.executeWithCollaboration(plan)
-
-      // Step 4: Learn from the interaction
-      await this.memorySystem.recordInteraction(userInput, result)
-
-      return result
+      return {
+        content: processedResponse.content,
+        actions: processedResponse.actions,
+        confidence: processedResponse.confidence || 0.9
+      };
     } catch (error) {
-      console.error('Error processing request:', error)
-      return this.handleError(error)
+      console.error('Error processing message with hybrid AI service:', error);
+      return {
+        content: 'I apologize, but I encountered an error. Please try again.',
+        actions: [],
+        confidence: 0.0
+      };
     }
   }
 
-  async analyzeRequest(input) {
-    const analyst = this.agents.get('analyst')
-    return await analyst.analyze({
-      input,
-      context: await this.memorySystem.getRelevantContext(input),
-      capabilities: this.capabilities
-    })
-  }
-
-  async executeWithCollaboration(plan) {
-    const coordinator = this.agents.get('coordinator')
-    return await coordinator.orchestrate(plan, this.agents)
+  async processThroughAgents(content, context) {
+    // Process the AI response through the agent system
+    // This would involve routing to appropriate specialized agents
+    return {
+      content: content,
+      actions: [],
+      confidence: 0.9
+    };
   }
 
   createEnhancedUI() {
@@ -153,7 +164,7 @@ export class EnhancedAIAgent {
     this.addMessage('user', message)
     this.showThinking()
 
-    const response = await this.processRequest(message)
+    const response = await this.processMessage(message)
     this.hideThinking()
     this.addMessage('agent', response.content, response.metadata)
   }
