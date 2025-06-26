@@ -21,6 +21,9 @@ import { MultiAgentSystem, MultiAgentWidgets } from './components/MultiAgentSyst
 import './agentic-ai/agents.js'
 import './agentic-ai/agentic-ai.js'
 import './styles/agentic-ai.css'
+// Import Voice AI
+import VoiceAI from './components/VoiceAI.js'
+import './lib/elevenlabs-voice.js'
 
 console.log('🚀 Main.js loaded - starting initialization...')
 
@@ -28,7 +31,7 @@ console.log('🚀 Main.js loaded - starting initialization...')
 let currentUser = null
 let tasks = []
 let journalEntries = []
-let calendar = null
+let calendar = null 
 let aiAgent = null
 let pomodoroTimer = null
 let pointsSystem = null
@@ -42,6 +45,7 @@ let settings = null
 let privacyPolicy = null
 let termsOfService = null
 let multiAgentSystem = null
+let voiceAI = null
 
 const moodManager = {
     feelings: [],
@@ -335,6 +339,21 @@ async function initializeApp() {
             console.log('✅ Enhanced AI Agent initialized')
         } catch (aiError) {
             console.error('❌ Error initializing AI Agent:', aiError)
+        }
+
+        // Initialize Voice AI
+        console.log('🎤 Initializing Voice AI...')
+        try {
+            const voiceAIContainer = document.getElementById('voice-ai-container')
+            if (voiceAIContainer) {
+                voiceAI = new VoiceAI(voiceAIContainer)
+                window.voiceAI = voiceAI
+                console.log('✅ Voice AI initialized')
+            } else {
+                console.log('⚠️ Voice AI container not found, skipping initialization')
+            }
+        } catch (voiceError) {
+            console.error('❌ Error initializing Voice AI:', voiceError)
         }
 
         // Initialize Agentic AI system
@@ -1940,7 +1959,7 @@ window.toolbox = {
     updateToolVisibility() {
         Object.entries(this.toolVisibility).forEach(([toolId, isVisible]) => {
             const toolElement = document.getElementById(`${toolId}-tool`)
-            if (toolElement) {
+            if (toolElement) {  
                 toolElement.style.display = isVisible ? 'block' : 'none'
             }
         })
@@ -1991,3 +2010,52 @@ window.cleanupDevelopmentWidgets = function() {
         window.developmentMetricsInterval = null
     }
 }
+
+// Global debugging functions for Voice AI
+window.testVoiceAI = async () => {
+    if (window.voiceAI) {
+        console.log('🎤 Testing Voice AI...');
+        try {
+            await window.voiceAI.speak('Hello! This is a test of the Voice AI system.');
+            console.log('✅ Voice AI test successful');
+        } catch (error) {
+            console.error('❌ Voice AI test failed:', error);
+        }
+    } else {
+        console.log('⚠️ Voice AI not initialized');
+    }
+};
+
+window.testVoiceRecording = async () => {
+    if (window.voiceAI) {
+        console.log('🎤 Testing voice recording...');
+        try {
+            const result = await window.voiceAI.recordAndTranscribe();
+            console.log('✅ Voice recording test successful:', result);
+        } catch (error) {
+            console.error('❌ Voice recording test failed:', error);
+        }
+    } else {
+        console.log('⚠️ Voice AI not initialized');
+    }
+};
+
+window.getVoiceAIVoices = () => {
+    if (window.voiceAI) {
+        const voices = window.voiceAI.getVoices();
+        console.log('🎵 Available voices:', voices);
+        return voices;
+    } else {
+        console.log('⚠️ Voice AI not initialized');
+        return [];
+    }
+};
+
+// Expose Voice AI globally for debugging
+window.voiceAIDebug = {
+    test: window.testVoiceAI,
+    record: window.testVoiceRecording,
+    getVoices: window.getVoiceAIVoices,
+    speak: (text) => window.voiceAI?.speak(text),
+    setVoice: (voiceId) => window.voiceAI?.setVoice(voiceId)
+};
