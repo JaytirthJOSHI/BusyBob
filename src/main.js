@@ -31,7 +31,7 @@ console.log('🚀 Main.js loaded - starting initialization...')
 let currentUser = null
 let tasks = []
 let journalEntries = []
-let calendar = null 
+let calendar = null
 let aiAgent = null
 let pomodoroTimer = null
 let pointsSystem = null
@@ -565,59 +565,6 @@ async function initializeApp() {
 
         console.log('🎉 App initialization complete!')
 
-        // Add global function for Multi-Agent System
-        window.getMultiAgentSystemStatus = () => {
-            if (multiAgentSystem) {
-                const status = multiAgentSystem.getSystemStatus()
-                console.log('🤖 Multi-Agent System Status:', status)
-                return status
-            } else {
-                console.log('❌ Multi-Agent System not initialized')
-                return null
-            }
-        }
-
-        // Add global function to test Multi-Agent System
-        window.testMultiAgentSystem = async function(prompt) {
-            try {
-                if (!window.multiAgentSystem) {
-                    console.error('Multi-agent system not initialized')
-                    ui.showMessage('AI system not ready. Please refresh the page.', 'error')
-                    return
-                }
-
-                console.log('🤖 Testing multi-agent system with prompt:', prompt)
-
-                // Show loading state
-                ui.showMessage('🤖 AI team is working on your request...', 'info')
-
-                const result = await window.multiAgentSystem.processRequest(prompt)
-
-                console.log('✅ Multi-agent system result:', result)
-
-                // Show result in a nice format
-                const message = result.success
-                    ? `✅ ${result.response}`
-                    : `❌ ${result.error || 'Something went wrong'}`
-
-                ui.showMessage(message, result.success ? 'success' : 'error')
-
-                // Update metrics
-                if (window.multiAgentWidgets) {
-                    window.multiAgentWidgets.updateMetrics()
-                }
-
-            } catch (error) {
-                console.error('❌ Error testing multi-agent system:', error)
-                ui.showMessage('Error testing AI system. Please try again.', 'error')
-            }
-        }
-
-        // Add global database testing functions
-        window.testDatabaseConnection = db.testDatabaseConnection
-        window.testAllDatabaseOperations = db.testAllOperations
-        window.getDatabaseStatus = db.getStatus
-
     } catch (error) {
         console.error('❌ Error during app initialization:', error)
         ui.showMessage('Failed to initialize app. Please refresh the page.', 'error')
@@ -758,9 +705,9 @@ function showSignInSuccess() {
 async function handleSignup(event) {
     event.preventDefault()
 
+    const name = document.getElementById('signup-name').value
     const email = document.getElementById('signup-email').value
     const password = document.getElementById('signup-password').value
-    const name = document.getElementById('signup-name').value
 
     try {
         console.log('📝 Attempting signup...')
@@ -768,7 +715,8 @@ async function handleSignup(event) {
         if (error) throw error
 
         console.log('✅ Signup successful')
-        showSignInSuccess()
+        ui.showMessage('Signup successful! Please check your email for a verification link.', 'success')
+        showAuthPages('login')
     } catch (error) {
         console.error('❌ Signup error:', error)
         ui.showMessage('Signup failed: ' + error.message, 'error')
@@ -776,31 +724,49 @@ async function handleSignup(event) {
 }
 
 async function signOut() {
+    const isConfirmed = await ui.showConfirmation(
+        'Are you sure you want to sign out?',
+        'This will clear all your local data. This action cannot be undone.'
+    )
+
+    if (!isConfirmed) {
+        return
+    }
+
     try {
-        console.log('🚪 Signing out user...')
-
-        // Clear offline data first
-        await db.clearUserData()
-        console.log('🧹 Cleared offline user data')
-
+        console.log('🚪 Signing out and clearing all user data...')
         await auth.signOut()
         currentUser = null
 
-        // Clear application state
-        tasks = []
-        journalEntries = []
-
-        // Remove AI agent when user signs out
-        if (aiAgent) {
-            const aiAgentToggle = document.getElementById('ai-agent-toggle')
-            const aiAgentWindow = document.getElementById('ai-agent-window')
-            if (aiAgentToggle) aiAgentToggle.remove()
-            if (aiAgentWindow) aiAgentWindow.remove()
-            aiAgent = null
+        // Full cleanup for security
+        console.log('🧹 Clearing all user data from device...')
+        try {
+            await db.clearUserData()
+            console.log('✅ Offline data cleared.')
+        } catch (dbError) {
+            console.error('❌ Error clearing offline data:', dbError)
         }
+        
+        localStorage.clear()
+        sessionStorage.clear()
+        console.log('✅ Local and session storage cleared.')
 
-        // Remove kid mode indicators and styles
-        const kidModeIndicator = document.querySelector('.kid-mode-indicator')
+        // Reset UI components
+        if (calendar) calendar.destroy()
+        calendar = null
+        if (pomodoroTimer) pomodoroTimer.destroy()
+        pomodoroTimer = null
+        if (pointsSystem) pointsSystem.destroy()
+        pointsSystem = null
+        if (aiAgent) aiAgent.destroy()
+        aiAgent = null
+        if (multiAgentSystem) multiAgentSystem.destroy()
+        multiAgentSystem = null
+        if(window.kidMode) window.kidMode.destroy()
+        if (window.multiAgentWidgets) window.multiAgentWidgets.destroy()
+        
+        // Remove Kid Mode elements if they exist
+        const kidModeIndicator = document.getElementById('kid-mode-indicator')
         if (kidModeIndicator) kidModeIndicator.remove()
 
         const kidModeStyles = document.getElementById('kid-mode-styles')
@@ -850,7 +816,7 @@ async function handleSpotifyAuth() {
         authUrl.searchParams.append('client_id', import.meta.env.VITE_SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID')
         authUrl.searchParams.append('scope', scope)
         authUrl.searchParams.append('redirect_uri', `${window.location.origin}/auth/spotify/callback`)
-        authUrl.searchParams.append('state', state)
+        authUrl.search_params.append('state', state)
         authUrl.searchParams.append('show_dialog', 'true') // Force reauth for sign-in vs integration
 
         window.location.href = authUrl.toString()
@@ -1054,36 +1020,28 @@ function showPage(pageName) {
             }
             break
         case 'music':
-            if (music) {
+            if(music) {
                 music.init()
             }
             break
         case 'ai-notes':
-            if (aiNotes) {
+            if(aiNotes) {
                 aiNotes.init()
             }
             break
-        case 'agentic-ai':
-            if (agenticAI) {
-                // Initialize the agentic AI component if not already done
-                if (!window.agenticAIComponent) {
-                    window.agenticAIComponent = new AgenticAIComponent('agenticAI')
-                }
-            }
-            break
         case 'settings':
-            if (settings) {
+            if(settings) {
                 settings.init()
             }
             break
         case 'privacy-policy':
-            if (privacyPolicy) {
-                privacyPolicy.initializeHTML()
+            if(privacyPolicy) {
+                privacyPolicy.init(document.getElementById('privacy-policy-page'))
             }
             break
         case 'terms-of-service':
-            if (termsOfService) {
-                termsOfService.initializeHTML()
+            if(termsOfService) {
+                termsOfService.init(document.getElementById('terms-of-service-page'))
             }
             break
     }
@@ -1092,29 +1050,25 @@ function showPage(pageName) {
 // Data loading functions
 async function loadAllData() {
     try {
-        console.log('📊 Loading all application data...')
-        
-        // Load tasks
-        console.log('📋 Loading tasks...')
-        await loadTasks()
-        
-        // Load journal data
-        console.log('📔 Loading journal data...')
-        await loadJournalData()
-        
-        // Load mood data
-        console.log('😊 Loading mood data...')
-        await moodManager.load()
-        
-        // Load home data and charts
-        console.log('🏠 Loading home data...')
+        console.log('🔄 Loading all user data...')
+        const dataPromises = [
+            loadTasks(),
+            loadJournalData(),
+            moodManager.init(),
+            pointsSystem.init(),
+            pomodoroTimer.init(),
+            kidMode.init(),
+        ]
+
+        await Promise.all(dataPromises)
+        console.log('✅ All user data loaded successfully')
+
         loadHomeData()
+        loadCalendar()
         loadCharts()
-        
-        console.log('✅ All data loaded successfully')
     } catch (error) {
         console.error('❌ Error loading all data:', error)
-        ui.showMessage('Failed to load some data. Please refresh the page.', 'error')
+        ui.showMessage('Failed to load some of your data. Please try refreshing.', 'error')
     }
 }
 
@@ -1126,7 +1080,7 @@ function loadHomeData() {
     updateGreetingTime()
 
     // Update task count
-    const pendingTasks = tasks.filter(task => !task.completed)
+    const pendingTasks = tasks.filter(t => !t.completed)
     document.getElementById('tasks-count').textContent = pendingTasks.length
 
     // Update mood average
@@ -1150,108 +1104,100 @@ function loadHomeData() {
 }
 
 function updateGreetingTime() {
-    const hour = new Date().getHours()
-    let greeting = 'morning'
-    
-    if (hour >= 12 && hour < 17) {
-        greeting = 'afternoon'
-    } else if (hour >= 17 && hour < 22) {
-        greeting = 'evening'
-    } else if (hour >= 22 || hour < 5) {
-        greeting = 'night'
-    }
-    
     const greetingElement = document.getElementById('greeting-time')
     if (greetingElement) {
+        const hour = new Date().getHours()
+        let greeting = 'Hello'
+        if (hour < 12) {
+            greeting = 'Good morning'
+        } else if (hour < 18) {
+            greeting = 'Good afternoon'
+        } else {
+            greeting = 'Good evening'
+        }
         greetingElement.textContent = greeting
     }
 }
 
 function loadDevelopmentWidgets() {
-    const container = document.getElementById('development-widgets-container')
-    if (!container || !window.multiAgentWidgets) return
+    const container = document.getElementById('development-widgets-container');
+    if (!container) return;
 
-    try {
-        container.innerHTML = window.multiAgentWidgets.generateDevelopmentWidgets()
+    // Clear previous widgets
+    container.innerHTML = '';
 
-        // Update metrics after a short delay to ensure DOM is ready
-        setTimeout(() => {
-            window.multiAgentWidgets.updateMetrics()
-        }, 100)
-
-        // Set up periodic metrics updates
-        if (window.developmentMetricsInterval) {
-            clearInterval(window.developmentMetricsInterval)
+    // Example widgets
+    const widgets = [
+        {
+            title: "Multi-Agent System",
+            content: `
+                <div class="space-y-2">
+                    <button onclick="window.getMultiAgentSystemStatus()" class="w-full text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded">Get Status</button>
+                    <input id="test-prompt-input" type="text" placeholder="Enter a test prompt" class="w-full text-sm border-gray-300 rounded">
+                    <button onclick="window.testMultiAgentSystem(document.getElementById('test-prompt-input').value)" class="w-full text-sm bg-green-100 text-green-800 py-1 px-2 rounded">Run Test</button>
+                </div>
+            `
+        },
+        {
+            title: "Database Tools",
+            content: `
+                 <div class="space-y-2">
+                    <button onclick="window.testDatabaseConnection()" class="w-full text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded">Test Connection</button>
+                    <button onclick="window.testAllDatabaseOperations()" class="w-full text-sm bg-green-100 text-green-800 py-1 px-2 rounded">Test All Operations</button>
+                    <button onclick="window.getDatabaseStatus()" class="w-full text-sm bg-yellow-100 text-yellow-800 py-1 px-2 rounded">Get Status</button>
+                </div>
+            `
         }
-        window.developmentMetricsInterval = setInterval(() => {
-            window.multiAgentWidgets.updateMetrics()
-        }, 10000) // Update every 10 seconds
-    } catch (error) {
-        console.error('Error loading development widgets:', error)
-        container.innerHTML = '<div class="text-red-500 p-4">Error loading development features</div>'
-    }
+    ];
+
+    widgets.forEach(widget => {
+        const widgetEl = document.createElement('div');
+        widgetEl.className = 'bg-white/50 dark:bg-gray-800/50 p-3 rounded-lg';
+        widgetEl.innerHTML = `
+            <h4 class="font-semibold text-xs mb-2 text-gray-700 dark:text-gray-300">${widget.title}</h4>
+            ${widget.content}
+        `;
+        container.appendChild(widgetEl);
+    });
+
+    window.cleanupDevelopmentWidgets = () => {
+        if(container) container.innerHTML = '';
+    };
 }
 
 function loadUpcomingTasks() {
-    const upcomingContainer = document.getElementById('upcoming-tasks')
-    if (!upcomingContainer) return
+    const upcomingTasksList = document.getElementById('upcoming-tasks-list')
+    if (!upcomingTasksList) return
+
+    upcomingTasksList.innerHTML = '' // Clear list
 
     const upcoming = tasks
-        .filter(task => !task.completed)
+        .filter(t => !t.completed)
         .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
         .slice(0, 5)
 
-    upcomingContainer.innerHTML = upcoming.length > 0
-        ? upcoming.map(task => `
-            <div class="flex items-center justify-between p-4 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-gray-600/20 hover:bg-white/70 dark:hover:bg-gray-700/70 transition-all duration-200">
-                <div class="flex-1">
-                    <div class="font-semibold text-sm text-gray-900 dark:text-white">${task.title}</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        ${dateUtils.formatDateTime(task.due_date, task.due_time)}
-                    </div>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="text-xs px-3 py-1 rounded-full ${taskUtils.getPriorityColor(task.priority)} font-medium">
-                        ${task.priority}
-                    </span>
-                    <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                </div>
-            </div>
-        `).join('')
-        : `
-            <div class="text-center py-8">
-                <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                    </svg>
-                </div>
-                <p class="text-gray-500 dark:text-gray-400 text-sm">No upcoming tasks</p>
-                <p class="text-gray-400 dark:text-gray-500 text-xs mt-1">Add some tasks to get started!</p>
-            </div>
-        `
+    if (upcoming.length === 0) {
+        upcomingTasksList.innerHTML = '<p class="text-center text-sm text-gray-500 dark:text-gray-400 py-4">No upcoming tasks. Great job!</p>'
+        return
+    }
+
+    upcoming.forEach(task => {
+        const li = document.createElement('li')
+        li.className = 'py-3 flex items-center'
+        li.innerHTML = createSimpleTaskHTML(task)
+        upcomingTasksList.appendChild(li)
+    })
 }
 
+// Task management functions
 async function loadTasks() {
     try {
-        console.log('📋 Loading tasks from database...')
         const { data, error } = await db.getTasks()
-        
-        if (error) {
-            console.error('❌ Error loading tasks:', error)
-            ui.showMessage('Failed to load tasks', 'error')
-            return
-        }
-        
+        if (error) throw error
         tasks = data || []
-        console.log(`✅ Loaded ${tasks.length} tasks`)
         renderTasks()
-        
-        // Update calendar with tasks
-        if (calendar) {
-            calendar.setTasks(tasks)
-        }
     } catch (error) {
-        console.error('❌ Error in loadTasks:', error)
+        console.error('Error loading tasks:', error)
         ui.showMessage('Failed to load tasks', 'error')
     }
 }
@@ -1259,423 +1205,343 @@ async function loadTasks() {
 function renderTasks() {
     const taskList = document.getElementById('task-list')
     if (!taskList) return
+    taskList.innerHTML = '' // Clear list
 
-    taskList.innerHTML = tasks.length > 0
-        ? tasks.map(task => createSimpleTaskHTML(task)).join('')
-        : '<p class="text-gray-500 dark:text-gray-400 text-center py-8">No tasks yet. Add your first task above!</p>'
+    if (tasks.length === 0) {
+        taskList.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-8">No tasks yet. Add one to get started!</p>'
+        return
+    }
+
+    tasks.forEach(task => {
+        const li = document.createElement('li')
+        li.className = 'bg-white dark:bg-gray-800 p-4 rounded-lg shadow'
+        li.innerHTML = createSimpleTaskHTML(task)
+        taskList.appendChild(li)
+    })
 }
 
 function createSimpleTaskHTML(task) {
     return `
-        <div class="todo-item border rounded-lg p-3 sm:p-4 bg-white dark:bg-gray-700 card-hover" data-task-id="${task.id}">
-            <div class="flex items-start justify-between">
-                <div class="flex items-start space-x-3 flex-1 min-w-0">
-                    <input type="checkbox" ${task.completed ? 'checked' : ''}
-                           onchange="toggleTask(${task.id})"
-                           class="h-5 w-5 sm:h-4 sm:w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 flex-shrink-0">
-                    <div class="flex-1 min-w-0">
-                        <h3 class="font-medium text-gray-900 dark:text-white ${task.completed ? 'line-through opacity-75' : ''} text-sm sm:text-base break-words">${task.title}</h3>
-                        ${task.description ? `<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${task.description}</p>` : ''}
-                    </div>
-                </div>
-                <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 p-2 ml-2 flex-shrink-0">
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                </button>
-            </div>
+        <div class="flex items-center w-full">
+            <input type="checkbox" id="task-${task.id}" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" class="h-5 w-5 rounded-full border-gray-300 text-orange-600 focus:ring-orange-500 cursor-pointer">
+            <label for="task-${task.id}" class="ml-3 block text-sm font-medium ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900 dark:text-gray-200'}">${task.title}</label>
+            <span class="ml-auto text-xs text-gray-500 dark:text-gray-400">${dateUtils.formatDueDate(task.due_date)}</span>
+            <button onclick="deleteTask('${task.id}')" class="ml-2 text-gray-400 hover:text-red-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
         </div>
     `
 }
 
 function loadCalendar() {
     if (calendar) {
-        calendar.setTasks(tasks)
+        calendar.render(tasks)
     }
-    loadSelectedDateTasks(new Date())
 }
 
 function loadSelectedDateTasks(date) {
-    const selectedTasksContainer = document.getElementById('selected-date-tasks')
-    const titleElement = document.getElementById('selected-date-title')
+    const selectedTasks = tasks.filter(task => {
+        const taskDate = new Date(task.due_date).toDateString()
+        return taskDate === date.toDateString()
+    })
 
-    if (!selectedTasksContainer || !titleElement) return
+    const selectedDateTasksList = document.getElementById('selected-date-tasks')
+    if (!selectedDateTasksList) return
 
-    // Show all tasks instead of just selected date tasks
-    titleElement.textContent = "All Tasks"
-
-    if (tasks.length > 0) {
-        selectedTasksContainer.innerHTML = tasks.map(task => createCalendarTaskHTML(task)).join('')
-    } else {
-        selectedTasksContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-4">No tasks yet. Add tasks from the Calendar!</p>'
+    selectedDateTasksList.innerHTML = '' // Clear list
+    if (selectedTasks.length === 0) {
+        selectedDateTasksList.innerHTML = '<p class="text-center text-sm text-gray-500 dark:text-gray-400 py-4">No tasks for this day.</p>'
+        return
     }
+
+    selectedTasks.forEach(task => {
+        const li = document.createElement('li')
+        li.innerHTML = createCalendarTaskHTML(task)
+        selectedDateTasksList.appendChild(li)
+    })
 }
 
 function createCalendarTaskHTML(task) {
-    const isOverdue = task.due_date && dateUtils.isOverdue(task.due_date, task.due_time) && !task.completed
-    const priorityClass = task.priority === 'high' ? 'border-l-4 border-l-red-500' :
-                         task.priority === 'medium' ? 'border-l-4 border-l-yellow-500' : 'border-l-4 border-l-green-500'
-
     return `
-        <div class="task-item border rounded-lg p-3 sm:p-4 bg-white dark:bg-gray-700 ${priorityClass} card-hover" data-task-id="${task.id}">
-            <div class="flex items-start justify-between">
-                <div class="flex items-start space-x-3 flex-1 min-w-0">
-                    <input type="checkbox" ${task.completed ? 'checked' : ''}
-                           onchange="toggleTask(${task.id})"
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-0.5 flex-shrink-0">
-                    <div class="flex-1 min-w-0">
-                        <h3 class="font-medium text-gray-900 dark:text-white ${task.completed ? 'line-through opacity-75' : ''} text-sm break-words">${task.title}</h3>
-                        ${task.description ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${task.description}</p>` : ''}
-                        <div class="flex flex-wrap items-center gap-2 mt-2">
-                            <span class="text-xs px-2 py-1 rounded-full ${taskUtils.getCategoryColor(task.category)} whitespace-nowrap">${task.category}</span>
-                            ${task.due_date ? `<span class="text-xs text-gray-500 dark:text-gray-400">
-                                ${dateUtils.formatDateTime(task.due_date, task.due_time)}
-                            </span>` : ''}
-                            ${isOverdue ? '<span class="text-xs text-red-500 font-medium">OVERDUE</span>' : ''}
-                        </div>
-                    </div>
-                </div>
-                <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 p-1 ml-2 flex-shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
+        <div class="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-700/50 rounded-lg">
+            <div>
+                <p class="font-medium text-sm ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900 dark:text-gray-300'}">${task.title}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">${task.category || 'General'}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <input type="checkbox" id="cal-task-${task.id}" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" class="h-4 w-4 rounded-full border-gray-300 text-orange-600 focus:ring-orange-500 cursor-pointer">
+                <button onclick="deleteTask('${task.id}')" class="text-gray-400 hover:text-red-500">
+                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
         </div>
     `
 }
 
+// Journaling functions
 async function loadJournalData() {
     try {
-        console.log('📔 Loading journal data from database...')
         const { data, error } = await db.getJournalEntries()
-        
-        if (error) {
-            console.error('❌ Error loading journal data:', error)
-            ui.showMessage('Failed to load journal entries', 'error')
-            return
-        }
-        
+        if (error) throw error
         journalEntries = data || []
-        console.log(`✅ Loaded ${journalEntries.length} journal entries`)
-        
         renderTodaysReflection()
         renderPastJournalEntries()
         calculateAndRenderStreak()
         setupJournalListeners()
     } catch (error) {
-        console.error('❌ Error in loadJournalData:', error)
+        console.error('Error loading journal data:', error)
         ui.showMessage('Failed to load journal entries', 'error')
     }
 }
 
 function renderTodaysReflection() {
-    const contentTextarea = document.getElementById('reflection-content')
-    const charCount = document.getElementById('reflection-char-count')
-    const saveButton = document.getElementById('save-reflection-btn')
+    const today = new Date().toDateString()
+    const todaysEntry = journalEntries.find(entry => new Date(entry.created_at).toDateString() === today)
+    const reflectionContainer = document.getElementById('todays-reflection')
 
-    // Always start with a blank slate for a new entry
-    contentTextarea.value = ''
-    saveButton.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
-    saveButton.disabled = true; // Initially disabled
-
-    const count = contentTextarea.value.length
-    charCount.textContent = `${count}`
-    document.getElementById('reflection-date').textContent = new Date().toLocaleDateString('en-US', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
+    if (todaysEntry) {
+        reflectionContainer.innerHTML = `
+            <h3 class="font-bold text-lg mb-2">Today's Reflection</h3>
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                <p class="text-gray-700 dark:text-gray-300">${todaysEntry.content}</p>
+                <p class="text-right text-xs text-gray-500 mt-2">${new Date(todaysEntry.created_at).toLocaleTimeString()}</p>
+            </div>
+        `
+    } else {
+        // Form is already in the HTML, so just ensure it's visible
+        reflectionContainer.innerHTML = document.getElementById('reflection-form-template').innerHTML;
+    }
 }
 
 function renderPastJournalEntries() {
-    const listContainer = document.getElementById('journal-entries-list')
-    if (!listContainer) return
+    const pastEntriesList = document.getElementById('past-journal-entries')
+    if (!pastEntriesList) return
+    pastEntriesList.innerHTML = ''
 
-    const sortedEntries = journalEntries.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-
-    if (sortedEntries.length > 0) {
-        listContainer.innerHTML = sortedEntries.map(entry => `
-            <div class="bg-white/80 dark:bg-gray-800/80 p-4 rounded-xl shadow border border-white/20 relative card-hover">
-                <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">${new Date(entry.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                <p class="text-gray-600 dark:text-gray-400 text-sm mt-2">${entry.content}</p>
-                <button onclick="deleteJournalEntry('${entry.id}')" class="absolute top-2 right-2 text-red-500 hover:text-red-700 p-1 opacity-50 hover:opacity-100 transition-opacity">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-        `).join('')
-    } else {
-        listContainer.innerHTML = `
-            <div class="text-center py-8">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No entries yet</h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by writing your first reflection.</p>
-            </div>
-        `
-    }
-}
-
-function calculateAndRenderStreak() {
-    const streakContainer = document.getElementById('journal-streak-count');
-    if (!streakContainer) return;
-
-    if (journalEntries.length === 0) {
-        streakContainer.innerHTML = `
-            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M4 17v4m-2-2h4m1-12a9 9 0 011 17.928M15 3a9 9 0 011 17.928m-3.5 1.072L12 21l-1-4-4 1 1-4-4-1 4-1-1-4 4 1 1-4 1 4 4-1-4 4 1 4-1-4z"></path></svg>
-            0 Day Streak
-        `
+    const pastEntries = journalEntries.slice(1, 6) // Get next 5 entries
+    if (pastEntries.length === 0) {
+        pastEntriesList.innerHTML = '<p class="text-center text-sm text-gray-500 dark:text-gray-400 py-4">No past entries to show.</p>'
         return
     }
 
-    const entryDates = [...new Set(journalEntries.map(e => e.created_at.split('T')[0]))].sort().reverse();
+    pastEntries.forEach(entry => {
+        const li = document.createElement('li')
+        li.className = 'mb-4'
+        li.innerHTML = `
+            <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+                <p class="text-sm text-gray-700 dark:text-gray-300">${entry.content}</p>
+                <div class="flex justify-between items-center mt-2">
+                    <p class="text-xs text-gray-500">${dateUtils.format(new Date(entry.created_at))}</p>
+                    <button onclick="deleteJournalEntry('${entry.id}')" class="text-gray-400 hover:text-red-500 text-xs">Delete</button>
+                </div>
+            </div>
+        `
+        pastEntriesList.appendChild(li)
+    })
+}
 
-    let streak = 0;
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const todayStr = today.toISOString().split('T')[0];
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-    if (entryDates[0] === todayStr || entryDates[0] === yesterdayStr) {
-        streak = 1;
-        for (let i = 0; i < entryDates.length - 1; i++) {
-            const current = new Date(entryDates[i]);
-            const next = new Date(entryDates[i+1]);
-
-            const diffTime = current - next;
-            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 1) {
-                streak++;
-            } else {
-                break;
-            }
-        }
+function calculateAndRenderStreak() {
+    let streak = 0
+    if (journalEntries.length === 0) {
+        document.getElementById('journal-streak').textContent = 0
+        return
     }
 
-    streakContainer.innerHTML = `
-        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10s5 2 7 0l2.657-2.657a8 8 0 010 11.314z"></path></svg>
-        ${streak} Day Streak
-    `
+    const dates = journalEntries.map(e => new Date(e.created_at).toDateString()).reverse()
+    const uniqueDates = [...new Set(dates)]
+
+    let currentDate = new Date()
+    // Check if today is in the list
+    if (uniqueDates.includes(currentDate.toDateString())) {
+        streak++
+    }
+    
+    // Check for consecutive days
+    for (let i = 0; i < uniqueDates.length; i++) {
+        const entryDate = new Date(uniqueDates[i])
+        const prevDate = new Date()
+        prevDate.setDate(currentDate.getDate() - (i + 1))
+
+        if (entryDate.toDateString() === prevDate.toDateString()) {
+            streak++
+        } else {
+            break;
+        }
+    }
+    
+    document.getElementById('journal-streak').textContent = streak
 }
 
 function setupJournalListeners() {
-    const contentTextarea = document.getElementById('reflection-content');
-    const charCount = document.getElementById('reflection-char-count');
-    const saveButton = document.getElementById('save-reflection-btn');
+    const form = document.getElementById('reflection-form')
+    if(form) {
+        form.addEventListener('submit', handleReflectionSubmit)
+    }
 
-    if(contentTextarea && charCount && saveButton) {
-        contentTextarea.addEventListener('input', () => {
-            const count = contentTextarea.value.length;
-            charCount.textContent = `${count}`;
-            saveButton.disabled = count === 0 || count > 280;
-        });
+    const content = document.getElementById('journal-content')
+    const charCount = document.getElementById('journal-char-count')
+
+    if(content && charCount) {
+        content.addEventListener('input', () => {
+            charCount.textContent = `${content.value.length} / 500`
+        })
     }
 }
 
+// Form submission handlers
 async function handleTaskSubmit(event) {
     event.preventDefault()
-    const formData = new FormData(event.target)
+    const titleInput = document.getElementById('task-title')
+    const dueDateInput = document.getElementById('task-due-date')
+    const title = titleInput.value.trim()
+    const dueDate = dueDateInput.value
+
+    if (!title || !dueDate) {
+        ui.showMessage('Please provide a title and due date.', 'error')
+        return
+    }
 
     const taskData = {
-        title: formData.get('title'),
-        description: formData.get('description') || '',
-        category: 'general',
-        priority: 'medium',
-        due_date: null,
-        due_time: null,
-        stress_level: 3,
+        title,
+        due_date: new Date(dueDate).toISOString(),
         completed: false
     }
 
     try {
         const { data, error } = await db.createTask(taskData)
         if (error) throw error
-
-        tasks.push(data[0])
+        tasks.push(data)
         renderTasks()
-
-        // Update calendar
-        if (calendar) {
-            calendar.setTasks(tasks)
-        }
-
-        ui.showMessage('Task added!', 'success')
-        event.target.reset()
-
-        // Add success animation
-        const taskList = document.getElementById('task-list')
-        if (taskList.firstElementChild) {
-            animations.slideIn(taskList.firstElementChild, 'down', 300)
-        }
+        loadUpcomingTasks()
+        loadCalendar()
+        titleInput.value = ''
+        dueDateInput.value = ''
+        ui.showMessage('Task added successfully!', 'success')
     } catch (error) {
-        console.error('Error creating task:', error)
-        ui.showMessage(`Error adding task: ${error.message || 'Unknown error'}`, 'error')
+        console.error('Error adding task:', error)
+        ui.showMessage('Failed to add task.', 'error')
     }
 }
 
 async function handleReflectionSubmit(event) {
     event.preventDefault()
-    const form = event.target
-    const content = form.querySelector('#reflection-content').value
+    const contentInput = document.getElementById('journal-content')
+    const content = contentInput.value.trim()
 
-    if (content.length < 1 || content.length > 280) {
-        ui.showMessage('Reflection must be between 1 and 280 characters.', 'error')
+    if (!content) {
+        ui.showMessage('Please write something for your reflection.', 'error')
         return
     }
 
     try {
-        // Always create a new entry
         await db.addJournalEntry(content)
-
-        // Award points for journal entry
-        if (window.pointsSystem) {
-            try {
-                const wordCount = content.trim().split(/\s+/).length
-                let points = window.pointsSystem.getPointValue('journalEntry')
-                let reason = 'Journal entry created'
-
-                // Bonus points for longer entries
-                if (wordCount >= 50) {
-                    points = window.pointsSystem.getPointValue('longJournalEntry')
-                    reason = 'Long journal entry created'
-                }
-
-                await window.pointsSystem.awardPoints(points, reason, 'journal')
-            } catch (pointsError) {
-                console.error('Error awarding points for journal:', pointsError)
-            }
-        }
-
+        contentInput.value = ''
         ui.showMessage('Reflection saved!', 'success')
-        await loadJournalData() // Reload all journal data to update streak and views
-
+        await loadJournalData()
     } catch (error) {
-        console.error('Error saving journal entry:', error)
-        ui.showMessage('Could not save reflection.', 'error')
+        console.error('Error saving reflection:', error)
+        ui.showMessage('Failed to save reflection.', 'error')
     }
 }
 
-// Action handlers
+// Data modification functions
 async function toggleTask(taskId) {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
     try {
         const { data, error } = await db.updateTask(taskId, { completed: !task.completed });
+        if (error) throw error
+        
+        // Update local state
+        task.completed = !task.completed
+        
+        // Re-render UI
+        renderTasks()
+        loadUpcomingTasks()
+        loadCalendar()
+        loadSelectedDateTasks(calendar.currentDate)
 
-        if (error) {
-            throw error;
-        }
-
-        if (!data || data.length === 0) {
-            throw new Error("Update failed. No rows were updated. This might be due to security policies.");
-        }
-
-        const updatedTask = data[0];
-        const taskIndex = tasks.findIndex(t => t.id === updatedTask.id);
-        if (taskIndex !== -1) {
-            tasks[taskIndex] = updatedTask;
-        }
-
-        renderTasks();
-
-        // Update calendar
-        if (calendar) {
-            calendar.setTasks(tasks);
-            calendar.refreshTaskSidebar();
-        }
-
-        // Refresh home data
-        loadHomeData();
-
-        // Show feedback
-        if (updatedTask.completed) {
-            ui.showMessage('Task completed! Great job! 🎉', 'success');
-            const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
-            if (taskElement) {
-                animations.pulse(taskElement, 600);
+        // Award points if task completed
+        if (task.completed && window.pointsSystem) {
+            try {
+                const points = window.pointsSystem.getPointValue('taskCompleted')
+                await window.pointsSystem.awardPoints(points, `Completed: ${task.title}`, 'task')
+            } catch (pointsError) {
+                console.error('Error awarding points for task:', pointsError)
             }
-        } else {
-            // Optional: show a message for marking task as incomplete
-            ui.showMessage('Task marked as not complete.', 'info');
         }
+        
+        ui.showMessage(`Task "${task.title}" updated.`, 'success')
     } catch (error) {
-        console.error('Error updating task:', error);
-        ui.showMessage('Error updating task: ' + error.message, 'error');
-        // No need to revert state as we are not doing optimistic updates anymore
-        renderTasks(); // Re-render to ensure UI is consistent with data
+        console.error('Error toggling task:', error)
+        ui.showMessage('Failed to update task.', 'error')
     }
 }
 
 async function deleteTask(taskId) {
-    if (!confirm('Are you sure you want to delete this task?')) return
+    const task = tasks.find(t => t.id === taskId)
+    if (!task) return
+
+    const confirmed = await ui.showConfirmation(`Delete task "${task.title}"?`)
+    if (!confirmed) return
 
     try {
         const { error } = await db.deleteTask(taskId)
         if (error) throw error
-
         tasks = tasks.filter(t => t.id !== taskId)
         renderTasks()
-
-        // Update calendar
-        if (calendar) {
-            calendar.setTasks(tasks)
-            calendar.refreshTaskSidebar()
-        }
-
-        ui.showMessage('Task deleted', 'success')
+        loadUpcomingTasks()
+        loadCalendar()
+        ui.showMessage('Task deleted.', 'success')
     } catch (error) {
         console.error('Error deleting task:', error)
-        ui.showMessage('Error deleting task', 'error')
+        ui.showMessage('Failed to delete task.', 'error')
     }
 }
 
 async function deleteJournalEntry(entryId) {
-    if (!confirm('Are you sure you want to delete this journal entry?')) return
+    const confirmed = await ui.showConfirmation('Delete this journal entry permanently?')
+    if (!confirmed) return
 
     try {
         const { error } = await db.deleteJournalEntry(entryId)
         if (error) throw error
-
         journalEntries = journalEntries.filter(e => e.id !== entryId)
+        renderTodaysReflection()
         renderPastJournalEntries()
         calculateAndRenderStreak()
-
-        ui.showMessage('Journal entry deleted', 'success')
+        ui.showMessage('Journal entry deleted.', 'success')
     } catch (error) {
         console.error('Error deleting journal entry:', error)
-        ui.showMessage('Error deleting journal entry', 'error')
+        ui.showMessage('Failed to delete journal entry.', 'error')
     }
 }
 
-// Event handlers
+// Calendar callback
 function onDateSelect(date) {
     loadSelectedDateTasks(date)
 }
 
+// Charting functions
 function loadCharts() {
-    // Mood chart
-    const moodCtx = document.getElementById('moodChart')
-    const feelings = moodManager.feelings;
-    if (moodCtx && feelings.length > 0) {
-        const recentFeelings = feelings.slice(0, 7).reverse()
-        new Chart(moodCtx, {
+    // Example chart: Mood over time
+    const moodChartCtx = document.getElementById('mood-chart')?.getContext('2d')
+    if (moodChartCtx && moodManager.feelings.length > 0) {
+        new Chart(moodChartCtx, {
             type: 'line',
             data: {
-                labels: recentFeelings.map(f => new Date(f.created_at).toLocaleDateString()),
+                labels: moodManager.feelings.map(f => dateUtils.format(new Date(f.created_at))).reverse(),
                 datasets: [{
                     label: 'Mood Rating',
-                    data: recentFeelings.map(f => f.rating),
-                    borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4
+                    data: moodManager.feelings.map(f => f.rating).reverse(),
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                    fill: true
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -1686,376 +1552,191 @@ function loadCharts() {
         })
     }
 
-    // Task chart
-    const taskCtx = document.getElementById('taskChart')
-    if (taskCtx) {
+    // Example chart: Task completion
+    const taskChartCtx = document.getElementById('task-chart')?.getContext('2d')
+    if (taskChartCtx && tasks.length > 0) {
         const completedTasks = tasks.filter(t => t.completed).length
         const pendingTasks = tasks.length - completedTasks
 
-        new Chart(taskCtx, {
+        new Chart(taskChartCtx, {
             type: 'doughnut',
             data: {
                 labels: ['Completed', 'Pending'],
                 datasets: [{
                     data: [completedTasks, pendingTasks],
-                    backgroundColor: ['#10B981', '#F59E0B']
+                    backgroundColor: ['#4ade80', '#f87171']
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false
+                responsive: true
             }
         })
     }
 }
 
+// Utility functions
 function updateCurrentDate() {
     const dateElement = document.getElementById('current-date')
-    if (dateElement) {
+    if(dateElement) {
         dateElement.textContent = dateUtils.getCurrentDate()
     }
 }
 
 function updateLiveClock() {
-    const clockElement = document.getElementById('live-clock');
-    if (clockElement) {
-        const now = new Date();
-        const timezone = localStorage.getItem('timezone');
-
-        const options = {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true // Or false for 24-hour format
-        };
-
-        if (timezone) {
-            options.timeZone = timezone;
-        }
-
-        const timeString = now.toLocaleTimeString([], options);
-        clockElement.textContent = timeString;
+    const clockElement = document.getElementById('live-clock')
+    if(clockElement) {
+        clockElement.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
 }
 
-// Listen for timezone changes from settings
-window.addEventListener('timezoneChange', updateLiveClock);
 
-// Kid Mode Functions
+// Kid Mode
 async function applyKidModeStyles() {
-    if (!kidMode.isEnabled) return
-
-    console.log('🎨 Applying Kid Mode styles...')
-
-    // Add Kid Mode styles to the page
-    const existingStyles = document.getElementById('kid-mode-styles')
-    if (existingStyles) {
-        existingStyles.remove()
+    const kidModeSettings = await db.getKidModeSettings();
+    if (kidMode.isActive(kidModeSettings)) {
+        document.body.classList.add('kid-mode-active');
+        const styleSheet = document.createElement("style");
+        styleSheet.id = 'kid-mode-styles';
+        styleSheet.innerText = kidMode.getThemeStyles(kidModeSettings.theme);
+        document.head.appendChild(styleSheet);
     }
-
-    const styleSheet = document.createElement('style')
-    styleSheet.id = 'kid-mode-styles'
-    styleSheet.textContent = kidMode.getKidModeStyles()
-    document.head.appendChild(styleSheet)
-
-    // Add Kid Mode indicator
-    const existingIndicator = document.querySelector('.kid-mode-indicator')
-    if (existingIndicator) {
-        existingIndicator.remove()
-    }
-
-    const indicatorHtml = kidMode.renderKidModeIndicator()
-    if (indicatorHtml) {
-        document.body.insertAdjacentHTML('afterbegin', indicatorHtml)
-    }
-
-    // Apply Kid Mode class to body
-    document.body.classList.add('kid-mode-active')
-
-    // Restrict certain features
-    applyKidModeRestrictions()
-
-    // Initialize content filtering observer
-    initKidModeObserver()
-
-    console.log('✅ Kid Mode styles applied successfully')
 }
 
 function applyKidModeRestrictions() {
-    if (!kidMode.isEnabled) return
+    const kidModeSettings = kidMode.settings;
+    if (kidMode.isActive(kidModeSettings)) {
+        // Feature restrictions
+        if (kidModeSettings.restrictedFeatures?.includes('settings')) {
+            document.querySelector('[data-page="settings"]')?.classList.add('hidden');
+        }
+        if (kidModeSettings.restrictedFeatures?.includes('academic-hub')) {
+            document.querySelector('[data-page="academic-hub"]')?.classList.add('hidden');
+        }
+        // ... add more restrictions as needed
 
-    console.log('🚫 Applying Kid Mode restrictions...')
-
-    // Hide Spotify integration if restricted
-    if (kidMode.isFeatureRestricted('spotify_integration')) {
-        const musicTab = document.querySelector('[data-page="music"]')
-        if (musicTab) {
-            musicTab.style.display = 'none'
+        // Time restrictions
+        if (kidMode.isTimeRestricted()) {
+            // Disable the whole app except for a message
+            const mainApp = document.getElementById('main-app');
+            mainApp.innerHTML = `
+                <div class="text-center p-8">
+                    <h2 class="text-2xl font-bold">Screen time is over for now!</h2>
+                    <p>Come back later to continue your tasks.</p>
+                </div>
+            `;
         }
     }
-
-    // Remove external links
-    if (kidMode.isFeatureRestricted('external_links')) {
-        const externalLinks = document.querySelectorAll('a[href*="http"]:not([href*="' + window.location.hostname + '"])')
-        externalLinks.forEach(link => {
-            link.setAttribute('href', '#')
-            link.setAttribute('title', 'External links are disabled in Kid Mode')
-            link.style.opacity = '0.5'
-            link.style.pointerEvents = 'none'
-        })
-    }
-
-    // Restrict file upload inputs
-    if (kidMode.isFeatureRestricted('file_uploads')) {
-        const fileInputs = document.querySelectorAll('input[type="file"]')
-        fileInputs.forEach(input => {
-            input.disabled = true
-            input.style.opacity = '0.5'
-        })
-    }
-
-    // Hide advanced settings
-    if (kidMode.isFeatureRestricted('advanced_settings')) {
-        const advancedSettings = document.querySelectorAll('.advanced-setting, .danger-zone')
-        advancedSettings.forEach(setting => {
-            setting.style.display = 'none'
-        })
-    }
-
-    console.log('✅ Kid Mode restrictions applied')
 }
 
-// Apply content filtering
 function applyKidModeContentFiltering() {
-    if (!kidMode.isEnabled) return
-
-    // Filter content in real-time
-    const contentElements = document.querySelectorAll('p, div, span, h1, h2, h3, h4, h5, h6')
-    contentElements.forEach(element => {
-        if (element.textContent) {
-            element.textContent = kidMode.sanitizeContent(element.textContent)
+    // This function will be called by the observer
+    const kidModeSettings = kidMode.settings;
+    if (kidMode.isActive(kidModeSettings)) {
+        const allTextNodes = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let currentNode;
+        while (currentNode = allTextNodes.nextNode()) {
+            currentNode.nodeValue = kidMode.filterText(currentNode.nodeValue);
         }
-    })
+    }
 }
 
-// Initialize Kid Mode content filtering observer
 function initKidModeObserver() {
-    if (!kidMode.isEnabled) return
+    const kidModeSettings = kidMode.settings;
+    if (kidMode.isActive(kidModeSettings) && kidModeSettings.contentFiltering) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    applyKidModeContentFiltering();
+                }
+            });
+        });
 
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.type === 'childList') {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === Node.ELEMENT_NODE) {
-                        // Apply restrictions to new elements
-                        if (kidMode.isFeatureRestricted('external_links')) {
-                            const newLinks = node.querySelectorAll?.('a[href*="http"]:not([href*="' + window.location.hostname + '"])')
-                            newLinks?.forEach(link => {
-                                link.setAttribute('href', '#')
-                                link.setAttribute('title', 'External links are disabled in Kid Mode')
-                                link.style.opacity = '0.5'
-                                link.style.pointerEvents = 'none'
-                            })
-                        }
-
-                        // Apply content filtering
-                        if (node.textContent) {
-                            node.textContent = kidMode.sanitizeContent(node.textContent)
-                        }
-                    }
-                })
-            }
-        })
-    })
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    })
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
 }
 
-// Make functions globally available for onclick handlers
-window.toggleTask = toggleTask
-window.deleteTask = deleteTask
-window.deleteJournalEntry = deleteJournalEntry
-window.loadHomeData = loadHomeData
-
-// Global Kid Mode functions
-window.kidMode = kidMode
-window.applyKidModeStyles = applyKidModeStyles
-
-// Toolbox functionality
 window.toolbox = {
-    isVisible: false,
-    toolVisibility: {
-        'academic-hub': true,
-        'ai-notes': true,
-        'music': true,
-        'dev-tools': true
-    },
-
+    isOpen: false,
+    
     init() {
-        this.loadToolVisibility()
-        this.setupEventListeners()
-        this.updateToolVisibility()
+        this.setupEventListeners();
+        this.loadToolVisibility();
     },
-
+    
     setupEventListeners() {
-        // Toggle button
-        document.getElementById('toolbox-toggle')?.addEventListener('click', () => this.toggle())
+        const toggleBtn = document.getElementById('toolbox-toggle');
+        const toolboxPanel = document.getElementById('toolbox-panel');
 
-        // Close button
-        document.getElementById('close-toolbox')?.addEventListener('click', () => this.hide())
-
-        // Close on outside click
-        document.addEventListener('click', (e) => {
-            const toolbox = document.getElementById('toolbox-window')
-            const toggle = document.getElementById('toolbox-toggle')
-            if (this.isVisible && !toolbox?.contains(e.target) && !toggle?.contains(e.target)) {
-                this.hide()
+        toggleBtn?.addEventListener('click', () => this.toggle());
+        
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 't' && e.metaKey) {
+                this.toggle();
             }
-        })
-    },
+        });
 
+        toolboxPanel?.addEventListener('change', (e) => {
+            if (e.target.type === 'checkbox') {
+                this.setToolVisibility(e.target.id, e.target.checked);
+            }
+        });
+    },
+    
     toggle() {
-        this.isVisible = !this.isVisible
-        const toolbox = document.getElementById('toolbox-window')
-        if (this.isVisible) {
-            toolbox?.classList.remove('hidden')
-        } else {
-            toolbox?.classList.add('hidden')
-        }
+        const toolboxPanel = document.getElementById('toolbox-panel');
+        this.isOpen = !this.isOpen;
+        toolboxPanel.classList.toggle('hidden', !this.isOpen);
     },
 
     show() {
-        this.isVisible = true
-        document.getElementById('toolbox-window')?.classList.remove('hidden')
+        document.getElementById('toolbox-panel').classList.remove('hidden');
+        this.isOpen = true;
     },
 
     hide() {
-        this.isVisible = false
-        document.getElementById('toolbox-window')?.classList.add('hidden')
+        document.getElementById('toolbox-panel').classList.add('hidden');
+        this.isOpen = false;
     },
-
+    
     loadToolVisibility() {
-        try {
-            const saved = localStorage.getItem('toolbox-visibility')
-            if (saved) {
-                this.toolVisibility = { ...this.toolVisibility, ...JSON.parse(saved) }
-            }
-        } catch (error) {
-            console.error('Error loading tool visibility:', error)
-        }
+        const visibility = JSON.parse(localStorage.getItem('toolboxVisibility')) || {};
+        Object.keys(visibility).forEach(toolId => {
+            const checkbox = document.getElementById(toolId);
+            if(checkbox) checkbox.checked = visibility[toolId];
+        });
+        this.updateToolVisibility();
     },
-
+    
     saveToolVisibility() {
-        try {
-            localStorage.setItem('toolbox-visibility', JSON.stringify(this.toolVisibility))
-        } catch (error) {
-            console.error('Error saving tool visibility:', error)
-        }
+        const checkboxes = document.querySelectorAll('#toolbox-panel input[type="checkbox"]');
+        const visibility = {};
+        checkboxes.forEach(cb => {
+            visibility[cb.id] = cb.checked;
+        });
+        localStorage.setItem('toolboxVisibility', JSON.stringify(visibility));
     },
-
+    
     updateToolVisibility() {
-        Object.entries(this.toolVisibility).forEach(([toolId, isVisible]) => {
-            const toolElement = document.getElementById(`${toolId}-tool`)
-            if (toolElement) {  
-                toolElement.style.display = isVisible ? 'block' : 'none'
+        const checkboxes = document.querySelectorAll('#toolbox-panel input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            const toolElement = document.getElementById(cb.dataset.tool);
+            if(toolElement) {
+                toolElement.style.display = cb.checked ? '' : 'none';
             }
-        })
+        });
     },
 
     setToolVisibility(toolId, isVisible) {
-        this.toolVisibility[toolId] = isVisible
-        this.saveToolVisibility()
-        this.updateToolVisibility()
-    }
-}
-
-// Global function to open tools
-window.openTool = function(toolId) {
-    console.log('🛠️ Opening tool:', toolId)
-
-    // Hide toolbox first
-    window.toolbox.hide()
-
-    switch (toolId) {
-        case 'academic-hub':
-            showPage('academic-hub')
-            break
-        case 'ai-notes':
-            showPage('ai-notes')
-            break
-        case 'music':
-            showPage('music')
-            break
-        case 'dev-tools':
-            // Show development widgets on home page
-            showPage('home')
-            // Scroll to development section
-            setTimeout(() => {
-                const devSection = document.getElementById('development-widgets-container')
-                devSection?.scrollIntoView({ behavior: 'smooth' })
-            }, 100)
-            break
-        default:
-            console.warn('Unknown tool:', toolId)
-    }
-}
-
-// Cleanup function for development widgets.
-window.cleanupDevelopmentWidgets = function() {
-    if (window.developmentMetricsInterval) {
-        clearInterval(window.developmentMetricsInterval)
-        window.developmentMetricsInterval = null
-    }
-}
-
-// Global debugging functions for Voice AI
-window.testVoiceAI = async () => {
-    if (window.voiceAI) {
-        console.log('🎤 Testing Voice AI...');
-        try {
-            await window.voiceAI.speak('Hello! This is a test of the Voice AI system.');
-            console.log('✅ Voice AI test successful');
-        } catch (error) {
-            console.error('❌ Voice AI test failed:', error);
-        }
-    } else {
-        console.log('⚠️ Voice AI not initialized');
+        this.toolVisibility[toolId] = isVisible;
+        this.saveToolVisibility();
+        this.updateToolVisibility();
     }
 };
 
-window.testVoiceRecording = async () => {
-    if (window.voiceAI) {
-        console.log('🎤 Testing voice recording...');
-        try {
-            const result = await window.voiceAI.recordAndTranscribe();
-            console.log('✅ Voice recording test successful:', result);
-        } catch (error) {
-            console.error('❌ Voice recording test failed:', error);
-        }
-    } else {
-        console.log('⚠️ Voice AI not initialized');
-    }
-};
-
-window.getVoiceAIVoices = () => {
-    if (window.voiceAI) {
-        const voices = window.voiceAI.getVoices();
-        console.log('🎵 Available voices:', voices);
-        return voices;
-    } else {
-        console.log('⚠️ Voice AI not initialized');
-        return [];
-    }
-};
-
-// Expose Voice AI globally for debugging
-window.voiceAIDebug = {
-    test: window.testVoiceAI,
-    record: window.testVoiceRecording,
-    getVoices: window.getVoiceAIVoices,
-    speak: (text) => window.voiceAI?.speak(text),
-    setVoice: (voiceId) => window.voiceAI?.setVoice(voiceId)
-};
+window.toggleTask = toggleTask;
+window.deleteTask = deleteTask;
+window.deleteJournalEntry = deleteJournalEntry;
+window.onDateSelect = onDateSelect;

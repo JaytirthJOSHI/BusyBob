@@ -2,6 +2,7 @@
 // Main integration file that connects the multi-agent system with existing BusyBob features
 
 import hybridAI from '../lib/hybrid-ai-service.js'
+import { db, auth } from '../lib/supabase.js'
 
 class BusyBobAgenticAI {
     constructor() {
@@ -69,35 +70,31 @@ class BusyBobAgenticAI {
     async fetchUserData(userId) {
         // This would integrate with existing BusyBob data systems
         // For now, return mock data
+        const { data: { user } } = await auth.getCurrentUser()
+        if (!user || user.id !== userId) {
+            return {}
+        }
+
+        const [
+            tasks,
+            feelings,
+            subjects,
+            profile
+        ] = await Promise.all([
+            db.getTasks(),
+            db.getFeelings(),
+            db.getSubjects(),
+            db.getProfile()
+        ]);
+
         return {
-            academicLevel: 'High School',
-            subjects: ['Mathematics', 'Physics', 'English Literature', 'World History'],
-            recentGrades: [
-                { subject: 'Mathematics', grade: 'A-', date: '2024-01-15' },
-                { subject: 'Physics', grade: 'B+', date: '2024-01-10' },
-                { subject: 'English Literature', grade: 'A', date: '2024-01-12' }
-            ],
-            upcomingTasks: [
-                { title: 'Physics Lab Report', dueDate: '2024-01-20', subject: 'Physics' },
-                { title: 'Math Quiz Preparation', dueDate: '2024-01-18', subject: 'Mathematics' },
-                { title: 'English Essay Draft', dueDate: '2024-01-22', subject: 'English Literature' }
-            ],
-            studyPreferences: {
-                preferredTime: 'morning',
-                sessionLength: 45,
-                breakLength: 15,
-                learningStyle: 'visual'
-            },
-            moodHistory: [
-                { mood: 'focused', timestamp: '2024-01-15T08:00:00Z' },
-                { mood: 'stressed', timestamp: '2024-01-14T14:30:00Z' },
-                { mood: 'confident', timestamp: '2024-01-13T16:00:00Z' }
-            ],
-            learningGoals: [
-                'Maintain A average in all subjects',
-                'Improve time management skills',
-                'Develop better study habits'
-            ]
+            academicLevel: profile?.academic_level || 'High School',
+            subjects: subjects?.map(s => s.name) || [],
+            recentGrades: [], // Placeholder, as grades are not yet in db
+            upcomingTasks: tasks?.filter(t => !t.completed).sort((a, b) => new Date(a.due_date) - new Date(b.due_date)).slice(0, 5) || [],
+            studyPreferences: profile?.study_preferences || {},
+            moodHistory: feelings?.slice(0, 10) || [],
+            learningGoals: profile?.learning_goals || []
         };
     }
 
@@ -141,30 +138,30 @@ class BusyBobAgenticAI {
     }
 
     async getRecentTasks() {
-        // This would fetch from the tasks system
-        return [
-            { title: 'Complete Physics Assignment', status: 'in_progress' },
-            { title: 'Review Math Notes', status: 'completed' },
-            { title: 'Start English Essay', status: 'pending' }
-        ];
+        const { data: tasks, error } = await db.getTasks({ limit: 5 });
+        if (error) {
+            console.error("Error fetching recent tasks:", error);
+            return [];
+        }
+        return tasks;
     }
 
     async getCurrentMood() {
-        // This would fetch from the mood tracking system
-        return {
-            mood: 'focused',
-            energy: 'high',
-            timestamp: new Date().toISOString()
-        };
+        const { data: feelings, error } = await db.getFeelings({ limit: 1 });
+        if (error) {
+            console.error("Error fetching current mood:", error);
+            return null;
+        }
+        return feelings.length > 0 ? feelings[0] : null;
     }
 
     async getUpcomingDeadlines() {
-        // This would fetch from the calendar/tasks system
-        return [
-            { title: 'Physics Lab Report', dueDate: '2024-01-20', priority: 'high' },
-            { title: 'Math Quiz', dueDate: '2024-01-18', priority: 'medium' },
-            { title: 'English Essay', dueDate: '2024-01-22', priority: 'high' }
-        ];
+        const { data: tasks, error } = await db.getTasks({ upcoming: true, limit: 5 });
+        if (error) {
+            console.error("Error fetching upcoming deadlines:", error);
+            return [];
+        }
+        return tasks;
     }
 
     async triggerIntegrations(agentId, context) {
@@ -386,4 +383,4 @@ class BusyBobAgenticAI {
 }
 
 // Export for use in other modules
-window.BusyBobAgenticAI = BusyBobAgenticAI; 
+window.BusyBobAgenticAI = BusyBobAgenticAI;

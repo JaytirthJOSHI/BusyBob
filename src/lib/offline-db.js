@@ -1252,6 +1252,16 @@ export const db = {
             console.error('❌ Error importing user data:', error)
             return false
         }
+    },
+
+    async getSubjects() {
+        console.warn("getSubjects is not implemented yet. Returning placeholder data.");
+        return { data: [], error: null };
+    },
+
+    async getProfile() {
+        console.warn("getProfile is not implemented yet. Returning placeholder data.");
+        return { data: {}, error: null };
     }
 }
 

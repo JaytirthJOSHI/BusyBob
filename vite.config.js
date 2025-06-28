@@ -5,7 +5,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api/studentvue': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3001',
         changeOrigin: true,
         configure: (proxy, options) => {
           proxy.on('error', (err, req, res) => {
