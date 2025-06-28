@@ -351,7 +351,7 @@ export const db = {
         try {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) {
-                console.warn('⚠️ No authenticated user found for feeling creation')
+                console.warn('⚠️ No authenticated user found for creating feeling')
                 return { data: null, error: new Error('User not authenticated') }
             }
 
@@ -359,7 +359,6 @@ export const db = {
                 ...feelingData,
                 user_id: user.id,
                 created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
             }
 
             console.log('😊 Creating feeling:', feeling)

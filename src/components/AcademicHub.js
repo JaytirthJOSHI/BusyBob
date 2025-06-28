@@ -349,13 +349,19 @@ export class AcademicHub {
     }
 
     // StudentVue data loading methods
-    async fetchStudentVueData(action, retries = 3) {
-        if (!this.districtUrl || !this.username || !this.password) {
+    async fetchStudentVueData(action, retries = 3, credentials = null) {
+        const creds = credentials || {
+            districtUrl: this.districtUrl,
+            username: this.username,
+            password: this.password,
+        }
+
+        if (!creds.districtUrl || !creds.username || !creds.password) {
             throw new Error('StudentVue credentials are not set.')
         }
 
-        // Additional validation
-        if (!this.isStudentVueConnected) {
+        // Additional validation - only check this if not testing credentials
+        if (!credentials && !this.isStudentVueConnected) {
             throw new Error('StudentVue is not connected.')
         }
 
@@ -367,9 +373,9 @@ export class AcademicHub {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        districtUrl: this.districtUrl,
-                        username: this.username,
-                        password: this.password,
+                        districtUrl: creds.districtUrl,
+                        username: creds.username,
+                        password: creds.password,
                         action: action,
                     }),
                 })
@@ -586,28 +592,176 @@ export class AcademicHub {
         if (!container) return
 
         container.innerHTML = `
-            <div class="max-w-4xl mx-auto p-6">
-                <div class="text-center py-12">
-                    <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                        </svg>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Connect Your Academic Accounts</h2>
-                    <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                        Connect your Canvas and/or StudentVue accounts to view all your academic data in one unified dashboard.
-                    </p>
-                    <div class="space-y-4">
-                        <button id="go-to-settings" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105">
-                            Go to Settings to Connect
+            <div class="max-w-md mx-auto mt-10 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Connect to Your Accounts</h2>
+
+                <!-- StudentVue Connection Form -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">StudentVue</h3>
+                    <form id="studentvue-form">
+                        <div class="mb-4">
+                            <label for="studentvue-district" class="block text-sm font-medium text-gray-700 dark:text-gray-300">District URL</label>
+                            <input type="text" id="studentvue-district" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., https://studentvue.cobbk12.org">
+                        </div>
+                        <div class="mb-4">
+                            <label for="studentvue-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                            <input type="text" id="studentvue-username" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="mb-4">
+                            <label for="studentvue-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                            <input type="password" id="studentvue-password" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Connect StudentVue
                         </button>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                            You can manage all your connected accounts in the Settings page
-                        </p>
-                    </div>
+                    </form>
+                </div>
+
+                <!-- Divider -->
+                <div class="my-6 border-t border-gray-200 dark:border-gray-700"></div>
+
+                <!-- Canvas Connection Form (existing) -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Canvas</h3>
+                    <form id="canvas-form">
+                        <div class="mb-4">
+                            <label for="canvas-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Canvas URL</label>
+                            <input type="text" id="canvas-url" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., https://canvas.instructure.com">
+                        </div>
+                        <div class="mb-4">
+                            <label for="canvas-token" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Access Token</label>
+                            <input type="password" id="canvas-token" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <button type="submit" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Connect Canvas
+                        </button>
+                    </form>
                 </div>
             </div>
         `
+
+        document.getElementById('studentvue-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            this.showMessage('Connecting to StudentVue...', 'info')
+            try {
+                const districtUrl = document.getElementById('studentvue-district').value
+                const username = document.getElementById('studentvue-username').value
+                const password = document.getElementById('studentvue-password').value
+
+                if (!districtUrl || !username || !password) {
+                    this.showMessage('All StudentVue fields are required.', 'error')
+                    return
+                }
+
+                // Test the connection first
+                await this.testStudentVueConnection(districtUrl, username, password)
+
+                // If successful, save the credentials
+                await this.saveStudentVueCredentials(districtUrl, username, password)
+
+                this.districtUrl = districtUrl
+                this.username = username
+                this.password = password
+                this.isStudentVueConnected = true
+
+                this.showMessage('StudentVue connected successfully!', 'success')
+                await this.loadAllData()
+
+            } catch (error) {
+                this.showMessage(`StudentVue connection failed: ${error.message}`, 'error')
+            }
+        })
+
+        document.getElementById('canvas-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            this.showMessage('Connecting to Canvas...', 'info')
+            try {
+                const canvasUrl = document.getElementById('canvas-url').value
+                const canvasAccessToken = document.getElementById('canvas-token').value
+
+                if (!canvasUrl || !canvasAccessToken) {
+                    this.showMessage('All Canvas fields are required.', 'error')
+                    return
+                }
+
+                await this.testCanvasConnection(canvasUrl, canvasAccessToken)
+                await this.saveCanvasCredentials(canvasUrl, canvasAccessToken)
+
+                this.canvasUrl = canvasUrl
+                this.canvasAccessToken = canvasAccessToken
+                this.isCanvasConnected = true
+
+                this.showMessage('Canvas connected successfully!', 'success')
+                await this.loadAllData()
+
+            } catch (error) {
+                this.showMessage(`Canvas connection failed: ${error.message}`, 'error')
+            }
+        })
+    }
+
+    async testStudentVueConnection(districtUrl, username, password) {
+        console.log('Testing StudentVue connection...')
+        // Use a lightweight action to test credentials
+        await this.fetchStudentVueData('getSchoolInfo', 1, { districtUrl, username, password })
+    }
+
+    async saveStudentVueCredentials(districtUrl, username, password) {
+        const { data: { user } } = await auth.getCurrentUser()
+        if (!user) throw new Error('User not authenticated')
+
+        const { error } = await supabase
+            .from('studentvue_credentials')
+            .upsert({
+                user_id: user.id,
+                district_url: districtUrl,
+                username: username,
+                password: password,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id' })
+
+        if (error) {
+            console.error('Error saving StudentVue credentials:', error)
+            throw new Error('Failed to save StudentVue credentials to the database.')
+        }
+
+        console.log('StudentVue credentials saved successfully.')
+    }
+
+    async testCanvasConnection(canvasUrl, accessToken) {
+        console.log('Testing Canvas connection...')
+        // A simple API call to test the connection
+        const response = await fetch(`/api/canvas/courses`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ canvasToken: accessToken, canvasDomain: canvasUrl, includeEnded: false }),
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || errorData.message || 'Invalid Canvas URL or token.')
+        }
+    }
+
+    async saveCanvasCredentials(canvasUrl, accessToken) {
+        const { data: { user } } = await auth.getCurrentUser()
+        if (!user) throw new Error('User not authenticated')
+
+        const { error } = await supabase
+            .from('canvas_credentials')
+            .upsert({
+                user_id: user.id,
+                canvas_url: canvasUrl,
+                access_token: accessToken,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id' })
+
+        if (error) {
+            console.error('Error saving Canvas credentials:', error)
+            throw new Error('Failed to save Canvas credentials to the database.')
+        }
+
+        console.log('Canvas credentials saved successfully.')
     }
 
     renderOverviewTab() {

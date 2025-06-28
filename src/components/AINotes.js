@@ -1,3 +1,5 @@
+import { supabase, auth } from '../lib/supabase.js'
+
 export class AINotes {
     constructor() {
         this.notes = [];
@@ -14,7 +16,7 @@ export class AINotes {
 
     async loadNotes() {
         try {
-            const { data: notes, error } = await window.supabase
+            const { data: notes, error } = await supabase
                 .from('ai_notes')
                 .select('*')
                 .order('created_at', { ascending: false });
@@ -34,7 +36,7 @@ export class AINotes {
         }
 
         try {
-            const { data, error } = await window.supabase
+            const { data, error } = await supabase
                 .rpc('search_ai_notes', { search_query: query });
 
             if (error) throw error;
@@ -47,12 +49,12 @@ export class AINotes {
 
     async saveNote(noteData) {
         try {
-            const { data: { user } } = await window.supabase.auth.getUser();
+            const { data: { user } } = await auth.getUser();
             if (!user) throw new Error('User not authenticated');
 
             if (noteData.id) {
                 // Update existing note
-                const { error } = await window.supabase
+                const { error } = await supabase
                     .from('ai_notes')
                     .update({
                         title: noteData.title,
@@ -64,7 +66,7 @@ export class AINotes {
                 if (error) throw error;
             } else {
                 // Create new note
-                const { error } = await window.supabase
+                const { error } = await supabase
                     .from('ai_notes')
                     .insert({
                         user_id: user.id,
@@ -90,7 +92,7 @@ export class AINotes {
         if (!confirm('Are you sure you want to delete this note?')) return;
 
         try {
-            const { error } = await window.supabase
+            const { error } = await supabase
                 .from('ai_notes')
                 .delete()
                 .eq('id', noteId);

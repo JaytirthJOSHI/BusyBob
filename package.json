@@ -31,7 +31,7 @@
   "scripts": {
     "dev": "vite",
     "start": "node server.js",
-    "dev:server": "node server.js",
+    "dev:server": "PORT=3001 node server.js",
     "dev:full": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "build": "vite build",
     "preview": "vite preview",
@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.0",
+    "dotenv": "^17.0.0",
     "vite": "^7.0.0"
   },
   "engines": {

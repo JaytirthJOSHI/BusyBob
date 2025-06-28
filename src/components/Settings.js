@@ -1741,31 +1741,29 @@ export class Settings {
     }
 
     loadInterfaceSettings() {
-        try {
-            const settings = JSON.parse(localStorage.getItem('interface-settings') || '{}')
-            let el;
-            // Load tab visibility
-            el = document.getElementById('tab-home'); if (el) el.checked = settings.home ?? true;
-            el = document.getElementById('tab-tasks'); if (el) el.checked = settings.tasks ?? true;
-            el = document.getElementById('tab-calendar'); if (el) el.checked = settings.calendar ?? true;
-            el = document.getElementById('tab-journal'); if (el) el.checked = settings.journal ?? true;
-            el = document.getElementById('tab-academic-hub'); if (el) el.checked = settings.academicHub ?? true;
-            el = document.getElementById('tab-music'); if (el) el.checked = settings.music ?? true;
-            el = document.getElementById('tab-ai-notes'); if (el) el.checked = settings.aiNotes ?? true;
-            // Load home page sections
-            el = document.getElementById('section-upcoming-tasks'); if (el) el.checked = settings.upcomingTasks ?? true;
-            el = document.getElementById('section-mood-logging'); if (el) el.checked = settings.moodLogging ?? true;
-            el = document.getElementById('section-pomodoro-widget'); if (el) el.checked = settings.pomodoroWidget ?? true;
-            el = document.getElementById('section-statistics'); if (el) el.checked = settings.statistics ?? true;
-            // Load toolbox settings
-            if (window.toolbox) {
-                el = document.getElementById('toolbox-academic-hub'); if (el) el.checked = window.toolbox.toolVisibility['academic-hub'] ?? true;
-                el = document.getElementById('toolbox-ai-notes'); if (el) el.checked = window.toolbox.toolVisibility['ai-notes'] ?? true;
-                el = document.getElementById('toolbox-music'); if (el) el.checked = window.toolbox.toolVisibility['music'] ?? true;
-                el = document.getElementById('toolbox-dev-tools'); if (el) el.checked = window.toolbox.toolVisibility['dev-tools'] ?? true;
+        const settings = JSON.parse(localStorage.getItem('interfaceSettings')) || {};
+        
+        // Ensure toolbox and its visibility settings are loaded
+        const toolVisibility = window.toolbox?.toolVisibility || {};
+        
+        // Combine stored settings with default visibility
+        const finalSettings = {
+            'academic-hub': toolVisibility['academic-hub'] ?? settings['academic-hub'] ?? true,
+            'music': toolVisibility['music'] ?? settings['music'] ?? true,
+            'ai-notes': toolVisibility['ai-notes'] ?? settings['ai-notes'] ?? true,
+            'journal': toolVisibility['journal'] ?? settings['journal'] ?? true,
+            'calendar': toolVisibility['calendar'] ?? settings['calendar'] ?? true,
+            'tasks': toolVisibility['tasks'] ?? settings['tasks'] ?? true
+        };
+
+        this.applyInterfaceSettings(finalSettings);
+
+        // Update UI toggles
+        for (const [key, value] of Object.entries(finalSettings)) {
+            const toggle = document.getElementById(`${key}-toggle`);
+            if (toggle) {
+                toggle.checked = value;
             }
-        } catch (error) {
-            console.error('Error loading interface settings:', error)
         }
     }
 }

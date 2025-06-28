@@ -26,7 +26,7 @@ async function handleRequest(body) {
     let client;
     try {
         console.log('Attempting to login to StudentVue...');
-        client = await StudentVue.login(districtUrl, { username, password });
+        client = await StudentVue.login(districtUrl, username, password);
         console.log('Successfully logged in to StudentVue');
     } catch (error) {
         console.error('StudentVue login failed:', { message: error.message, stack: error.stack });

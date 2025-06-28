@@ -3,7 +3,7 @@
 
 class ElevenLabsVoiceService {
     constructor() {
-        this.apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY || process.env.ELEVENLABS_API_KEY;
+        this.apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
         this.baseURL = 'https://api.elevenlabs.io/v1';
         this.isInitialized = false;
         this.availableVoices = new Map();

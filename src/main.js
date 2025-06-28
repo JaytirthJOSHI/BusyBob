@@ -22,8 +22,8 @@ import './agentic-ai/agents.js'
 import './agentic-ai/agentic-ai.js'
 import './styles/agentic-ai.css'
 // Import Voice AI
-import VoiceAI from './components/VoiceAI.js'
-import './lib/elevenlabs-voice.js'
+// import VoiceAI from './components/VoiceAI.js'
+// import './lib/elevenlabs-voice.js'
 
 console.log('🚀 Main.js loaded - starting initialization...')
 
@@ -307,6 +307,7 @@ async function initializeApp() {
         navigation = new Navigation()
         landingPage = new LandingPage()
         academicHub = new AcademicHub()
+        calendar = new Calendar('calendar-container', onDateSelect)
         music = new Music()
         aiNotes = new AINotes()
         settings = new Settings(calendar)
@@ -330,18 +331,8 @@ async function initializeApp() {
             console.error('❌ Error initializing gamification systems:', gameError)
         }
 
-        // Initialize Enhanced AI Agent
-        console.log('🤖 Initializing Enhanced AI Agent...')
-        try {
-            aiAgent = new EnhancedAIAgent()
-            await aiAgent.init()
-            window.enhancedAI = aiAgent
-            console.log('✅ Enhanced AI Agent initialized')
-        } catch (aiError) {
-            console.error('❌ Error initializing AI Agent:', aiError)
-        }
-
         // Initialize Voice AI
+        /*
         console.log('🎤 Initializing Voice AI...')
         try {
             const voiceAIContainer = document.getElementById('voice-ai-container')
@@ -355,6 +346,7 @@ async function initializeApp() {
         } catch (voiceError) {
             console.error('❌ Error initializing Voice AI:', voiceError)
         }
+        */
 
         // Initialize Agentic AI system
         if (!agenticAI) {
@@ -951,11 +943,13 @@ async function showMainApp() {
             }
         }
 
-        // Initialize calendar if not already done
-        if (!calendar) {
-            console.log('📅 Initializing calendar...')
-            calendar = new Calendar('calendar-container', onDateSelect)
-        }
+        // Initialize components that need it once
+        console.log('🔧 Initializing main components...')
+        if (academicHub) academicHub.init()
+        if (music) music.init()
+        if (aiNotes) aiNotes.init()
+        if (settings) settings.init()
+        console.log('✅ Main components initialized.')
 
         // Load all data
         console.log('📊 Loading all application data...')
@@ -1015,24 +1009,12 @@ function showPage(pageName) {
             loadJournalData()
             break
         case 'academic-hub':
-            if (academicHub) {
-                academicHub.init()
-            }
             break
         case 'music':
-            if(music) {
-                music.init()
-            }
             break
         case 'ai-notes':
-            if(aiNotes) {
-                aiNotes.init()
-            }
             break
         case 'settings':
-            if(settings) {
-                settings.init()
-            }
             break
         case 'privacy-policy':
             if(privacyPolicy) {
@@ -1225,7 +1207,7 @@ function createSimpleTaskHTML(task) {
         <div class="flex items-center w-full">
             <input type="checkbox" id="task-${task.id}" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" class="h-5 w-5 rounded-full border-gray-300 text-orange-600 focus:ring-orange-500 cursor-pointer">
             <label for="task-${task.id}" class="ml-3 block text-sm font-medium ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900 dark:text-gray-200'}">${task.title}</label>
-            <span class="ml-auto text-xs text-gray-500 dark:text-gray-400">${dateUtils.formatDueDate(task.due_date)}</span>
+            <span class="ml-auto text-xs text-gray-500 dark:text-gray-400">${dateUtils.formatDateTime(task.due_date)}</span>
             <button onclick="deleteTask('${task.id}')" class="ml-2 text-gray-400 hover:text-red-500">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
@@ -1308,8 +1290,10 @@ function renderTodaysReflection() {
             </div>
         `
     } else {
-        // Form is already in the HTML, so just ensure it's visible
-        reflectionContainer.innerHTML = document.getElementById('reflection-form-template').innerHTML;
+        const template = document.getElementById('reflection-form-template')
+        if (template) {
+            reflectionContainer.innerHTML = template.innerHTML;
+        }
     }
 }
 
@@ -1342,8 +1326,11 @@ function renderPastJournalEntries() {
 
 function calculateAndRenderStreak() {
     let streak = 0
+    const journalStreakEl = document.getElementById('journal-streak')
+    if (!journalStreakEl) return
+
     if (journalEntries.length === 0) {
-        document.getElementById('journal-streak').textContent = 0
+        journalStreakEl.textContent = 0
         return
     }
 
@@ -1369,7 +1356,7 @@ function calculateAndRenderStreak() {
         }
     }
     
-    document.getElementById('journal-streak').textContent = streak
+    journalStreakEl.textContent = streak
 }
 
 function setupJournalListeners() {
@@ -1592,24 +1579,22 @@ function updateLiveClock() {
 
 // Kid Mode
 async function applyKidModeStyles() {
-    const kidModeSettings = await db.getKidModeSettings();
-    if (kidMode.isActive(kidModeSettings)) {
+    if (kidMode.isActive) {
         document.body.classList.add('kid-mode-active');
         const styleSheet = document.createElement("style");
         styleSheet.id = 'kid-mode-styles';
-        styleSheet.innerText = kidMode.getThemeStyles(kidModeSettings.theme);
+        styleSheet.innerText = kidMode.getKidModeStyles();
         document.head.appendChild(styleSheet);
     }
 }
 
 function applyKidModeRestrictions() {
-    const kidModeSettings = kidMode.settings;
-    if (kidMode.isActive(kidModeSettings)) {
+    if (kidMode.isActive) {
         // Feature restrictions
-        if (kidModeSettings.restrictedFeatures?.includes('settings')) {
+        if (kidMode.isFeatureRestricted('settings')) {
             document.querySelector('[data-page="settings"]')?.classList.add('hidden');
         }
-        if (kidModeSettings.restrictedFeatures?.includes('academic-hub')) {
+        if (kidMode.isFeatureRestricted('academic-hub')) {
             document.querySelector('[data-page="academic-hub"]')?.classList.add('hidden');
         }
         // ... add more restrictions as needed
@@ -1630,19 +1615,17 @@ function applyKidModeRestrictions() {
 
 function applyKidModeContentFiltering() {
     // This function will be called by the observer
-    const kidModeSettings = kidMode.settings;
-    if (kidMode.isActive(kidModeSettings)) {
+    if (kidMode.isActive) {
         const allTextNodes = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         let currentNode;
         while (currentNode = allTextNodes.nextNode()) {
-            currentNode.nodeValue = kidMode.filterText(currentNode.nodeValue);
+            currentNode.nodeValue = kidMode.sanitizeContent(currentNode.nodeValue);
         }
     }
 }
 
 function initKidModeObserver() {
-    const kidModeSettings = kidMode.settings;
-    if (kidMode.isActive(kidModeSettings) && kidModeSettings.contentFiltering) {
+    if (kidMode.isActive && kidMode.settings?.contentFiltering) {
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.type === 'childList') {

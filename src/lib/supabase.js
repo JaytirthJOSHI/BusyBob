@@ -38,13 +38,13 @@ export const auth = {
       })
 
       if (data.user && !error) {
-        // Create user profile in the users table
+        // Create user profile in the profiles table
         const { error: profileError } = await supabase
-          .from('users')
+          .from('profiles')
           .insert([
             {
               id: data.user.id,
-              name: name,
+              username: name,
               email: email,
               created_at: new Date().toISOString()
             }
@@ -126,7 +126,7 @@ export const auth = {
       // For Spotify, we handle auth differently since it's not a native Supabase provider
       // First, check if user exists by email
       const { data: existingUsers, error: searchError } = await supabase
-        .from('users')
+        .from('profiles')
         .select('*')
         .eq('email', spotifyData.email)
         .limit(1)
@@ -138,7 +138,7 @@ export const auth = {
 
         // Update user record with Spotify data
         const { error: updateError } = await supabase
-          .from('users')
+          .from('profiles')
           .update({
             spotify_id: spotifyData.spotifyId,
             name: spotifyData.name || user.name,
@@ -169,9 +169,9 @@ export const auth = {
 
         user = signUpData.user;
 
-        // Create user profile in the users table
+        // Create user profile in the profiles table
         const { error: profileError } = await supabase
-          .from('users')
+          .from('profiles')
           .insert([
             {
               id: user.id,

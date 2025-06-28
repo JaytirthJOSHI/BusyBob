@@ -1,8 +1,8 @@
 import { auth, supabase } from '../lib/supabase.js'
 
-export class KidMode {
+class KidModeSingleton {
     constructor() {
-        this.isEnabled = false
+        this.isActive = false
         this.userAge = null
         this.dateOfBirth = null
         this.settings = null
@@ -32,7 +32,7 @@ export class KidMode {
 
             if (kidModeData) {
                 this.settings = kidModeData
-                this.isEnabled = kidModeData.enabled
+                this.isActive = kidModeData.enabled
                 this.dateOfBirth = kidModeData.date_of_birth
 
                 if (this.dateOfBirth) {
@@ -48,7 +48,7 @@ export class KidMode {
                 .single()
 
             if (userData && !this.settings) {
-                this.isEnabled = userData.kid_mode_enabled || false
+                this.isActive = userData.kid_mode_enabled || false
                 this.dateOfBirth = userData.date_of_birth
 
                 if (this.dateOfBirth) {
@@ -77,7 +77,7 @@ export class KidMode {
     }
 
     async checkAutoDisable() {
-        if (!this.isEnabled || !this.dateOfBirth) return
+        if (!this.isActive || !this.dateOfBirth) return
 
         const age = this.calculateAge(this.dateOfBirth)
 
@@ -114,7 +114,7 @@ export class KidMode {
                 })
                 .eq('id', user.id)
 
-            this.isEnabled = false
+            this.isActive = false
 
             // Show notification
             this.showAutoDisableNotification()
@@ -153,7 +153,7 @@ export class KidMode {
 
             if (error) throw error
 
-            this.isEnabled = true
+            this.isActive = true
             this.dateOfBirth = dateOfBirth
             this.userAge = age
 
@@ -186,7 +186,7 @@ export class KidMode {
 
             if (error) throw error
 
-            this.isEnabled = false
+            this.isActive = false
 
             return true
 
@@ -199,7 +199,7 @@ export class KidMode {
     async setDateOfBirth(dateOfBirth) {
         const age = this.calculateAge(dateOfBirth)
 
-        if (age >= 13 && this.isEnabled) {
+        if (age >= 13 && this.isActive) {
             // Auto-disable if setting age to 13+
             await this.autoDisableKidMode()
             return false
@@ -215,7 +215,7 @@ export class KidMode {
                 .upsert({
                     user_id: user.id,
                     date_of_birth: dateOfBirth,
-                    enabled: this.isEnabled && age < 13,
+                    enabled: this.isActive && age < 13,
                     updated_at: new Date().toISOString()
                 })
 
@@ -262,7 +262,7 @@ export class KidMode {
 
     // Feature restrictions for Kid Mode
     getRestrictedFeatures() {
-        if (!this.isEnabled) return []
+        if (!this.isActive) return []
 
         return [
             'spotify_integration',  // No music streaming
@@ -276,12 +276,12 @@ export class KidMode {
     }
 
     isFeatureRestricted(featureName) {
-        return this.isEnabled && this.getRestrictedFeatures().includes(featureName)
+        return this.isActive && this.getRestrictedFeatures().includes(featureName)
     }
 
     // UI modifications for Kid Mode
     getKidModeStyles() {
-        if (!this.isEnabled) return ''
+        if (!this.isActive) return ''
 
         return `
             /* Kid Mode Styles */
@@ -317,7 +317,7 @@ export class KidMode {
     }
 
     renderKidModeIndicator() {
-        if (!this.isEnabled) return ''
+        if (!this.isActive) return ''
 
         return `
             <div class="kid-mode-indicator">
@@ -328,22 +328,22 @@ export class KidMode {
 
     // Data sanitization for Kid Mode
     sanitizeContent(content) {
-        if (!this.isEnabled) return content
+        if (!this.isActive) return content
 
-        // Remove any potentially inappropriate content
-        // This is a basic implementation - you might want to use a proper content filter
-        const sensitivePatterns = [
-            /https?:\/\/[^\s]+/gi,  // Remove external links
-            /\b[\w._%+-]+@[\w.-]+\.[A-Z]{2,}\b/gi  // Remove email addresses
-        ]
-
+        // Basic profanity filter (expand with a proper library if needed)
+        const profaneWords = ['example', 'badword']
         let sanitized = content
-        sensitivePatterns.forEach(pattern => {
-            sanitized = sanitized.replace(pattern, '[LINK REMOVED]')
+        profaneWords.forEach(word => {
+            const regex = new RegExp(`\\b${word}\\b`, 'gi')
+            sanitized = sanitized.replace(regex, '****')
         })
-
         return sanitized
     }
+
+    destroy() {
+        // Cleanup logic if any event listeners or timers are added in the future
+        console.log('Kid Mode destroyed');
+    }
 }
-// Global instance
-export const kidMode = new KidMode()
+
+export const kidMode = new KidModeSingleton();

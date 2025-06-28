@@ -12,7 +12,8 @@ class CanvasAPIError extends Error {
 
 class CanvasClient {
   constructor(token, domain, options = {}) {
-    this.baseURL = `https://${domain}/api/v1`;
+    const sanitizedDomain = domain.replace(/^https?:\/\//, '');
+    this.baseURL = `https://${sanitizedDomain}/api/v1`;
     this.token = token;
     this.maxRetries = options.maxRetries || 3;
     this.retryDelay = options.retryDelay || 1000;
@@ -733,4 +734,4 @@ router.post('/dashboard', validateCanvasCredentials, async (req, res) => {
   }
 });
 
-export { router };
+export { router }; 

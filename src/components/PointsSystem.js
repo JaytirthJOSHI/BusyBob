@@ -125,9 +125,9 @@ export class PointsSystem {
       }
 
       const { data, error } = await supabase
-        .from('user_metadata')
-        .select('points, lifetime_points, level, rank, unlocked_rewards')
-        .eq('user_id', user.id)
+        .from('profiles')
+        .select('points, lifetime_points, level, unlocked_rewards')
+        .eq('id', user.id)
         .single()
 
       if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
@@ -158,18 +158,18 @@ export class PointsSystem {
   async createInitialUserData(userId) {
     try {
       const { error } = await supabase
-        .from('user_metadata')
-        .insert({
-          user_id: userId,
+        .from('profiles')
+        .update({
           points: 0,
           lifetime_points: 0,
           level: 1,
           unlocked_rewards: []
         })
+        .eq('id', userId)
 
       if (error) throw error
 
-      console.log('Created initial user metadata')
+      console.log('Created initial user gamification data in profiles')
     } catch (error) {
       console.error('Error creating initial user data:', error)
       throw error
@@ -552,34 +552,13 @@ export class PointsSystem {
   async loadLeaderboard() {
     try {
       const { data, error } = await supabase
-        .from('user_metadata')
-        .select('user_id, points, level, created_at')
+        .from('profiles')
+        .select('username, avatar_url, level, points')
         .order('points', { ascending: false })
         .limit(10)
 
       if (error) throw error
-
-      const leaderboardHTML = data?.map((user, index) => `
-        <div class="flex items-center justify-between p-4 rounded-lg ${index === 0 ? 'bg-yellow-50 dark:bg-yellow-900/20' : index === 1 ? 'bg-gray-50 dark:bg-gray-800' : index === 2 ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-gray-50 dark:bg-gray-700'} transition-colors">
-          <div class="flex items-center gap-4">
-            <div class="text-2xl font-bold ${index === 0 ? 'text-yellow-600' : index === 1 ? 'text-gray-600' : index === 2 ? 'text-orange-600' : 'text-gray-500'}">
-              ${index + 1}
-            </div>
-            <div>
-              <div class="font-semibold text-gray-800 dark:text-white">Student ${index + 1}</div>
-              <div class="text-sm text-gray-500 dark:text-gray-400">Level ${user.level || 1}</div>
-            </div>
-          </div>
-          <div class="text-right">
-            <div class="font-bold text-purple-600 dark:text-purple-400">${(user.points || 0).toLocaleString()} 💎</div>
-          </div>
-        </div>
-      `).join('') || '<div class="text-center text-gray-500 dark:text-gray-400">No data available</div>'
-
-      const content = document.getElementById('leaderboard-content')
-      if (content) {
-        content.innerHTML = leaderboardHTML
-      }
+      return data || []
     } catch (error) {
       console.error('Error loading leaderboard:', error)
       const content = document.getElementById('leaderboard-content')
@@ -608,9 +587,9 @@ export class PointsSystem {
       unlockedRewards.push(rewardId)
 
       const { error: updateError } = await supabase
-        .from('user_metadata')
+        .from('profiles')
         .upsert({
-          user_id: user.id,
+          id: user.id,
           points: newPoints,
           unlocked_rewards: unlockedRewards
         })
@@ -667,9 +646,9 @@ export class PointsSystem {
       const newLevel = this.calculateLevel(newLifetimePoints)
 
       const { error: updateError } = await supabase
-        .from('user_metadata')
+        .from('profiles')
         .upsert({
-          user_id: user.id,
+          id: user.id,
           points: newPoints,
           lifetime_points: newLifetimePoints,
           level: newLevel
@@ -834,3 +813,4 @@ export class PointsSystem {
     this.isInitialized = false
   }
 }
+
