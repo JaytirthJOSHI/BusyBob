@@ -70,7 +70,11 @@ const moodManager = {
 
     async log(rating, date) {
         try {
-            const feelingData = { rating }
+            const feelingData = { 
+                rating,
+                mood: this.ui.getRatingText(rating),
+                intensity: rating
+            }
             if (date) {
                 feelingData.created_at = date.toISOString()
             }

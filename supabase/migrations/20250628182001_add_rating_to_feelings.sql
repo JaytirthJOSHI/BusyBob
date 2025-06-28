@@ -1,0 +1,1 @@
+ALTER TABLE "public"."feelings" ADD COLUMN "rating" integer;
