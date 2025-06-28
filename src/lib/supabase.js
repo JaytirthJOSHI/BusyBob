@@ -230,15 +230,15 @@ export const auth = {
 
 // Database helpers
 export const db = {
-  // Ensure user exists in users table
+  // Ensure user exists in profiles table
   ensureUser: async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // Check if user exists in users table
+      // Check if user exists in profiles table
       const { data: existingUser, error: checkError } = await supabase
-        .from('users')
+        .from('profiles')
         .select('id')
         .eq('id', user.id)
         .single()
@@ -246,28 +246,23 @@ export const db = {
       if (checkError && checkError.code === 'PGRST116') {
         // User doesn't exist, create them
         const { error: createError } = await supabase
-          .from('users')
+          .from('profiles')
           .insert([
             {
               id: user.id,
               email: user.email,
-              name: user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+              // You might want to add a default username or other fields here
             }
           ])
-
-        if (createError) {
-          console.error('Error creating user record:', createError)
-          throw createError
-        }
+        if (createError) throw createError
       } else if (checkError) {
-        console.error('Error checking user:', checkError)
         throw checkError
       }
 
       return user
     } catch (err) {
-      console.error('EnsureUser error:', err)
-      throw err
+      console.error('Error ensuring user:', err)
+      return null
     }
   },
 
@@ -662,6 +657,123 @@ export const db = {
     } catch (err) {
       console.error('DeleteJournalEntry error:', err)
       return { data: null, error: err }
+    }
+  },
+}
+
+export const ai = {
+  createNote: async (title, content) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated for creating AI note.')
+
+      const { data, error } = await supabase
+        .from('ai_notes')
+        .insert([{
+          user_id: user.id,
+          title,
+          content,
+        }])
+        .select()
+
+      if (error) throw error
+      return data[0]
+    } catch (err) {
+      console.error('Error creating AI note:', err)
+      return null
+    }
+  },
+
+  getNotes: async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated for fetching AI notes.')
+
+      const { data, error } = await supabase
+        .from('ai_notes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.error('Error fetching AI notes:', err)
+      return []
+    }
+  },
+
+  updateNote: async (noteId, updates) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated for updating AI note.')
+
+      const { data, error } = await supabase
+        .from('ai_notes')
+        .update(updates)
+        .eq('id', noteId)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.error('Error updating AI note:', err)
+      return null
+    }
+  },
+
+  deleteNote: async (noteId) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated for deleting AI note.')
+
+      const { data, error } = await supabase
+        .from('ai_notes')
+        .delete()
+        .eq('id', noteId)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.error('Error deleting AI note:', err)
+      return null
+    }
+  },
+
+  uploadFile: async (noteId, file) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated for uploading file.')
+
+      const filePath = `public/ai-notes/${user.id}/${noteId}/${file.name}`
+      const { error: uploadError } = await supabase.storage
+        .from('ai_note_files')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: publicUrlData } = supabase.storage
+        .from('ai_note_files')
+        .getPublicUrl(filePath)
+
+      // Add file metadata to the database
+      const { error: dbError } = await supabase
+        .from('ai_note_files')
+        .insert([{
+          note_id: noteId,
+          user_id: user.id,
+          file_name: file.name,
+          file_path: filePath,
+          file_url: publicUrlData.publicUrl,
+        }])
+
+      if (dbError) throw dbError
+
+      return { publicUrl: publicUrlData.publicUrl }
+    } catch (err) {
+      console.error('Error uploading file for AI note:', err)
+      return null
     }
   },
 }
