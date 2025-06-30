@@ -12,13 +12,16 @@ const getEnvVar = (key) => {
     return undefined
 }
 
-const supabaseUrl = getEnvVar('VITE_SUPABASE_URL') || 'https://placeholder.supabase.co'
-const supabaseKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || 'placeholder-key'
+const supabaseUrl = getEnvVar('VITE_SUPABASE_URL')
+const supabaseKey = getEnvVar('VITE_SUPABASE_ANON_KEY')
 
-if (!getEnvVar('VITE_SUPABASE_URL') || !getEnvVar('VITE_SUPABASE_ANON_KEY')) {
-  console.warn('Missing Supabase environment variables. Using placeholder values.')
-  console.log('VITE_SUPABASE_URL:', getEnvVar('VITE_SUPABASE_URL') ? 'Set' : 'Missing')
-  console.log('VITE_SUPABASE_ANON_KEY:', getEnvVar('VITE_SUPABASE_ANON_KEY') ? 'Set' : 'Missing')
+// Check if required environment variables are present
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing required Supabase environment variables:')
+  console.log('VITE_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing')
+  console.log('VITE_SUPABASE_ANON_KEY:', supabaseKey ? 'Set' : 'Missing')
+  console.log('Please check your .env file and ensure both VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are properly configured.')
+  throw new Error('Supabase configuration is incomplete. Please set up your environment variables.')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
