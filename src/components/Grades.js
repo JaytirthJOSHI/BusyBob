@@ -47,9 +47,14 @@ export class Grades {
             const { data, error } = await supabase.from('studentvue_credentials')
                 .select('*')
                 .eq('user_id', user.id)
-                .single()
+                .maybeSingle()
 
-            if (error || !data) return null
+            if (error) {
+                console.error('Error fetching stored credentials:', error)
+                return null
+            }
+
+            if (!data) return null
 
             return {
                 districtUrl: data.district_url,

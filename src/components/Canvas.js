@@ -46,9 +46,14 @@ export class Canvas {
             const { data, error } = await supabase.from('canvas_credentials')
                 .select('*')
                 .eq('user_id', user.id)
-                .single()
+                .maybeSingle()
 
-            if (error || !data) return null
+            if (error) {
+                console.error('Error fetching stored Canvas credentials:', error)
+                return null
+            }
+
+            if (!data) return null
 
             return {
                 canvasUrl: data.canvas_url,
