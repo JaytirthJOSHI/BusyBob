@@ -759,7 +759,7 @@ export const db = {
                     .from('kid_mode_settings')
                     .select('*')
                     .eq('user_id', user.id)
-                    .maybeSingle()
+                    .limit(1)
             )
 
             if (error) {
@@ -767,11 +767,14 @@ export const db = {
                 throw error
             }
 
-            // Update cache
-            this.setCache('kid_mode_settings', data || null)
+            // Handle array response - get first element or null
+            const result = data && data.length > 0 ? data[0] : null
 
-            console.log('✅ Retrieved kid mode settings:', data)
-            return { data: data || null, error: null }
+            // Update cache
+            this.setCache('kid_mode_settings', result)
+
+            console.log('✅ Retrieved kid mode settings:', result)
+            return { data: result, error: null }
         } catch (error) {
             console.error('❌ Error getting kid mode settings:', error)
             return { data: null, error }
@@ -852,7 +855,7 @@ export const db = {
                     .from('music_connections')
                     .select('*')
                     .eq('user_id', user.id)
-                    .maybeSingle()
+                    .limit(1)
             )
 
             if (error) {
@@ -860,11 +863,14 @@ export const db = {
                 throw error
             }
 
-            // Update cache
-            this.setCache('music_connections', data || null)
+            // Handle array response - get first element or null
+            const result = data && data.length > 0 ? data[0] : null
 
-            console.log('✅ Retrieved music connections:', data)
-            return { data: data || null, error: null }
+            // Update cache
+            this.setCache('music_connections', result)
+
+            console.log('✅ Retrieved music connections:', result)
+            return { data: result, error: null }
         } catch (error) {
             console.error('❌ Error getting music connections:', error)
             return { data: null, error }
