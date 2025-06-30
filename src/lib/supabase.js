@@ -26,6 +26,20 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
+// Helper function to convert rating to mood text
+const getRatingText = (rating) => {
+  if (rating === null || rating === undefined) return 'neutral'
+  
+  const ratingNum = Number(rating)
+  if (isNaN(ratingNum)) return 'neutral'
+  
+  if (ratingNum <= 1) return 'very sad'
+  if (ratingNum <= 2) return 'sad'
+  if (ratingNum <= 3) return 'okay'
+  if (ratingNum <= 4) return 'good'
+  return 'very happy'
+}
+
 // Auth helpers
 export const auth = {
   signUp: async (email, password, name) => {
@@ -244,9 +258,9 @@ export const db = {
         .from('profiles')
         .select('id')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
-      if (checkError && checkError.code === 'PGRST116') {
+      if (!existingUser && !checkError) {
         // User doesn't exist, create them
         const { error: createError } = await supabase
           .from('profiles')
@@ -581,10 +595,8 @@ export const db = {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // Ensure mood is never null - provide a default value
-      const moodValue = feeling.mood || 
-                       (feeling.rating !== undefined && feeling.rating !== null ? String(feeling.rating) : null) || 
-                       'neutral'
+      // Ensure mood is never null - use rating to generate mood text
+      const moodValue = feeling.mood || getRatingText(feeling.rating)
 
       const { data, error } = await supabase
         .from('feelings')

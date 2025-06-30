@@ -28,15 +28,10 @@ class KidModeSingleton {
                 .from('kid_mode_settings')
                 .select('*')
                 .eq('user_id', user.id)
-                .single()
+                .maybeSingle()
 
-            // Handle the case where no row is found (PGRST116 error)
-            if (kidModeError && kidModeError.code === 'PGRST116') {
-                // No kid mode settings found, this is normal for new users
-                this.settings = null
-                this.isActive = false
-            } else if (kidModeError) {
-                // Some other error occurred
+            if (kidModeError) {
+                // Some error occurred
                 throw kidModeError
             } else if (kidModeData) {
                 this.settings = kidModeData
@@ -46,6 +41,10 @@ class KidModeSingleton {
                 if (this.dateOfBirth) {
                     this.userAge = this.calculateAge(this.dateOfBirth)
                 }
+            } else {
+                // No kid mode settings found, this is normal for new users
+                this.settings = null
+                this.isActive = false
             }
 
             // Also check users table for fallback
@@ -53,7 +52,7 @@ class KidModeSingleton {
                 .from('users')
                 .select('kid_mode_enabled, date_of_birth')
                 .eq('id', user.id)
-                .single()
+                .maybeSingle()
 
             if (userData && !this.settings) {
                 this.isActive = userData.kid_mode_enabled || false
