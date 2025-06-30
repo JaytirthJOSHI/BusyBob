@@ -196,13 +196,13 @@ export const auth = {
         .upsert([
           {
             user_id: user.id,
-            provider: 'spotify',
-            access_token: spotifyData.accessToken,
+            service: 'spotify',
+            auth_token: spotifyData.accessToken,
             refresh_token: spotifyData.refreshToken,
             expires_at: new Date(spotifyData.expiresAt).toISOString()
           }
         ], {
-          onConflict: 'user_id,provider'
+          onConflict: 'user_id,service'
         });
 
       if (musicError) {
@@ -581,12 +581,17 @@ export const db = {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
+      // Ensure mood is never null - provide a default value
+      const moodValue = feeling.mood || 
+                       (feeling.rating !== undefined && feeling.rating !== null ? String(feeling.rating) : null) || 
+                       'neutral'
+
       const { data, error } = await supabase
         .from('feelings')
         .insert([
           {
             user_id: user.id,
-            mood: feeling.mood || feeling.rating?.toString() || 'neutral',
+            mood: moodValue,
             intensity: feeling.intensity,
             notes: feeling.notes || feeling.comments || '',
             rating: feeling.rating,

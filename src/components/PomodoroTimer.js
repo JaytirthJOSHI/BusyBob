@@ -53,13 +53,17 @@ export class PomodoroTimer {
 
   async loadSettings() {
     try {
+      const { data: { user } } = await auth.getCurrentUser()
+      if (!user) return
+
       const { data } = await supabase
-        .from('user_metadata')
-        .select('pomodoro_settings')
+        .from('profiles')
+        .select('settings')
+        .eq('id', user.id)
         .single()
 
-      if (data?.pomodoro_settings) {
-        this.settings = { ...this.settings, ...data.pomodoro_settings }
+      if (data?.settings?.pomodoro_settings) {
+        this.settings = { ...this.settings, ...data.settings.pomodoro_settings }
       }
     } catch (error) {
       console.log('Using default Pomodoro settings')
@@ -71,12 +75,24 @@ export class PomodoroTimer {
       const { data: { user } } = await auth.getCurrentUser()
       if (!user) return
 
+      // Get current settings first
+      const { data: currentData } = await supabase
+        .from('profiles')
+        .select('settings')
+        .eq('id', user.id)
+        .single()
+
+      const currentSettings = currentData?.settings || {}
+
       await supabase
-        .from('user_metadata')
-        .upsert({
-          user_id: user.id,
-          pomodoro_settings: this.settings
+        .from('profiles')
+        .update({
+          settings: {
+            ...currentSettings,
+            pomodoro_settings: this.settings
+          }
         })
+        .eq('id', user.id)
     } catch (error) {
       console.error('Error saving Pomodoro settings:', error)
     }
@@ -84,18 +100,22 @@ export class PomodoroTimer {
 
   async loadProgress() {
     try {
+      const { data: { user } } = await auth.getCurrentUser()
+      if (!user) return
+
       const today = new Date().toISOString().split('T')[0]
       const { data } = await supabase
         .from('pomodoro_sessions')
         .select('*')
-        .gte('created_at', today)
-        .order('created_at', { ascending: false })
+        .eq('user_id', user.id)
+        .gte('started_at', today)
+        .order('started_at', { ascending: false })
 
       if (data) {
-        this.timerState.sessionCount = data.filter(s => s.session_type === 'work').length
+        this.timerState.sessionCount = data.filter(s => s.session_type === 'pomodoro').length
         this.timerState.totalFocusTime = data
-          .filter(s => s.session_type === 'work' && s.completed)
-          .reduce((total, session) => total + session.duration, 0)
+          .filter(s => s.session_type === 'pomodoro' && s.completed)
+          .reduce((total, session) => total + session.duration_minutes, 0)
 
         // Calculate daily streak
         this.calculateDailyStreak()
@@ -107,12 +127,16 @@ export class PomodoroTimer {
 
   async calculateDailyStreak() {
     try {
+      const { data: { user } } = await auth.getCurrentUser()
+      if (!user) return
+
       const { data } = await supabase
         .from('pomodoro_sessions')
-        .select('created_at')
-        .eq('session_type', 'work')
+        .select('started_at')
+        .eq('user_id', user.id)
+        .eq('session_type', 'pomodoro')
         .eq('completed', true)
-        .order('created_at', { ascending: false })
+        .order('started_at', { ascending: false })
 
       if (!data || data.length === 0) {
         this.timerState.dailyStreak = 0
@@ -124,7 +148,7 @@ export class PomodoroTimer {
       currentDate.setHours(0, 0, 0, 0)
 
       for (let i = 0; i < data.length; i++) {
-        const sessionDate = new Date(data[i].created_at)
+        const sessionDate = new Date(data[i].started_at)
         sessionDate.setHours(0, 0, 0, 0)
 
         if (sessionDate.getTime() === currentDate.getTime()) {
@@ -405,11 +429,11 @@ export class PomodoroTimer {
 
       const sessionData = {
         user_id: user.id,
-        session_type: sessionType,
-        duration: duration,
+        session_type: sessionType === 'work' ? 'pomodoro' : sessionType,
+        duration_minutes: duration,
         completed: completed,
-        points_earned: pointsEarned,
-        created_at: new Date().toISOString()
+        started_at: new Date().toISOString(),
+        ended_at: completed ? new Date().toISOString() : null
       }
 
       await supabase.from('pomodoro_sessions').insert(sessionData)
@@ -424,20 +448,18 @@ export class PomodoroTimer {
       if (!user) return
 
       const { data: userData } = await supabase
-        .from('user_metadata')
+        .from('profiles')
         .select('points')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single()
 
       const currentPoints = userData?.points || 0
       const newPoints = currentPoints + points
 
       await supabase
-        .from('user_metadata')
-        .upsert({
-          user_id: user.id,
-          points: newPoints
-        })
+        .from('profiles')
+        .update({ points: newPoints })
+        .eq('id', user.id)
 
       await supabase.from('points_transactions').insert({
         user_id: user.id,
@@ -659,16 +681,20 @@ export class PomodoroTimer {
 
   async getDailyStats() {
     try {
+      const { data: { user } } = await auth.getCurrentUser()
+      if (!user) return { workSessions: 0, totalFocusTime: 0, totalBreaks: 0 }
+
       const today = new Date().toISOString().split('T')[0]
       const { data } = await supabase
         .from('pomodoro_sessions')
         .select('*')
+        .eq('user_id', user.id)
         .eq('completed', true)
-        .gte('created_at', today)
+        .gte('started_at', today)
 
-      const workSessions = data?.filter(s => s.session_type === 'work').length || 0
-      const totalFocusTime = data?.filter(s => s.session_type === 'work')
-        .reduce((total, session) => total + session.duration, 0) || 0
+      const workSessions = data?.filter(s => s.session_type === 'pomodoro').length || 0
+      const totalFocusTime = data?.filter(s => s.session_type === 'pomodoro')
+        .reduce((total, session) => total + session.duration_minutes, 0) || 0
 
       return {
         workSessions,

@@ -74,12 +74,12 @@ export class Music {
                 .from('music_connections')
                 .select('*')
                 .eq('user_id', user.id)
-                .eq('provider', 'spotify')
+                .eq('service', 'spotify')
                 .single()
 
             if (musicData) {
                 this.isConnected = true
-                this.accessToken = musicData.access_token
+                this.accessToken = musicData.auth_token
 
                 // Check if token needs refresh
                 if (musicData.expires_at && new Date(musicData.expires_at) < new Date()) {
@@ -385,7 +385,7 @@ export class Music {
                 .from('music_connections')
                 .delete()
                 .eq('user_id', user.id)
-                .eq('provider', 'spotify')
+                .eq('service', 'spotify')
 
             this.isConnected = false
             this.accessToken = null

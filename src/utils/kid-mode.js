@@ -24,15 +24,23 @@ class KidModeSingleton {
             if (!user) return
 
             // Load from kid_mode_settings table
-            const { data: kidModeData } = await supabase
+            const { data: kidModeData, error: kidModeError } = await supabase
                 .from('kid_mode_settings')
                 .select('*')
                 .eq('user_id', user.id)
                 .single()
 
-            if (kidModeData) {
+            // Handle the case where no row is found (PGRST116 error)
+            if (kidModeError && kidModeError.code === 'PGRST116') {
+                // No kid mode settings found, this is normal for new users
+                this.settings = null
+                this.isActive = false
+            } else if (kidModeError) {
+                // Some other error occurred
+                throw kidModeError
+            } else if (kidModeData) {
                 this.settings = kidModeData
-                this.isActive = kidModeData.enabled
+                this.isActive = kidModeData.is_enabled || false
                 this.dateOfBirth = kidModeData.date_of_birth
 
                 if (this.dateOfBirth) {
@@ -99,7 +107,7 @@ class KidModeSingleton {
                 .from('kid_mode_settings')
                 .upsert({
                     user_id: user.id,
-                    enabled: false,
+                    is_enabled: false,
                     date_of_birth: this.dateOfBirth,
                     disabled_at: new Date().toISOString(),
                     auto_disabled_at_13: true,
@@ -144,9 +152,9 @@ class KidModeSingleton {
                 .from('kid_mode_settings')
                 .upsert({
                     user_id: user.id,
-                    enabled: true,
+                    is_enabled: true,
                     date_of_birth: dateOfBirth,
-                    admin_code: this.ADMIN_CODE,
+                    pin: this.ADMIN_CODE,
                     enabled_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 })
@@ -178,7 +186,7 @@ class KidModeSingleton {
             const { error } = await supabase
                 .from('kid_mode_settings')
                 .update({
-                    enabled: false,
+                    is_enabled: false,
                     disabled_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 })
@@ -215,7 +223,7 @@ class KidModeSingleton {
                 .upsert({
                     user_id: user.id,
                     date_of_birth: dateOfBirth,
-                    enabled: this.isActive && age < 13,
+                    is_enabled: this.isActive && age < 13,
                     updated_at: new Date().toISOString()
                 })
 
@@ -343,6 +351,11 @@ class KidModeSingleton {
     destroy() {
         // Cleanup logic if any event listeners or timers are added in the future
         console.log('Kid Mode destroyed');
+    }
+
+    // Getter for compatibility
+    get isEnabled() {
+        return this.isActive
     }
 }
 

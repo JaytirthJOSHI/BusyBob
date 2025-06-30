@@ -64,7 +64,7 @@ export class Settings {
                 .from('music_connections')
                 .select('*')
                 .eq('user_id', user.id)
-                .eq('provider', 'spotify')
+                .eq('service', 'spotify')
                 .single()
 
             this.spotifyConnected = !!spotifyData
@@ -73,7 +73,7 @@ export class Settings {
                 try {
                     const profileResponse = await fetch('https://api.spotify.com/v1/me', {
                         headers: {
-                            'Authorization': `Bearer ${spotifyData.access_token}`
+                            'Authorization': `Bearer ${spotifyData.auth_token}`
                         }
                     })
                     if (profileResponse.ok) {
@@ -999,11 +999,9 @@ export class Settings {
         if (!selector) return;
 
         try {
-            const response = await fetch('http://worldtimeapi.org/api/timezone');
-            if (!response.ok) throw new Error('Failed to fetch timezones');
-
-            const timezones = await response.json();
-            const savedTimezone = localStorage.getItem('timezone');
+            // Use a more reliable timezone API
+            const timezones = Intl.supportedValuesOf('timeZone');
+            const savedTimezone = localStorage.getItem('timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone;
 
             selector.innerHTML = timezones.map(tz => {
                 const isSelected = tz === savedTimezone ? 'selected' : '';
@@ -1012,7 +1010,21 @@ export class Settings {
 
         } catch (error) {
             console.error('Error loading timezones:', error);
-            selector.innerHTML = '<option>Could not load timezones</option>';
+            // Fallback to common timezones
+            const commonTimezones = [
+                'America/New_York',
+                'America/Chicago',
+                'America/Denver',
+                'America/Los_Angeles',
+                'Europe/London',
+                'Europe/Paris',
+                'Asia/Tokyo',
+                'Australia/Sydney'
+            ];
+            
+            selector.innerHTML = commonTimezones.map(tz => {
+                return `<option value="${tz}">${tz.replace(/_/g, ' ')}</option>`;
+            }).join('');
         }
     }
 
@@ -1254,7 +1266,7 @@ export class Settings {
                 .from('music_connections')
                 .delete()
                 .eq('user_id', user.id)
-                .eq('provider', 'spotify')
+                .eq('service', 'spotify')
 
             this.spotifyConnected = false
             this.spotifyProfile = null
@@ -1446,7 +1458,7 @@ export class Settings {
         try {
             // Validate admin code
             if (adminCode !== '1337') {
-                throw new Error('Invalid admin code')
+                throw new Error('Invalid admin code. Kid Mode cannot be disabled.')
             }
 
             // Disable Kid Mode
