@@ -3,7 +3,7 @@
 
 class GroqAPIService {
     constructor() {
-        this.apiKey = import.meta.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
+        this.apiKey = import.meta.env.VITE_GROQ_API_KEY;
         this.baseURL = 'https://api.groq.com/openai/v1';
         this.models = {
             llama3_8b: 'llama3-8b-8192',
