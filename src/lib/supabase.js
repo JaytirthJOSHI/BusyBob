@@ -375,37 +375,37 @@ export const db = {
       const sampleFeelings = [
         {
           user_id: user.id,
+          mood: 'happy',
           rating: 8,
-          comments: 'Feeling productive today! Completed most of my tasks and had a great workout.',
-          mood_tags: ['productive', 'energetic', 'focused'],
+          notes: 'Feeling productive today! Completed most of my tasks and had a great workout.',
           created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
         },
         {
           user_id: user.id,
+          mood: 'stressed',
           rating: 6,
-          comments: 'A bit stressed about the upcoming presentation, but managing it well.',
-          mood_tags: ['stressed', 'focused', 'determined'],
+          notes: 'A bit stressed about the upcoming presentation, but managing it well.',
           created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
         },
         {
           user_id: user.id,
+          mood: 'excited',
           rating: 9,
-          comments: 'Amazing day! Had a great conversation with a friend and felt very grateful.',
-          mood_tags: ['happy', 'grateful', 'social'],
+          notes: 'Amazing day! Had a great conversation with a friend and felt very grateful.',
           created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
         },
         {
           user_id: user.id,
+          mood: 'tired',
           rating: 5,
-          comments: 'Feeling a bit tired today, need to get more sleep tonight.',
-          mood_tags: ['tired', 'calm', 'reflective'],
+          notes: 'Feeling a bit tired today, need to get more sleep tonight.',
           created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString()
         },
         {
           user_id: user.id,
+          mood: 'motivated',
           rating: 7,
-          comments: 'Good day overall. Made progress on my goals and felt motivated.',
-          mood_tags: ['motivated', 'satisfied', 'productive'],
+          notes: 'Good day overall. Made progress on my goals and felt motivated.',
           created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
         }
       ]
@@ -586,9 +586,10 @@ export const db = {
         .insert([
           {
             user_id: user.id,
+            mood: feeling.mood || feeling.rating?.toString() || 'neutral',
+            intensity: feeling.intensity,
+            notes: feeling.notes || feeling.comments || '',
             rating: feeling.rating,
-            comments: feeling.comments || '',
-            mood_tags: feeling.mood_tags || [],
             created_at: feeling.created_at || new Date().toISOString()
           }
         ])
