@@ -5,6 +5,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/JaytirthJOSHI/BusyBob?style=social)](https://github.com/JaytirthJOSHI/BusyBob/stargazers)
 [![Website](https://img.shields.io/website?url=https%3A//busybob.site&label=busybob.site)](https://busybob.site)
 [![License](https://img.shields.io/badge/license-Custom-blue.svg)](LICENSE)
+[![Built with Bolt](https://bolt.new/badge)](https://bolt.new)
 
 **Keywords:** `student-productivity` `canvas-integration` `studentvue` `academic-planner` `mood-tracking` `ai-assistant` `spotify-integration` `education-technology` `study-organization` `college-productivity`
 
