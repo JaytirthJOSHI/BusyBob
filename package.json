@@ -35,6 +35,7 @@
     "dev:full": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "build": "vite build",
     "preview": "vite preview",
+    "vercel-build": "vite build",
     "deploy": "npm run build && npx vercel --prod",
     "deploy:netlify": "npm run build && npx netlify deploy --prod --dir=dist",
     "lint": "echo 'Add ESLint later'",

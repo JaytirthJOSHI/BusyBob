@@ -1,5 +1,4 @@
 import { auth, supabase } from './lib/supabase.js'
-import { db } from './lib/offline-db.js'
 import { Calendar } from './components/Calendar.js'
 import { EnhancedAIAgent } from './components/EnhancedAIAgent.js'
 import { PomodoroTimer } from './components/PomodoroTimer.js'
@@ -15,17 +14,53 @@ import { PrivacyPolicy } from './components/PrivacyPolicy.js'
 import { TermsOfService } from './components/TermsOfService.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 import { kidMode } from './utils/kid-mode.js'
-import { offlineStatus } from './components/OfflineStatus.js'
 import { MultiAgentSystem, MultiAgentWidgets } from './components/MultiAgentSystem.js'
 // Import agentic AI system
 import './agentic-ai/agents.js'
 import './agentic-ai/agentic-ai.js'
 import './styles/agentic-ai.css'
-// Import Voice AI
-// import VoiceAI from './components/VoiceAI.js'
-// import './lib/elevenlabs-voice.js'
 
 console.log('🚀 Main.js loaded - starting initialization...')
+
+// Utility function to ensure profile exists
+async function ensureProfileExists(userId) {
+    try {
+        // Check if profile exists
+        const { data: existingProfile, error: checkError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', userId)
+            .single()
+
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+            console.error('❌ Error checking profile existence:', checkError)
+            throw checkError
+        }
+
+        if (!existingProfile) {
+            // Profile doesn't exist, create it
+            console.log('📝 Creating missing profile for user:', userId)
+            const { error: createError } = await supabase
+                .from('profiles')
+                .insert([{
+                    id: userId,
+                    points: 0,
+                    lifetime_points: 0,
+                    level: 1,
+                    unlocked_rewards: []
+                }])
+
+            if (createError) {
+                console.error('❌ Error creating profile:', createError)
+                throw createError
+            }
+            console.log('✅ Profile created successfully')
+        }
+    } catch (error) {
+        console.error('❌ Error ensuring profile exists:', error)
+        throw error
+    }
+}
 
 // Global state
 let currentUser = null
@@ -45,7 +80,6 @@ let settings = null
 let privacyPolicy = null
 let termsOfService = null
 let multiAgentSystem = null
-let voiceAI = null
 
 const moodManager = {
     feelings: [],
@@ -59,9 +93,19 @@ const moodManager = {
 
     async load() {
         try {
-            const { data, error } = await db.getFeelings()
+            const { data: { user } } = await auth.getCurrentUser()
+            if (!user) return
+
+            // Load full history of user's mood data
+            const { data, error } = await supabase
+                .from('feelings')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+            
             if (error) throw error
             this.feelings = data || []
+            console.log(`📊 Loaded ${this.feelings.length} mood entries from full history`)
         } catch (error) {
             console.error("Error loading feelings:", error)
             ui.showMessage("Failed to load mood data.", "error")
@@ -70,15 +114,29 @@ const moodManager = {
 
     async log(rating, date) {
         try {
+            const { data: { user } } = await auth.getCurrentUser()
+            if (!user) {
+                ui.showMessage("Please sign in to log your mood.", "error")
+                return
+            }
+
+            // Ensure profile exists before creating feeling
+            await ensureProfileExists(user.id)
+
             const feelingData = { 
                 rating,
                 mood: this.ui.getRatingText(rating),
-                intensity: rating
+                intensity: rating,
+                user_id: user.id,
+                created_at: date ? date.toISOString() : new Date().toISOString()
             }
-            if (date) {
-                feelingData.created_at = date.toISOString()
-            }
-            const { data, error } = await db.createFeeling(feelingData)
+
+            const { data, error } = await supabase
+                .from('feelings')
+                .insert(feelingData)
+                .select()
+                .single()
+
             if (error) throw error
 
             await this.load() // Reload all feelings
@@ -335,23 +393,6 @@ async function initializeApp() {
             console.error('❌ Error initializing gamification systems:', gameError)
         }
 
-        // Initialize Voice AI
-        /*
-        console.log('🎤 Initializing Voice AI...')
-        try {
-            const voiceAIContainer = document.getElementById('voice-ai-container')
-            if (voiceAIContainer) {
-                voiceAI = new VoiceAI(voiceAIContainer)
-                window.voiceAI = voiceAI
-                console.log('✅ Voice AI initialized')
-            } else {
-                console.log('⚠️ Voice AI container not found, skipping initialization')
-            }
-        } catch (voiceError) {
-            console.error('❌ Error initializing Voice AI:', voiceError)
-        }
-        */
-
         // Initialize Agentic AI system
         if (!agenticAI) {
             console.log('🤖 Initializing Agentic AI system for authenticated user...')
@@ -359,8 +400,7 @@ async function initializeApp() {
             window.agenticAI = agenticAI // Make globally available for debugging/extensions
         }
 
-        // Expose database globally for debugging
-        window.db = db
+        // Database exposed globally for debugging removed - using direct Supabase calls
 
         // Set up theme toggle
         console.log('🌙 Setting up theme toggle...')
@@ -382,21 +422,17 @@ async function initializeApp() {
             console.log('👤 User is authenticated, showing main app')
             currentUser = user
 
-            // Initialize offline database for existing user
+            // Database connection test
             try {
-                console.log('💾 Initializing offline database for existing user...')
-                await db.ensureUser()
-                console.log('✅ Offline database initialized for existing user')
-                
-                // Test database connection
-                const dbTest = await db.testDatabaseConnection()
-                if (dbTest) {
+                console.log('💾 Testing database connection...')
+                const { data: { user } } = await auth.getCurrentUser()
+                if (user) {
                     console.log('✅ Database connection test passed')
                 } else {
-                    console.warn('⚠️ Database connection test failed')
+                    console.warn('⚠️ No authenticated user found')
                 }
             } catch (dbError) {
-                console.error('❌ Error initializing offline database for existing user:', dbError)
+                console.error('❌ Error testing database connection:', dbError)
             }
 
             // Initialize Kid Mode
@@ -429,21 +465,17 @@ async function initializeApp() {
             if (event === 'SIGNED_IN' && session) {
                 currentUser = session.user
 
-                // Initialize offline database for new sign-in
+                // Database connection test for new sign-in
                 try {
-                    console.log('💾 Initializing offline database for new sign-in...')
-                    await db.ensureUser()
-                    console.log('✅ Offline database initialized for new sign-in')
-                    
-                    // Test database connection
-                    const dbTest = await db.testDatabaseConnection()
-                    if (dbTest) {
+                    console.log('💾 Testing database connection for new sign-in...')
+                    const { data: { user } } = await auth.getCurrentUser()
+                    if (user) {
                         console.log('✅ Database connection test passed')
                     } else {
-                        console.warn('⚠️ Database connection test failed')
+                        console.warn('⚠️ No authenticated user found')
                     }
                 } catch (dbError) {
-                    console.error('❌ Error initializing offline database for new sign-in:', dbError)
+                    console.error('❌ Error testing database connection for new sign-in:', dbError)
                 }
 
                 // Initialize Kid Mode for new session
@@ -519,25 +551,20 @@ async function initializeApp() {
 
                 console.log('✅ Demo login successful')
 
-                // Initialize offline database for demo user
+                // Database connection test for demo user
                 try {
-                    console.log('💾 Initializing offline database for demo user...')
-                    await db.ensureUser()
-                    console.log('✅ Offline database initialized for demo user')
-                    
-                    // Test database connection
-                    const dbTest = await db.testDatabaseConnection()
-                    if (dbTest) {
+                    console.log('💾 Testing database connection for demo user...')
+                    const { data: { user } } = await auth.getCurrentUser()
+                    if (user) {
                         console.log('✅ Database connection test passed')
                     } else {
-                        console.warn('⚠️ Database connection test failed')
+                        console.warn('⚠️ No authenticated user found')
                     }
                 } catch (dbError) {
-                    console.error('❌ Error initializing offline database for demo user:', dbError)
+                    console.error('❌ Error testing database connection for demo user:', dbError)
                 }
 
-                // Populate demo data
-                await db.populateDemoData()
+                // Demo data population removed - using direct Supabase calls
 
                 // Show main app
                 showMainApp()
@@ -736,12 +763,7 @@ async function signOut() {
 
         // Full cleanup for security
         console.log('🧹 Clearing all user data from device...')
-        try {
-            await db.clearUserData()
-            console.log('✅ Offline data cleared.')
-        } catch (dbError) {
-            console.error('❌ Error clearing offline data:', dbError)
-        }
+        // Offline data clearing removed - using direct Supabase calls
         
         localStorage.clear()
         sessionStorage.clear()
@@ -1084,9 +1106,6 @@ function loadHomeData() {
 
     // Load upcoming tasks
     loadUpcomingTasks()
-
-    // Load development widgets
-    loadDevelopmentWidgets()
 }
 
 function updateGreetingTime() {
@@ -1103,52 +1122,6 @@ function updateGreetingTime() {
         }
         greetingElement.textContent = greeting
     }
-}
-
-function loadDevelopmentWidgets() {
-    const container = document.getElementById('development-widgets-container');
-    if (!container) return;
-
-    // Clear previous widgets
-    container.innerHTML = '';
-
-    // Example widgets
-    const widgets = [
-        {
-            title: "Multi-Agent System",
-            content: `
-                <div class="space-y-2">
-                    <button onclick="window.getMultiAgentSystemStatus()" class="w-full text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded">Get Status</button>
-                    <input id="test-prompt-input" type="text" placeholder="Enter a test prompt" class="w-full text-sm border-gray-300 rounded">
-                    <button onclick="window.testMultiAgentSystem(document.getElementById('test-prompt-input').value)" class="w-full text-sm bg-green-100 text-green-800 py-1 px-2 rounded">Run Test</button>
-                </div>
-            `
-        },
-        {
-            title: "Database Tools",
-            content: `
-                 <div class="space-y-2">
-                    <button onclick="window.testDatabaseConnection()" class="w-full text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded">Test Connection</button>
-                    <button onclick="window.testAllDatabaseOperations()" class="w-full text-sm bg-green-100 text-green-800 py-1 px-2 rounded">Test All Operations</button>
-                    <button onclick="window.getDatabaseStatus()" class="w-full text-sm bg-yellow-100 text-yellow-800 py-1 px-2 rounded">Get Status</button>
-                </div>
-            `
-        }
-    ];
-
-    widgets.forEach(widget => {
-        const widgetEl = document.createElement('div');
-        widgetEl.className = 'bg-white/50 dark:bg-gray-800/50 p-3 rounded-lg';
-        widgetEl.innerHTML = `
-            <h4 class="font-semibold text-xs mb-2 text-gray-700 dark:text-gray-300">${widget.title}</h4>
-            ${widget.content}
-        `;
-        container.appendChild(widgetEl);
-    });
-
-    window.cleanupDevelopmentWidgets = () => {
-        if(container) container.innerHTML = '';
-    };
 }
 
 function loadUpcomingTasks() {
@@ -1178,7 +1151,15 @@ function loadUpcomingTasks() {
 // Task management functions
 async function loadTasks() {
     try {
-        const { data, error } = await db.getTasks()
+        const { data: { user } } = await auth.getCurrentUser()
+        if (!user) return
+
+        const { data, error } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('due_date', { ascending: true })
+        
         if (error) throw error
         tasks = data || []
         renderTasks()
@@ -1267,7 +1248,15 @@ function createCalendarTaskHTML(task) {
 // Journaling functions
 async function loadJournalData() {
     try {
-        const { data, error } = await db.getJournalEntries()
+        const { data: { user } } = await auth.getCurrentUser()
+        if (!user) return
+
+        const { data, error } = await supabase
+            .from('journal_entries')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+        
         if (error) throw error
         journalEntries = data || []
         renderTodaysReflection()
@@ -1399,7 +1388,26 @@ async function handleTaskSubmit(event) {
     }
 
     try {
-        const { data, error } = await db.createTask(taskData)
+        const { data: { user } } = await auth.getCurrentUser()
+        if (!user) {
+            ui.showMessage('Please sign in to add tasks.', 'error')
+            return
+        }
+
+        // Ensure profile exists before creating task
+        await ensureProfileExists(user.id)
+
+        const { data, error } = await supabase
+            .from('tasks')
+            .insert({
+                ...taskData,
+                user_id: user.id,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            })
+            .select()
+            .single()
+
         if (error) throw error
         tasks.push(data)
         renderTasks()
@@ -1425,7 +1433,25 @@ async function handleReflectionSubmit(event) {
     }
 
     try {
-        await db.addJournalEntry(content)
+        const { data: { user } } = await auth.getCurrentUser()
+        if (!user) {
+            ui.showMessage('Please sign in to save reflections.', 'error')
+            return
+        }
+
+        // Ensure profile exists before creating journal entry
+        await ensureProfileExists(user.id)
+
+        const { error } = await supabase
+            .from('journal_entries')
+            .insert({
+                content,
+                user_id: user.id,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            })
+
+        if (error) throw error
         contentInput.value = ''
         ui.showMessage('Reflection saved!', 'success')
         await loadJournalData()
@@ -1441,7 +1467,16 @@ async function toggleTask(taskId) {
     if (!task) return;
 
     try {
-        const { data, error } = await db.updateTask(taskId, { completed: !task.completed });
+        const { data, error } = await supabase
+            .from('tasks')
+            .update({ 
+                completed: !task.completed,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', taskId)
+            .select()
+            .single();
+
         if (error) throw error
         
         // Update local state
@@ -1478,7 +1513,11 @@ async function deleteTask(taskId) {
     if (!confirmed) return
 
     try {
-        const { error } = await db.deleteTask(taskId)
+        const { error } = await supabase
+            .from('tasks')
+            .delete()
+            .eq('id', taskId)
+
         if (error) throw error
         tasks = tasks.filter(t => t.id !== taskId)
         renderTasks()
@@ -1496,7 +1535,11 @@ async function deleteJournalEntry(entryId) {
     if (!confirmed) return
 
     try {
-        const { error } = await db.deleteJournalEntry(entryId)
+        const { error } = await supabase
+            .from('journal_entries')
+            .delete()
+            .eq('id', entryId)
+
         if (error) throw error
         journalEntries = journalEntries.filter(e => e.id !== entryId)
         renderTodaysReflection()
@@ -1674,18 +1717,26 @@ window.toolbox = {
     
     toggle() {
         const toolboxPanel = document.getElementById('toolbox-panel');
-        this.isOpen = !this.isOpen;
-        toolboxPanel.classList.toggle('hidden', !this.isOpen);
+        if (toolboxPanel) {
+            this.isOpen = !this.isOpen;
+            toolboxPanel.classList.toggle('hidden', !this.isOpen);
+        }
     },
 
     show() {
-        document.getElementById('toolbox-panel').classList.remove('hidden');
-        this.isOpen = true;
+        const toolboxPanel = document.getElementById('toolbox-panel');
+        if (toolboxPanel) {
+            toolboxPanel.classList.remove('hidden');
+            this.isOpen = true;
+        }
     },
 
     hide() {
-        document.getElementById('toolbox-panel').classList.add('hidden');
-        this.isOpen = false;
+        const toolboxPanel = document.getElementById('toolbox-panel');
+        if (toolboxPanel) {
+            toolboxPanel.classList.add('hidden');
+            this.isOpen = false;
+        }
     },
     
     loadToolVisibility() {

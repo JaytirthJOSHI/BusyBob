@@ -162,6 +162,10 @@ export const ui = {
     }, duration)
   },
 
+  async showConfirmation(message, description) {
+    return window.confirm(`${message}\n\n${description || ''}`);
+  },
+
   addPageTransition(element) {
     element.classList.add('page-transition')
   },

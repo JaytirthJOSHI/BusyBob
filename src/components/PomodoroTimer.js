@@ -1,6 +1,5 @@
 import { auth, supabase } from '../lib/supabase.js'
 import { ui } from '../utils/helpers.js'
-import { offlineDB } from '../utils/offline-storage.js'
 
 export class PomodoroTimer {
   constructor() {
@@ -44,7 +43,7 @@ export class PomodoroTimer {
   async init() {
     await this.loadSettings()
     await this.loadProgress()
-    this.requestNotificationPermission()
+    // Notification permission will be requested on first user interaction
     this.createUI()
     this.attachEventListeners()
     this.updateDisplay()
@@ -333,6 +332,11 @@ export class PomodoroTimer {
 
   startTimer() {
     if (this.timerState.isRunning) return
+
+    // Request notification permission on first user interaction
+    if (this.notifications.permission === 'default') {
+      this.requestNotificationPermission()
+    }
 
     this.timerState.isRunning = true
     this.interval = setInterval(() => {

@@ -133,8 +133,23 @@ export class AINotes {
 
         container.innerHTML = `
             <div class="ai-notes-container">
+                <!-- Mobile Requirements Banner -->
+                <div class="mobile-banner">
+                    <div class="banner-content">
+                        <div class="banner-icon">📱</div>
+                        <div class="banner-text">
+                            <strong>Mobile Required for AI Notes</strong>
+                            <p>To take AI-powered notes with voice recording and file uploads, please use your mobile phone. The AI features require access to your device's microphone and camera.</p>
+                        </div>
+                        <button class="banner-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
+                    </div>
+                </div>
+
                 <div class="ai-notes-header">
-                    <h1>AI Notes</h1>
+                    <div class="header-left">
+                        <h1>AI Notes</h1>
+                        <p class="header-subtitle">Smart note-taking with AI assistance</p>
+                    </div>
                     <div class="notes-actions">
                         <div class="search-container">
                             <input
@@ -146,12 +161,19 @@ export class AINotes {
                             >
                             <button id="search-btn" class="search-btn">🔍</button>
                         </div>
-                        <button id="new-note-btn" class="btn btn-primary">+ New Note</button>
+                        <button id="new-note-btn" class="btn btn-primary">
+                            <span class="btn-icon">✏️</span>
+                            <span class="btn-text">New Note</span>
+                        </button>
                     </div>
                 </div>
 
                 <div class="ai-notes-content">
                     <div class="notes-sidebar">
+                        <div class="sidebar-header">
+                            <h3>Your Notes</h3>
+                            <span class="notes-count">${this.notes.length} notes</span>
+                        </div>
                         <div class="notes-list">
                             ${this.renderNotesList()}
                         </div>
@@ -171,6 +193,63 @@ export class AINotes {
                     background: var(--bg-color);
                 }
 
+                /* Mobile Banner Styles */
+                .mobile-banner {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 1rem;
+                    position: relative;
+                }
+
+                .banner-content {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    max-width: 1200px;
+                    margin: 0 auto;
+                }
+
+                .banner-icon {
+                    font-size: 2rem;
+                    flex-shrink: 0;
+                }
+
+                .banner-text {
+                    flex: 1;
+                }
+
+                .banner-text strong {
+                    display: block;
+                    font-size: 1.1rem;
+                    margin-bottom: 0.25rem;
+                }
+
+                .banner-text p {
+                    margin: 0;
+                    font-size: 0.9rem;
+                    opacity: 0.9;
+                    line-height: 1.4;
+                }
+
+                .banner-close {
+                    background: rgba(255, 255, 255, 0.2);
+                    border: none;
+                    color: white;
+                    font-size: 1.5rem;
+                    width: 2rem;
+                    height: 2rem;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: background 0.2s ease;
+                }
+
+                .banner-close:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                }
+
                 .ai-notes-header {
                     padding: 1.5rem 2rem;
                     border-bottom: 1px solid var(--border-color);
@@ -180,11 +259,17 @@ export class AINotes {
                     background: var(--surface-color);
                 }
 
-                .ai-notes-header h1 {
-                    margin: 0;
+                .header-left h1 {
+                    margin: 0 0 0.25rem 0;
                     color: var(--text-color);
                     font-size: 1.8rem;
                     font-weight: 600;
+                }
+
+                .header-subtitle {
+                    margin: 0;
+                    color: var(--text-secondary);
+                    font-size: 0.9rem;
                 }
 
                 .notes-actions {
@@ -227,10 +312,39 @@ export class AINotes {
                     border-right: 1px solid var(--border-color);
                     background: var(--surface-color);
                     overflow-y: auto;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .sidebar-header {
+                    padding: 1rem;
+                    border-bottom: 1px solid var(--border-color);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    background: var(--bg-color);
+                }
+
+                .sidebar-header h3 {
+                    margin: 0;
+                    color: var(--text-color);
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                }
+
+                .notes-count {
+                    background: var(--primary-color)20;
+                    color: var(--primary-color);
+                    padding: 0.25rem 0.5rem;
+                    border-radius: 0.25rem;
+                    font-size: 0.8rem;
+                    font-weight: 500;
                 }
 
                 .notes-list {
                     padding: 1rem;
+                    flex: 1;
+                    overflow-y: auto;
                 }
 
                 .note-item {
@@ -388,6 +502,7 @@ export class AINotes {
                     justify-content: center;
                     color: var(--text-secondary);
                     text-align: center;
+                    padding: 2rem;
                 }
 
                 .empty-state-icon {
@@ -395,13 +510,39 @@ export class AINotes {
                     margin-bottom: 1rem;
                 }
 
+                .empty-state-features {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                    gap: 1rem;
+                    margin-top: 2rem;
+                    max-width: 500px;
+                }
+
+                .feature-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem;
+                    background: var(--surface-color);
+                    border-radius: 0.5rem;
+                    border: 1px solid var(--border-color);
+                }
+
+                .feature-icon {
+                    font-size: 1.2rem;
+                }
+
                 .btn {
-                    padding: 0.5rem 1rem;
+                    padding: 0.75rem 1.5rem;
                     border: none;
                     border-radius: 0.5rem;
                     cursor: pointer;
                     font-weight: 500;
                     transition: all 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    font-size: 0.9rem;
                 }
 
                 .btn-primary {
@@ -425,23 +566,108 @@ export class AINotes {
                     filter: brightness(1.1);
                 }
 
+                .btn-icon {
+                    font-size: 1rem;
+                }
+
+                .btn-text {
+                    font-weight: 500;
+                }
+
                 @media (max-width: 768px) {
-                    .ai-notes-content {
+                    .ai-notes-container {
+                        height: auto;
+                        min-height: 100vh;
+                    }
+
+                    .ai-notes-header {
+                        padding: 1rem;
                         flex-direction: column;
+                        gap: 1rem;
+                        align-items: stretch;
                     }
 
-                    .notes-sidebar {
-                        width: 100%;
-                        height: 40vh;
-                    }
-
-                    .search-input {
-                        width: 200px;
+                    .header-left {
+                        text-align: center;
                     }
 
                     .notes-actions {
                         flex-direction: column;
-                        gap: 0.5rem;
+                        gap: 0.75rem;
+                    }
+
+                    .search-container {
+                        width: 100%;
+                    }
+
+                    .search-input {
+                        width: 100%;
+                        flex: 1;
+                    }
+
+                    .ai-notes-content {
+                        flex-direction: column;
+                        height: auto;
+                    }
+
+                    .notes-sidebar {
+                        width: 100%;
+                        height: 50vh;
+                        border-right: none;
+                        border-bottom: 1px solid var(--border-color);
+                    }
+
+                    .notes-main {
+                        height: 50vh;
+                    }
+
+                    .note-editor {
+                        padding: 1rem;
+                    }
+
+                    .editor-header {
+                        flex-direction: column;
+                        gap: 1rem;
+                        align-items: stretch;
+                    }
+
+                    .editor-actions {
+                        justify-content: center;
+                    }
+
+                    .banner-content {
+                        flex-direction: column;
+                        text-align: center;
+                        gap: 0.75rem;
+                    }
+
+                    .banner-close {
+                        position: absolute;
+                        top: 0.5rem;
+                        right: 0.5rem;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .ai-notes-header {
+                        padding: 0.75rem;
+                    }
+
+                    .header-left h1 {
+                        font-size: 1.5rem;
+                    }
+
+                    .btn {
+                        padding: 0.5rem 1rem;
+                        font-size: 0.8rem;
+                    }
+
+                    .note-editor {
+                        padding: 0.75rem;
+                    }
+
+                    .note-title-input {
+                        font-size: 1rem;
                     }
                 }
             </style>
@@ -527,8 +753,26 @@ export class AINotes {
         return `
             <div class="empty-state">
                 <div class="empty-state-icon">📝</div>
-                <h2>Select a note to view or edit</h2>
-                <p>Choose a note from the sidebar or create a new one to get started.</p>
+                <h2>Welcome to AI Notes</h2>
+                <p>Select a note from the sidebar or create a new one to get started.</p>
+                <div class="empty-state-features">
+                    <div class="feature-item">
+                        <span class="feature-icon">✏️</span>
+                        <span>Manual notes</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">🎤</span>
+                        <span>Voice recording (mobile)</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">📄</span>
+                        <span>File uploads (mobile)</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">🤖</span>
+                        <span>AI assistance</span>
+                    </div>
+                </div>
             </div>
         `;
     }

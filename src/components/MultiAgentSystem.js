@@ -1,5 +1,5 @@
 import { auth, supabase } from '../lib/supabase.js'
-import { offlineDB } from '../utils/offline-storage.js'
+import { ui } from '../utils/helpers.js'
 
 // Enhanced Multi-Agent System with advanced collaboration and learning
 export class MultiAgentSystem {
@@ -664,9 +664,7 @@ export class MultiAgentSystem {
       .single()
 
     if (error) throw error
-
-    // Also save to offline storage
-    await offlineDB.saveTask(data)
+    console.log('✅ Task created by agent:', data)
 
     return { success: true, task: data }
   }
@@ -690,9 +688,7 @@ export class MultiAgentSystem {
       .single()
 
     if (error) throw error
-
-    // Also save to offline storage
-    await offlineDB.saveFeeling(data)
+    console.log('✅ Mood logged by agent:', data)
 
     return { success: true, mood: data }
   }
@@ -716,9 +712,7 @@ export class MultiAgentSystem {
       .single()
 
     if (error) throw error
-
-    // Also save to offline storage
-    await offlineDB.saveJournalEntry(data)
+    console.log('✅ Journal entry created by agent:', data)
 
     return { success: true, entry: data }
   }
