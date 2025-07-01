@@ -12,16 +12,33 @@ const getEnvVar = (key) => {
     return undefined
 }
 
-const supabaseUrl = getEnvVar('VITE_SUPABASE_URL') || 'https://placeholder.supabase.co'
-const supabaseKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || 'placeholder-key'
+const supabaseUrl = getEnvVar('VITE_SUPABASE_URL')
+const supabaseKey = getEnvVar('VITE_SUPABASE_ANON_KEY')
 
-if (!getEnvVar('VITE_SUPABASE_URL') || !getEnvVar('VITE_SUPABASE_ANON_KEY')) {
-  console.warn('Missing Supabase environment variables. Using placeholder values.')
-  console.log('VITE_SUPABASE_URL:', getEnvVar('VITE_SUPABASE_URL') ? 'Set' : 'Missing')
-  console.log('VITE_SUPABASE_ANON_KEY:', getEnvVar('VITE_SUPABASE_ANON_KEY') ? 'Set' : 'Missing')
+// Check if required environment variables are present
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing required Supabase environment variables:')
+  console.log('VITE_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing')
+  console.log('VITE_SUPABASE_ANON_KEY:', supabaseKey ? 'Set' : 'Missing')
+  console.log('Please check your .env file and ensure both VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are properly configured.')
+  throw new Error('Supabase configuration is incomplete. Please set up your environment variables.')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
+
+// Helper function to convert rating to mood text
+const getRatingText = (rating) => {
+  if (rating === null || rating === undefined) return 'neutral'
+  
+  const ratingNum = Number(rating)
+  if (isNaN(ratingNum)) return 'neutral'
+  
+  if (ratingNum <= 1) return 'very sad'
+  if (ratingNum <= 2) return 'sad'
+  if (ratingNum <= 3) return 'okay'
+  if (ratingNum <= 4) return 'good'
+  return 'very happy'
+}
 
 // Auth helpers
 export const auth = {
@@ -193,13 +210,13 @@ export const auth = {
         .upsert([
           {
             user_id: user.id,
-            provider: 'spotify',
-            access_token: spotifyData.accessToken,
+            service: 'spotify',
+            auth_token: spotifyData.accessToken,
             refresh_token: spotifyData.refreshToken,
             expires_at: new Date(spotifyData.expiresAt).toISOString()
           }
         ], {
-          onConflict: 'user_id,provider'
+          onConflict: 'user_id,service'
         });
 
       if (musicError) {
@@ -230,44 +247,39 @@ export const auth = {
 
 // Database helpers
 export const db = {
-  // Ensure user exists in users table
+  // Ensure user exists in profiles table
   ensureUser: async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // Check if user exists in users table
+      // Check if user exists in profiles table
       const { data: existingUser, error: checkError } = await supabase
-        .from('users')
+        .from('profiles')
         .select('id')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
-      if (checkError && checkError.code === 'PGRST116') {
+      if (!existingUser && !checkError) {
         // User doesn't exist, create them
         const { error: createError } = await supabase
-          .from('users')
+          .from('profiles')
           .insert([
             {
               id: user.id,
               email: user.email,
-              name: user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+              // You might want to add a default username or other fields here
             }
           ])
-
-        if (createError) {
-          console.error('Error creating user record:', createError)
-          throw createError
-        }
+        if (createError) throw createError
       } else if (checkError) {
-        console.error('Error checking user:', checkError)
         throw checkError
       }
 
       return user
     } catch (err) {
-      console.error('EnsureUser error:', err)
-      throw err
+      console.error('Error ensuring user:', err)
+      return null
     }
   },
 
@@ -377,37 +389,37 @@ export const db = {
       const sampleFeelings = [
         {
           user_id: user.id,
+          mood: 'happy',
           rating: 8,
-          comments: 'Feeling productive today! Completed most of my tasks and had a great workout.',
-          mood_tags: ['productive', 'energetic', 'focused'],
+          notes: 'Feeling productive today! Completed most of my tasks and had a great workout.',
           created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
         },
         {
           user_id: user.id,
+          mood: 'stressed',
           rating: 6,
-          comments: 'A bit stressed about the upcoming presentation, but managing it well.',
-          mood_tags: ['stressed', 'focused', 'determined'],
+          notes: 'A bit stressed about the upcoming presentation, but managing it well.',
           created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
         },
         {
           user_id: user.id,
+          mood: 'excited',
           rating: 9,
-          comments: 'Amazing day! Had a great conversation with a friend and felt very grateful.',
-          mood_tags: ['happy', 'grateful', 'social'],
+          notes: 'Amazing day! Had a great conversation with a friend and felt very grateful.',
           created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
         },
         {
           user_id: user.id,
+          mood: 'tired',
           rating: 5,
-          comments: 'Feeling a bit tired today, need to get more sleep tonight.',
-          mood_tags: ['tired', 'calm', 'reflective'],
+          notes: 'Feeling a bit tired today, need to get more sleep tonight.',
           created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString()
         },
         {
           user_id: user.id,
+          mood: 'motivated',
           rating: 7,
-          comments: 'Good day overall. Made progress on my goals and felt motivated.',
-          mood_tags: ['motivated', 'satisfied', 'productive'],
+          notes: 'Good day overall. Made progress on my goals and felt motivated.',
           created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
         }
       ]
@@ -583,14 +595,18 @@ export const db = {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
+      // Ensure mood is never null - use rating to generate mood text
+      const moodValue = feeling.mood || getRatingText(feeling.rating)
+
       const { data, error } = await supabase
         .from('feelings')
         .insert([
           {
             user_id: user.id,
+            mood: moodValue,
+            intensity: feeling.intensity,
+            notes: feeling.notes || feeling.comments || '',
             rating: feeling.rating,
-            comments: feeling.comments || '',
-            mood_tags: feeling.mood_tags || [],
             created_at: feeling.created_at || new Date().toISOString()
           }
         ])
@@ -662,6 +678,123 @@ export const db = {
     } catch (err) {
       console.error('DeleteJournalEntry error:', err)
       return { data: null, error: err }
+    }
+  },
+}
+
+export const ai = {
+  createNote: async (title, content) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated for creating AI note.')
+
+      const { data, error } = await supabase
+        .from('ai_notes')
+        .insert([{
+          user_id: user.id,
+          title,
+          content,
+        }])
+        .select()
+
+      if (error) throw error
+      return data[0]
+    } catch (err) {
+      console.error('Error creating AI note:', err)
+      return null
+    }
+  },
+
+  getNotes: async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated for fetching AI notes.')
+
+      const { data, error } = await supabase
+        .from('ai_notes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.error('Error fetching AI notes:', err)
+      return []
+    }
+  },
+
+  updateNote: async (noteId, updates) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated for updating AI note.')
+
+      const { data, error } = await supabase
+        .from('ai_notes')
+        .update(updates)
+        .eq('id', noteId)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.error('Error updating AI note:', err)
+      return null
+    }
+  },
+
+  deleteNote: async (noteId) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated for deleting AI note.')
+
+      const { data, error } = await supabase
+        .from('ai_notes')
+        .delete()
+        .eq('id', noteId)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.error('Error deleting AI note:', err)
+      return null
+    }
+  },
+
+  uploadFile: async (noteId, file) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated for uploading file.')
+
+      const filePath = `public/ai-notes/${user.id}/${noteId}/${file.name}`
+      const { error: uploadError } = await supabase.storage
+        .from('ai_note_files')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: publicUrlData } = supabase.storage
+        .from('ai_note_files')
+        .getPublicUrl(filePath)
+
+      // Add file metadata to the database
+      const { error: dbError } = await supabase
+        .from('ai_note_files')
+        .insert([{
+          note_id: noteId,
+          user_id: user.id,
+          file_name: file.name,
+          file_path: filePath,
+          file_url: publicUrlData.publicUrl,
+        }])
+
+      if (dbError) throw dbError
+
+      return { publicUrl: publicUrlData.publicUrl }
+    } catch (err) {
+      console.error('Error uploading file for AI note:', err)
+      return null
     }
   },
 }

@@ -124,6 +124,20 @@ export const db = {
         this.setCache('offline_operations', offlineData, 24 * 60 * 60 * 1000) // 24 hours
     },
 
+    // Helper function to convert rating to mood text
+    getRatingText(rating) {
+        if (rating === null || rating === undefined) return 'neutral'
+        
+        const ratingNum = Number(rating)
+        if (isNaN(ratingNum)) return 'neutral'
+        
+        if (ratingNum <= 1) return 'very sad'
+        if (ratingNum <= 2) return 'sad'
+        if (ratingNum <= 3) return 'okay'
+        if (ratingNum <= 4) return 'good'
+        return 'very happy'
+    },
+
     async initUser(userId) {
         try {
             console.log('🔧 Initializing user in database...', { userId })
@@ -355,8 +369,12 @@ export const db = {
                 return { data: null, error: new Error('User not authenticated') }
             }
 
+            // Ensure mood is never null - use rating to generate mood text
+            const moodValue = feelingData.mood || this.getRatingText(feelingData.rating)
+
             const feeling = {
                 ...feelingData,
+                mood: moodValue,
                 user_id: user.id,
                 created_at: new Date().toISOString(),
             }
@@ -741,19 +759,22 @@ export const db = {
                     .from('kid_mode_settings')
                     .select('*')
                     .eq('user_id', user.id)
-                    .single()
+                    .limit(1)
             )
 
-            if (error && error.code !== 'PGRST116') {
+            if (error) {
                 console.error('❌ Supabase error getting kid mode settings:', error)
                 throw error
             }
 
-            // Update cache
-            this.setCache('kid_mode_settings', data || null)
+            // Handle array response - get first element or null
+            const result = data && data.length > 0 ? data[0] : null
 
-            console.log('✅ Retrieved kid mode settings:', data)
-            return { data: data || null, error: null }
+            // Update cache
+            this.setCache('kid_mode_settings', result)
+
+            console.log('✅ Retrieved kid mode settings:', result)
+            return { data: result, error: null }
         } catch (error) {
             console.error('❌ Error getting kid mode settings:', error)
             return { data: null, error }
@@ -834,19 +855,22 @@ export const db = {
                     .from('music_connections')
                     .select('*')
                     .eq('user_id', user.id)
-                    .single()
+                    .limit(1)
             )
 
-            if (error && error.code !== 'PGRST116') {
+            if (error) {
                 console.error('❌ Supabase error getting music connections:', error)
                 throw error
             }
 
-            // Update cache
-            this.setCache('music_connections', data || null)
+            // Handle array response - get first element or null
+            const result = data && data.length > 0 ? data[0] : null
 
-            console.log('✅ Retrieved music connections:', data)
-            return { data: data || null, error: null }
+            // Update cache
+            this.setCache('music_connections', result)
+
+            console.log('✅ Retrieved music connections:', result)
+            return { data: result, error: null }
         } catch (error) {
             console.error('❌ Error getting music connections:', error)
             return { data: null, error }

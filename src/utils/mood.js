@@ -108,7 +108,16 @@ const moodManager = {
 
     async log(rating) {
         try {
-            const { data, error } = await db.createFeeling({ rating })
+            // Map rating to mood text for the database
+            const moodTexts = ['very_bad', 'bad', 'okay', 'good', 'excellent']
+            const mood = moodTexts[rating - 1] || 'neutral'
+            
+            const { data, error } = await db.createFeeling({ 
+                rating, 
+                mood, // Add the required mood field
+                intensity: rating * 20 // Convert 1-5 rating to 20-100 intensity
+            })
+            
             if (error) throw error
 
             feelings.unshift(data[0])
@@ -187,7 +196,17 @@ const moodManager = {
                 yesterday.setDate(yesterday.getDate() - 1)
 
                 try {
-                    await db.createFeeling({ rating: selectedRating, created_at: yesterday.toISOString() })
+                    // Map rating to mood text for the database
+                    const moodTexts = ['very_bad', 'bad', 'okay', 'good', 'excellent']
+                    const mood = moodTexts[selectedRating - 1] || 'neutral'
+                    
+                    await db.createFeeling({ 
+                        rating: selectedRating, 
+                        mood, // Add the required mood field
+                        intensity: selectedRating * 20, // Convert 1-5 rating to 20-100 intensity
+                        created_at: yesterday.toISOString() 
+                    })
+                    
                     ui.showMessage("Yesterday's mood logged!", "success")
                     promptEl.remove()
                     // We don't need to reload all feelings for this, just don't prompt again
