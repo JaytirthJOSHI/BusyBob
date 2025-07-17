@@ -660,8 +660,17 @@ function setupNavigationListeners() {
 async function handleLogin(event) {
     event.preventDefault()
 
-    const email = document.getElementById('login-email').value
-    const password = document.getElementById('login-password').value
+    const emailInput = document.getElementById('login-email')
+    const passwordInput = document.getElementById('login-password')
+    
+    if (!emailInput || !passwordInput) {
+        console.warn('Login form elements not found in DOM')
+        ui.showMessage('Login form not available. Please try again.', 'error')
+        return
+    }
+    
+    const email = emailInput.value
+    const password = passwordInput.value
 
     try {
         console.log('🔐 Attempting login...')
@@ -728,9 +737,19 @@ function showSignInSuccess() {
 async function handleSignup(event) {
     event.preventDefault()
 
-    const name = document.getElementById('signup-name').value
-    const email = document.getElementById('signup-email').value
-    const password = document.getElementById('signup-password').value
+    const nameInput = document.getElementById('signup-name')
+    const emailInput = document.getElementById('signup-email')
+    const passwordInput = document.getElementById('signup-password')
+    
+    if (!nameInput || !emailInput || !passwordInput) {
+        console.warn('Signup form elements not found in DOM')
+        ui.showMessage('Signup form not available. Please try again.', 'error')
+        return
+    }
+    
+    const name = nameInput.value
+    const email = emailInput.value
+    const password = passwordInput.value
 
     try {
         console.log('📝 Attempting signup...')
@@ -1273,6 +1292,11 @@ function renderTodaysReflection() {
     const today = new Date().toDateString()
     const todaysEntry = journalEntries.find(entry => new Date(entry.created_at).toDateString() === today)
     const reflectionContainer = document.getElementById('todays-reflection')
+    
+    if (!reflectionContainer) {
+        console.warn('todays-reflection element not found in DOM')
+        return
+    }
 
     if (todaysEntry) {
         reflectionContainer.innerHTML = `
@@ -1292,7 +1316,10 @@ function renderTodaysReflection() {
 
 function renderPastJournalEntries() {
     const pastEntriesList = document.getElementById('past-journal-entries')
-    if (!pastEntriesList) return
+    if (!pastEntriesList) {
+        console.warn('past-journal-entries element not found in DOM')
+        return
+    }
     pastEntriesList.innerHTML = ''
 
     const pastEntries = journalEntries.slice(1, 6) // Get next 5 entries
@@ -1320,7 +1347,10 @@ function renderPastJournalEntries() {
 function calculateAndRenderStreak() {
     let streak = 0
     const journalStreakEl = document.getElementById('journal-streak')
-    if (!journalStreakEl) return
+    if (!journalStreakEl) {
+        console.warn('journal-streak element not found in DOM')
+        return
+    }
 
     if (journalEntries.length === 0) {
         journalStreakEl.textContent = 0
@@ -1373,6 +1403,13 @@ async function handleTaskSubmit(event) {
     event.preventDefault()
     const titleInput = document.getElementById('task-title')
     const dueDateInput = document.getElementById('task-due-date')
+    
+    if (!titleInput || !dueDateInput) {
+        console.warn('Task form elements not found in DOM')
+        ui.showMessage('Task form not available. Please try again.', 'error')
+        return
+    }
+    
     const title = titleInput.value.trim()
     const dueDate = dueDateInput.value
 
@@ -1425,6 +1462,13 @@ async function handleTaskSubmit(event) {
 async function handleReflectionSubmit(event) {
     event.preventDefault()
     const contentInput = document.getElementById('journal-content')
+    
+    if (!contentInput) {
+        console.warn('journal-content element not found in DOM')
+        ui.showMessage('Journal form not available. Please try again.', 'error')
+        return
+    }
+    
     const content = contentInput.value.trim()
 
     if (!content) {

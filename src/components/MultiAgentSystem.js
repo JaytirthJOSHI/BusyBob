@@ -664,7 +664,9 @@ export class MultiAgentSystem {
       .single()
 
     if (error) throw error
-    console.log('✅ Task created by agent:', data)
+
+    // Also save to offline storage
+    await ui.saveTask(data)
 
     return { success: true, task: data }
   }
@@ -688,7 +690,9 @@ export class MultiAgentSystem {
       .single()
 
     if (error) throw error
-    console.log('✅ Mood logged by agent:', data)
+
+    // Also save to offline storage
+    await ui.saveFeeling(data)
 
     return { success: true, mood: data }
   }
@@ -712,7 +716,9 @@ export class MultiAgentSystem {
       .single()
 
     if (error) throw error
-    console.log('✅ Journal entry created by agent:', data)
+
+    // Also save to offline storage
+    await ui.saveJournalEntry(data)
 
     return { success: true, entry: data }
   }

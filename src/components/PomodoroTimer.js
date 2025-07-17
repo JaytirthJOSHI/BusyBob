@@ -43,7 +43,6 @@ export class PomodoroTimer {
   async init() {
     await this.loadSettings()
     await this.loadProgress()
-    // Notification permission will be requested on first user interaction
     this.createUI()
     this.attachEventListeners()
     this.updateDisplay()
@@ -53,19 +52,21 @@ export class PomodoroTimer {
   async loadSettings() {
     try {
       const { data: { user } } = await auth.getCurrentUser()
-      if (!user) return
+      if (!user) return;
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('settings')
         .eq('id', user.id)
         .single()
+      
+      if (error && error.code !== 'PGRST116') throw error;
 
-      if (data?.settings?.pomodoro_settings) {
-        this.settings = { ...this.settings, ...data.settings.pomodoro_settings }
+      if (data?.settings?.pomodoro) {
+        this.settings = { ...this.settings, ...data.settings.pomodoro }
       }
     } catch (error) {
-      console.log('Using default Pomodoro settings')
+      console.warn('Could not load Pomodoro settings, using defaults.', error)
     }
   }
 
@@ -74,24 +75,28 @@ export class PomodoroTimer {
       const { data: { user } } = await auth.getCurrentUser()
       if (!user) return
 
-      // Get current settings first
-      const { data: currentData } = await supabase
+      // To prevent overwriting other settings, we need to get the current settings first
+      const { data: currentProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('settings')
         .eq('id', user.id)
-        .single()
+        .single();
+      
+      if(fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
-      const currentSettings = currentData?.settings || {}
+      const currentSettings = currentProfile?.settings || {};
+      const newSettings = {
+        ...currentSettings,
+        pomodoro: this.settings
+      };
 
-      await supabase
+      const { error } = await supabase
         .from('profiles')
-        .update({
-          settings: {
-            ...currentSettings,
-            pomodoro_settings: this.settings
-          }
-        })
+        .update({ settings: newSettings })
         .eq('id', user.id)
+
+      if (error) throw error;
+
     } catch (error) {
       console.error('Error saving Pomodoro settings:', error)
     }
@@ -100,21 +105,25 @@ export class PomodoroTimer {
   async loadProgress() {
     try {
       const { data: { user } } = await auth.getCurrentUser()
-      if (!user) return
+      if (!user) return;
 
-      const today = new Date().toISOString().split('T')[0]
-      const { data } = await supabase
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const { data, error } = await supabase
         .from('pomodoro_sessions')
         .select('*')
         .eq('user_id', user.id)
-        .gte('started_at', today)
-        .order('started_at', { ascending: false })
+        .gte('created_at', today.toISOString())
+        .order('created_at', { ascending: false })
+
+      if (error) throw error;
 
       if (data) {
-        this.timerState.sessionCount = data.filter(s => s.session_type === 'pomodoro').length
+        this.timerState.sessionCount = data.filter(s => s.session_type === 'work').length
         this.timerState.totalFocusTime = data
-          .filter(s => s.session_type === 'pomodoro' && s.completed)
-          .reduce((total, session) => total + session.duration_minutes, 0)
+          .filter(s => s.session_type === 'work' && s.completed)
+          .reduce((total, session) => total + session.duration, 0)
 
         // Calculate daily streak
         this.calculateDailyStreak()
@@ -126,16 +135,12 @@ export class PomodoroTimer {
 
   async calculateDailyStreak() {
     try {
-      const { data: { user } } = await auth.getCurrentUser()
-      if (!user) return
-
       const { data } = await supabase
         .from('pomodoro_sessions')
-        .select('started_at')
-        .eq('user_id', user.id)
-        .eq('session_type', 'pomodoro')
+        .select('created_at')
+        .eq('session_type', 'work')
         .eq('completed', true)
-        .order('started_at', { ascending: false })
+        .order('created_at', { ascending: false })
 
       if (!data || data.length === 0) {
         this.timerState.dailyStreak = 0
@@ -147,7 +152,7 @@ export class PomodoroTimer {
       currentDate.setHours(0, 0, 0, 0)
 
       for (let i = 0; i < data.length; i++) {
-        const sessionDate = new Date(data[i].started_at)
+        const sessionDate = new Date(data[i].created_at)
         sessionDate.setHours(0, 0, 0, 0)
 
         if (sessionDate.getTime() === currentDate.getTime()) {
@@ -309,34 +314,37 @@ export class PomodoroTimer {
   }
 
   attachEventListeners() {
-    document.getElementById('timer-start')?.addEventListener('click', () => this.startTimer())
-    document.getElementById('timer-pause')?.addEventListener('click', () => this.pauseTimer())
-    document.getElementById('timer-reset')?.addEventListener('click', () => this.resetTimer())
-    document.getElementById('timer-skip')?.addEventListener('click', () => this.skipSession())
-
-    document.getElementById('pomodoro-settings-btn')?.addEventListener('click', () => this.openSettings())
-    document.getElementById('close-settings')?.addEventListener('click', () => this.closeSettings())
-    document.getElementById('cancel-settings')?.addEventListener('click', () => this.closeSettings())
-    document.getElementById('save-settings')?.addEventListener('click', () => this.saveSettingsFromModal())
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-        if (e.code === 'Space' && e.target.closest('.pomodoro-container')) {
-          e.preventDefault()
-          this.timerState.isRunning ? this.pauseTimer() : this.startTimer()
-        }
+    document.body.addEventListener('click', (e) => {
+      if (e.target.matches('#pomodoro-settings-btn, #pomodoro-settings-btn *')) {
+        this.openSettings()
       }
+      if (e.target.matches('#close-settings, #close-settings *')) {
+        this.closeSettings()
+      }
+      if (e.target.matches('#timer-start, #timer-start *')) {
+        this.requestNotificationPermission(); // Ask for permission on user action
+        this.startTimer()
+      }
+      if (e.target.matches('#timer-pause, #timer-pause *')) {
+        this.pauseTimer()
+      }
+      if (e.target.matches('#timer-reset, #timer-reset *')) {
+        this.resetTimer()
+      }
+      if (e.target.matches('#timer-skip, #timer-skip *')) {
+        this.skipSession()
+      }
+    });
+
+    const settingsModal = document.getElementById('pomodoro-settings-modal')
+    settingsModal?.addEventListener('submit', (e) => {
+        e.preventDefault()
+        this.saveSettingsFromModal()
     })
   }
 
   startTimer() {
     if (this.timerState.isRunning) return
-
-    // Request notification permission on first user interaction
-    if (this.notifications.permission === 'default') {
-      this.requestNotificationPermission()
-    }
 
     this.timerState.isRunning = true
     this.interval = setInterval(() => {
@@ -428,21 +436,26 @@ export class PomodoroTimer {
 
   async saveSession(sessionType, duration, completed, pointsEarned) {
     try {
-      const { data: { user } } = await auth.getCurrentUser()
-      if (!user) return
-
+      const { data: { user } } = await auth.getCurrentUser();
+      if (!user) {
+          console.warn("Cannot save session, no user logged in.");
+          return;
+      }
+      
       const sessionData = {
         user_id: user.id,
-        session_type: sessionType === 'work' ? 'pomodoro' : sessionType,
-        duration_minutes: duration,
-        completed: completed,
-        started_at: new Date().toISOString(),
-        ended_at: completed ? new Date().toISOString() : null
+        session_type: sessionType,
+        duration_minutes: Math.floor(duration / 60),
+        completed,
+        // We can add task_id here later if we want to link sessions to tasks
       }
 
-      await supabase.from('pomodoro_sessions').insert(sessionData)
+      const { error } = await supabase.from('pomodoro_sessions').insert(sessionData)
+      if (error) throw error
+
+      await this.awardPoints(pointsEarned, `${this.getSessionName(sessionType)} completed`)
     } catch (error) {
-      console.error('Error saving session:', error)
+      console.error('Error saving Pomodoro session:', error)
     }
   }
 
@@ -492,8 +505,8 @@ export class PomodoroTimer {
     }
   }
 
-  getSessionName() {
-    switch (this.timerState.currentSession) {
+  getSessionName(sessionType) {
+    switch (sessionType) {
       case 'work': return 'Work'
       case 'shortBreak': return 'Short Break'
       case 'longBreak': return 'Long Break'
@@ -507,7 +520,7 @@ export class PomodoroTimer {
     const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 
     document.getElementById('timer-time').textContent = timeString
-    document.getElementById('session-type').textContent = `${this.getSessionName()} Session`
+    document.getElementById('session-type').textContent = `${this.getSessionName(this.timerState.currentSession)} Session`
     document.getElementById('session-count').textContent = `#${this.timerState.sessionCount + 1}`
     document.getElementById('timer-label').textContent = this.timerState.currentSession === 'work' ? 'Focus Time' : 'Break Time'
 
@@ -613,7 +626,7 @@ export class PomodoroTimer {
   }
 
   showCompletionNotification(sessionType, pointsEarned) {
-    const sessionName = this.getSessionName()
+    const sessionName = this.getSessionName(sessionType)
     const message = pointsEarned > 0
       ? `${sessionName} completed! +${pointsEarned} points earned 🎉`
       : `${sessionName} completed!`
@@ -685,20 +698,16 @@ export class PomodoroTimer {
 
   async getDailyStats() {
     try {
-      const { data: { user } } = await auth.getCurrentUser()
-      if (!user) return { workSessions: 0, totalFocusTime: 0, totalBreaks: 0 }
-
       const today = new Date().toISOString().split('T')[0]
       const { data } = await supabase
         .from('pomodoro_sessions')
         .select('*')
-        .eq('user_id', user.id)
         .eq('completed', true)
-        .gte('started_at', today)
+        .gte('created_at', today)
 
-      const workSessions = data?.filter(s => s.session_type === 'pomodoro').length || 0
-      const totalFocusTime = data?.filter(s => s.session_type === 'pomodoro')
-        .reduce((total, session) => total + session.duration_minutes, 0) || 0
+      const workSessions = data?.filter(s => s.session_type === 'work').length || 0
+      const totalFocusTime = data?.filter(s => s.session_type === 'work')
+        .reduce((total, session) => total + session.duration, 0) || 0
 
       return {
         workSessions,

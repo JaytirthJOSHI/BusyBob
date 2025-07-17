@@ -1820,16 +1820,65 @@ textarea:focus {
 }
 
 @keyframes bounce {
-    0%, 20%, 53%, 80%, 100% {
-        transform: translate3d(0, 0, 0);
-    }
-    40%, 43% {
-        transform: translate3d(0, -30px, 0);
-    }
-    70% {
-        transform: translate3d(0, -15px, 0);
-    }
-    90% {
-        transform: translate3d(0, -4px, 0);
-    }
+    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+    40% {transform: translateY(-30px);}
+    60% {transform: translateY(-15px);}
+}
+
+/* Development Widget Styles */
+.dev-widget-btn {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.dev-widget-input {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db; /* gray-300 */
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.dev-widget-input:focus {
+    outline: none;
+    border-color: #3b82f6; /* blue-500 */
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.dev-widget-btn-primary {
+    background-color: #2563eb; /* blue-600 */
+    color: white;
+    border-color: #2563eb;
+}
+
+.dev-widget-btn-primary:hover {
+    background-color: #1d4ed8; /* blue-700 */
+}
+
+.dev-widget-btn-secondary {
+    background-color: #e5e7eb; /* gray-200 */
+    color: #1f2937; /* gray-800 */
+    border-color: #d1d5db; /* gray-300 */
+}
+
+.dev-widget-btn-secondary:hover {
+    background-color: #d1d5db; /* gray-300 */
+}
+
+.dev-widget-btn-tertiary {
+    background-color: #fef08a; /* yellow-200 */
+    color: #713f12; /* yellow-800 */
+    border-color: #facc15; /* yellow-400 */
+}
+
+.dev-widget-btn-tertiary:hover {
+    background-color: #facc15; /* yellow-400 */
 }
