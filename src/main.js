@@ -25,14 +25,14 @@ console.log('🚀 Main.js loaded - starting initialization...')
 // Utility function to ensure profile exists
 async function ensureProfileExists(userId) {
     try {
-        // Check if profile exists
+        // Check if profile exists using maybeSingle to handle no results gracefully
         const { data: existingProfile, error: checkError } = await supabase
             .from('profiles')
             .select('id')
             .eq('id', userId)
-            .single()
+            .maybeSingle()
 
-        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        if (checkError) {
             console.error('❌ Error checking profile existence:', checkError)
             throw checkError
         }
@@ -40,14 +40,21 @@ async function ensureProfileExists(userId) {
         if (!existingProfile) {
             // Profile doesn't exist, create it
             console.log('📝 Creating missing profile for user:', userId)
+            
+            // Get user info from auth
+            const { data: { user } } = await auth.getCurrentUser()
+            
             const { error: createError } = await supabase
                 .from('profiles')
                 .insert([{
                     id: userId,
+                    email: user?.email || null,
+                    username: user?.user_metadata?.name || user?.email?.split('@')[0] || null,
                     points: 0,
                     lifetime_points: 0,
                     level: 1,
-                    unlocked_rewards: []
+                    unlocked_rewards: [],
+                    settings: {}
                 }])
 
             if (createError) {
@@ -56,6 +63,8 @@ async function ensureProfileExists(userId) {
             }
             console.log('✅ Profile created successfully')
         }
+        
+        return true
     } catch (error) {
         console.error('❌ Error ensuring profile exists:', error)
         throw error
@@ -126,7 +135,8 @@ const moodManager = {
             const feelingData = { 
                 rating,
                 mood: this.ui.getRatingText(rating),
-                intensity: rating,
+                intensity: rating * 20, // Convert 1-5 to 20-100 scale
+                notes: '', // Ensure notes field exists
                 user_id: user.id,
                 created_at: date ? date.toISOString() : new Date().toISOString()
             }
@@ -422,6 +432,16 @@ async function initializeApp() {
             console.log('👤 User is authenticated, showing main app')
             currentUser = user
 
+            // Ensure user profile exists first
+            console.log('👤 Ensuring user profile exists...')
+            try {
+                await ensureProfileExists(user.id)
+                console.log('✅ User profile verified')
+            } catch (error) {
+                console.error('❌ Failed to ensure profile exists:', error)
+                ui.showMessage('Failed to initialize user profile. Please try refreshing.', 'error')
+            }
+
             // Database connection test
             try {
                 console.log('💾 Testing database connection...')
@@ -464,6 +484,15 @@ async function initializeApp() {
             console.log('Auth state change:', event, session)
             if (event === 'SIGNED_IN' && session) {
                 currentUser = session.user
+
+                // Ensure user profile exists for new sign-in
+                console.log('👤 Ensuring user profile exists for new sign-in...')
+                try {
+                    await ensureProfileExists(session.user.id)
+                    console.log('✅ User profile verified for new sign-in')
+                } catch (error) {
+                    console.error('❌ Failed to ensure profile exists for new sign-in:', error)
+                }
 
                 // Database connection test for new sign-in
                 try {
