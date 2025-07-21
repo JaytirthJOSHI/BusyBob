@@ -678,8 +678,9 @@ export class MultiAgentSystem {
     const mood = {
       user_id: user.id,
       rating: params.rating,
+      mood: this.getRatingText(params.rating),
+      intensity: params.rating * 20, // Convert 1-5 to 20-100 scale
       notes: params.notes || '',
-      activities: params.activities || [],
       created_at: new Date().toISOString()
     }
 
@@ -695,6 +696,11 @@ export class MultiAgentSystem {
     await ui.saveFeeling(data)
 
     return { success: true, mood: data }
+  }
+
+  getRatingText(rating) {
+    const moodTexts = ['Very Bad', 'Bad', 'Okay', 'Good', 'Excellent']
+    return moodTexts[rating - 1] || 'Neutral'
   }
 
   async writeJournal(params) {

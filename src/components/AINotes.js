@@ -190,7 +190,21 @@ export class AINotes {
                     height: 100vh;
                     display: flex;
                     flex-direction: column;
-                    background: var(--bg-color);
+                    background: var(--bg-color, #ffffff);
+                    color: var(--text-color, #1f2937);
+                }
+
+                /* Dark mode specific overrides */
+                @media (prefers-color-scheme: dark) {
+                    .ai-notes-container {
+                        background: #111827;
+                        color: #f9fafb;
+                    }
+                }
+
+                .dark .ai-notes-container {
+                    background: #111827;
+                    color: #f9fafb;
                 }
 
                 /* Mobile Banner Styles */
@@ -285,20 +299,54 @@ export class AINotes {
 
                 .search-input {
                     padding: 0.5rem 1rem;
-                    border: 1px solid var(--border-color);
+                    border: 1px solid var(--border-color, #d1d5db);
                     border-radius: 0.5rem;
-                    background: var(--bg-color);
-                    color: var(--text-color);
+                    background: var(--bg-color, #ffffff);
+                    color: var(--text-color, #1f2937);
                     width: 250px;
+                    transition: all 0.2s ease;
+                }
+
+                .search-input:focus {
+                    outline: none;
+                    border-color: var(--primary-color, #3b82f6);
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
                 }
 
                 .search-btn {
                     padding: 0.5rem;
                     margin-left: 0.5rem;
-                    border: 1px solid var(--border-color);
+                    border: 1px solid var(--border-color, #d1d5db);
                     border-radius: 0.5rem;
-                    background: var(--surface-color);
+                    background: var(--surface-color, #f9fafb);
+                    color: var(--text-color, #1f2937);
                     cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .search-btn:hover {
+                    background: var(--primary-color, #3b82f6);
+                    color: white;
+                    border-color: var(--primary-color, #3b82f6);
+                }
+
+                /* Dark mode overrides for search */
+                .dark .search-input {
+                    background: #1f2937;
+                    border-color: #374151;
+                    color: #f9fafb;
+                }
+
+                .dark .search-btn {
+                    background: #374151;
+                    border-color: #4b5563;
+                    color: #f9fafb;
+                }
+
+                .dark .search-btn:hover {
+                    background: #3b82f6;
+                    border-color: #3b82f6;
+                    color: white;
                 }
 
                 .ai-notes-content {
@@ -349,22 +397,38 @@ export class AINotes {
 
                 .note-item {
                     padding: 1rem;
-                    border: 1px solid var(--border-color);
+                    border: 1px solid var(--border-color, #d1d5db);
                     border-radius: 0.5rem;
                     margin-bottom: 0.75rem;
                     cursor: pointer;
                     transition: all 0.2s ease;
-                    background: var(--bg-color);
+                    background: var(--bg-color, #ffffff);
                 }
 
                 .note-item:hover {
-                    border-color: var(--primary-color);
+                    border-color: var(--primary-color, #3b82f6);
                     transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
                 }
 
                 .note-item.active {
-                    border-color: var(--primary-color);
-                    background: var(--primary-color)10;
+                    border-color: var(--primary-color, #3b82f6);
+                    background: rgba(59, 130, 246, 0.1);
+                }
+
+                /* Dark mode overrides for note items */
+                .dark .note-item {
+                    background: #1f2937;
+                    border-color: #374151;
+                }
+
+                .dark .note-item:hover {
+                    border-color: #3b82f6;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                }
+
+                .dark .note-item.active {
+                    background: rgba(59, 130, 246, 0.2);
                 }
 
                 .note-item-header {
@@ -447,36 +511,73 @@ export class AINotes {
                 .note-title-input {
                     width: 100%;
                     padding: 0.75rem;
-                    border: 1px solid var(--border-color);
+                    border: 1px solid var(--border-color, #d1d5db);
                     border-radius: 0.5rem;
                     font-size: 1.2rem;
                     font-weight: 600;
-                    background: var(--surface-color);
-                    color: var(--text-color);
+                    background: var(--surface-color, #f9fafb);
+                    color: var(--text-color, #1f2937);
                     margin-bottom: 1rem;
+                    transition: all 0.2s ease;
+                }
+
+                .note-title-input:focus {
+                    outline: none;
+                    border-color: var(--primary-color, #3b82f6);
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
                 }
 
                 .note-content-input {
                     flex: 1;
                     padding: 1rem;
-                    border: 1px solid var(--border-color);
+                    border: 1px solid var(--border-color, #d1d5db);
                     border-radius: 0.5rem;
-                    background: var(--surface-color);
-                    color: var(--text-color);
+                    background: var(--surface-color, #f9fafb);
+                    color: var(--text-color, #1f2937);
                     font-family: inherit;
                     font-size: 0.9rem;
                     line-height: 1.6;
                     resize: none;
                     margin-bottom: 1rem;
+                    transition: all 0.2s ease;
+                }
+
+                .note-content-input:focus {
+                    outline: none;
+                    border-color: var(--primary-color, #3b82f6);
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
                 }
 
                 .note-tags-input {
                     padding: 0.5rem;
-                    border: 1px solid var(--border-color);
+                    border: 1px solid var(--border-color, #d1d5db);
                     border-radius: 0.5rem;
-                    background: var(--surface-color);
-                    color: var(--text-color);
+                    background: var(--surface-color, #f9fafb);
+                    color: var(--text-color, #1f2937);
                     width: 300px;
+                    transition: all 0.2s ease;
+                }
+
+                .note-tags-input:focus {
+                    outline: none;
+                    border-color: var(--primary-color, #3b82f6);
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+
+                /* Dark mode overrides for inputs */
+                .dark .note-title-input,
+                .dark .note-content-input,
+                .dark .note-tags-input {
+                    background: #1f2937;
+                    border-color: #374151;
+                    color: #f9fafb;
+                }
+
+                .dark .note-title-input:focus,
+                .dark .note-content-input:focus,
+                .dark .note-tags-input:focus {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
                 }
 
                 .ai-summary {

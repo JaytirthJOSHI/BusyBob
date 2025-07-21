@@ -1002,7 +1002,9 @@ Remember: All actions require human approval before execution. Only suggest acti
       .insert([{
         user_id: user.id,
         rating: action.rating,
-        comments: action.note || ''
+        mood: this.getMoodText(action.rating),
+        intensity: action.rating * 20,
+        notes: action.note || ''
       }])
 
     if (error) throw error

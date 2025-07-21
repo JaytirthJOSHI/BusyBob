@@ -595,8 +595,15 @@ export const db = {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // Ensure mood is never null - use rating to generate mood text
+      // Helper function to get mood text from rating
+      const getRatingText = (rating) => {
+        const moodTexts = ['Very Bad', 'Bad', 'Okay', 'Good', 'Excellent']
+        return moodTexts[rating - 1] || 'Neutral'
+      }
+
+      // Ensure mood and rating are both provided
       const moodValue = feeling.mood || getRatingText(feeling.rating)
+      const ratingValue = feeling.rating || 3 // Default to neutral if not provided
 
       const { data, error } = await supabase
         .from('feelings')
@@ -604,9 +611,9 @@ export const db = {
           {
             user_id: user.id,
             mood: moodValue,
-            intensity: feeling.intensity,
+            rating: ratingValue,
+            intensity: feeling.intensity || (ratingValue * 20), // Convert rating to intensity if not provided
             notes: feeling.notes || feeling.comments || '',
-            rating: feeling.rating,
             created_at: feeling.created_at || new Date().toISOString()
           }
         ])
