@@ -25,16 +25,22 @@ console.log('🚀 Main.js loaded - starting initialization...')
 // Utility function to ensure profile exists
 async function ensureProfileExists(userId) {
     try {
+        console.log('🔍 Checking if profile exists for user:', userId)
+        
+        if (!userId) {
+            throw new Error('User ID is required to ensure profile exists')
+        }
+
         // Check if profile exists using maybeSingle to handle no results gracefully
         const { data: existingProfile, error: checkError } = await supabase
             .from('profiles')
-            .select('id')
+            .select('id, email, username')
             .eq('id', userId)
             .maybeSingle()
 
         if (checkError) {
             console.error('❌ Error checking profile existence:', checkError)
-            throw checkError
+            throw new Error(`Failed to check profile existence: ${checkError.message}`)
         }
 
         if (!existingProfile) {
@@ -42,26 +48,44 @@ async function ensureProfileExists(userId) {
             console.log('📝 Creating missing profile for user:', userId)
             
             // Get user info from auth
-            const { data: { user } } = await auth.getCurrentUser()
+            const { data: { user }, error: userError } = await auth.getCurrentUser()
             
-            const { error: createError } = await supabase
+            if (userError) {
+                console.error('❌ Error getting current user for profile creation:', userError)
+                throw new Error(`Failed to get user info: ${userError.message}`)
+            }
+
+            if (!user) {
+                throw new Error('No authenticated user found for profile creation')
+            }
+            
+            const profileData = {
+                id: userId,
+                email: user.email || null,
+                username: user.user_metadata?.name || user.email?.split('@')[0] || null,
+                points: 0,
+                lifetime_points: 0,
+                level: 1,
+                unlocked_rewards: [],
+                settings: {}
+            }
+
+            console.log('📝 Inserting profile data:', profileData)
+
+            const { data: newProfile, error: createError } = await supabase
                 .from('profiles')
-                .insert([{
-                    id: userId,
-                    email: user?.email || null,
-                    username: user?.user_metadata?.name || user?.email?.split('@')[0] || null,
-                    points: 0,
-                    lifetime_points: 0,
-                    level: 1,
-                    unlocked_rewards: [],
-                    settings: {}
-                }])
+                .insert([profileData])
+                .select()
+                .single()
 
             if (createError) {
                 console.error('❌ Error creating profile:', createError)
-                throw createError
+                throw new Error(`Failed to create profile: ${createError.message}`)
             }
-            console.log('✅ Profile created successfully')
+            
+            console.log('✅ Profile created successfully:', newProfile)
+        } else {
+            console.log('✅ Profile already exists for user:', userId)
         }
         
         return true
@@ -123,17 +147,33 @@ const moodManager = {
 
     async log(rating, date) {
         try {
-            const { data: { user } } = await auth.getCurrentUser()
+            console.log('🎭 Starting mood logging with rating:', rating, 'date:', date)
+            
+            // Validate rating
+            if (!rating || rating < 1 || rating > 5) {
+                throw new Error('Invalid mood rating. Must be between 1 and 5.')
+            }
+
+            const { data: { user }, error: authError } = await auth.getCurrentUser()
+            
+            if (authError) {
+                console.error('❌ Auth error while logging mood:', authError)
+                throw new Error(`Authentication error: ${authError.message}`)
+            }
+            
             if (!user) {
                 ui.showMessage("Please sign in to log your mood.", "error")
                 return
             }
 
+            console.log('👤 User authenticated for mood logging:', user.id)
+
             // Ensure profile exists before creating feeling
+            console.log('🔍 Ensuring user profile exists...')
             await ensureProfileExists(user.id)
 
             const feelingData = { 
-                rating,
+                rating: parseInt(rating),
                 mood: this.ui.getRatingText(rating),
                 intensity: rating * 20, // Convert 1-5 to 20-100 scale
                 notes: '', // Ensure notes field exists
@@ -141,13 +181,20 @@ const moodManager = {
                 created_at: date ? date.toISOString() : new Date().toISOString()
             }
 
+            console.log('💾 Inserting feeling data:', feelingData)
+
             const { data, error } = await supabase
                 .from('feelings')
                 .insert(feelingData)
                 .select()
                 .single()
 
-            if (error) throw error
+            if (error) {
+                console.error('❌ Supabase error inserting feeling:', error)
+                throw new Error(`Database error: ${error.message}`)
+            }
+
+            console.log('✅ Feeling saved successfully:', data)
 
             await this.load() // Reload all feelings
             this.ui.render()
@@ -158,6 +205,7 @@ const moodManager = {
                 try {
                     const points = window.pointsSystem.getPointValue('moodLogged')
                     await window.pointsSystem.awardPoints(points, 'Mood logged', 'mood')
+                    console.log('🎯 Points awarded for mood logging:', points)
                 } catch (pointsError) {
                     console.error('Error awarding points for mood:', pointsError)
                 }
@@ -166,8 +214,8 @@ const moodManager = {
             if (window.loadHomeData) window.loadHomeData()
 
         } catch (error) {
-            console.error("Error logging mood:", error)
-            ui.showMessage("Failed to save mood.", "error")
+            console.error("❌ Error logging mood:", error)
+            ui.showMessage(`Failed to save mood: ${error.message}`, "error")
         }
     },
 
@@ -1199,8 +1247,21 @@ function loadUpcomingTasks() {
 // Task management functions
 async function loadTasks() {
     try {
-        const { data: { user } } = await auth.getCurrentUser()
-        if (!user) return
+        console.log('📋 Loading tasks from database...')
+        
+        const { data: { user }, error: authError } = await auth.getCurrentUser()
+        
+        if (authError) {
+            console.error('❌ Auth error while loading tasks:', authError)
+            throw new Error(`Authentication error: ${authError.message}`)
+        }
+        
+        if (!user) {
+            console.log('👤 No user authenticated, skipping task load')
+            return
+        }
+
+        console.log('👤 Loading tasks for user:', user.id)
 
         const { data, error } = await supabase
             .from('tasks')
@@ -1208,12 +1269,18 @@ async function loadTasks() {
             .eq('user_id', user.id)
             .order('due_date', { ascending: true })
         
-        if (error) throw error
+        if (error) {
+            console.error('❌ Supabase error loading tasks:', error)
+            throw new Error(`Database error: ${error.message}`)
+        }
+        
         tasks = data || []
+        console.log(`✅ Loaded ${tasks.length} tasks from database`)
         renderTasks()
+        
     } catch (error) {
-        console.error('Error loading tasks:', error)
-        ui.showMessage('Failed to load tasks', 'error')
+        console.error('❌ Error loading tasks:', error)
+        ui.showMessage(`Failed to load tasks: ${error.message}`, 'error')
     }
 }
 
@@ -1430,11 +1497,14 @@ function setupJournalListeners() {
 // Form submission handlers
 async function handleTaskSubmit(event) {
     event.preventDefault()
+    
+    console.log('📝 Starting task submission...')
+    
     const titleInput = document.getElementById('task-title')
     const dueDateInput = document.getElementById('task-due-date')
     
     if (!titleInput || !dueDateInput) {
-        console.warn('Task form elements not found in DOM')
+        console.error('❌ Task form elements not found in DOM')
         ui.showMessage('Task form not available. Please try again.', 'error')
         return
     }
@@ -1442,49 +1512,98 @@ async function handleTaskSubmit(event) {
     const title = titleInput.value.trim()
     const dueDate = dueDateInput.value
 
-    if (!title || !dueDate) {
-        ui.showMessage('Please provide a title and due date.', 'error')
+    console.log('📝 Form data - Title:', title, 'Due Date:', dueDate)
+
+    // Validate input
+    if (!title || title.length === 0) {
+        ui.showMessage('Please provide a task title.', 'error')
         return
     }
 
-    const taskData = {
-        title,
-        due_date: new Date(dueDate).toISOString(),
-        completed: false
+    if (!dueDate) {
+        ui.showMessage('Please provide a due date.', 'error')
+        return
+    }
+
+    // Validate date
+    const dueDateObj = new Date(dueDate)
+    if (isNaN(dueDateObj.getTime())) {
+        ui.showMessage('Please provide a valid due date.', 'error')
+        return
     }
 
     try {
-        const { data: { user } } = await auth.getCurrentUser()
+        console.log('🔐 Getting current user...')
+        const { data: { user }, error: authError } = await auth.getCurrentUser()
+        
+        if (authError) {
+            console.error('❌ Auth error while creating task:', authError)
+            throw new Error(`Authentication error: ${authError.message}`)
+        }
+        
         if (!user) {
             ui.showMessage('Please sign in to add tasks.', 'error')
             return
         }
 
+        console.log('👤 User authenticated for task creation:', user.id)
+
         // Ensure profile exists before creating task
+        console.log('🔍 Ensuring user profile exists...')
         await ensureProfileExists(user.id)
+
+        const taskData = {
+            title: title,
+            due_date: dueDateObj.toISOString(),
+            completed: false,
+            user_id: user.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        }
+
+        console.log('💾 Inserting task data:', taskData)
 
         const { data, error } = await supabase
             .from('tasks')
-            .insert({
-                ...taskData,
-                user_id: user.id,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            })
+            .insert(taskData)
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            console.error('❌ Supabase error inserting task:', error)
+            throw new Error(`Database error: ${error.message}`)
+        }
+
+        console.log('✅ Task saved successfully:', data)
+
+        // Update local state
         tasks.push(data)
+        
+        // Update UI
         renderTasks()
         loadUpcomingTasks()
         loadCalendar()
+        
+        // Clear form
         titleInput.value = ''
         dueDateInput.value = ''
+        
+        // Award points for task creation
+        if (window.pointsSystem) {
+            try {
+                const points = window.pointsSystem.getPointValue('taskCreated') || 5
+                await window.pointsSystem.awardPoints(points, `Created: ${title}`, 'task')
+                console.log('🎯 Points awarded for task creation:', points)
+            } catch (pointsError) {
+                console.error('Error awarding points for task creation:', pointsError)
+            }
+        }
+        
         ui.showMessage('Task added successfully!', 'success')
+        
     } catch (error) {
-        console.error('Error adding task:', error)
-        ui.showMessage('Failed to add task.', 'error')
+        console.error('❌ Error adding task:', error)
+        ui.showMessage(`Failed to add task: ${error.message}`, 'error')
     }
 }
 
