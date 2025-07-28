@@ -21,6 +21,16 @@ const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET || 'your-mic
 // Middleware
 app.use(express.json());
 
+// Set proper MIME types for CSS and JS files
+app.use((req, res, next) => {
+    if (req.path.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css');
+    } else if (req.path.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+    }
+    next();
+});
+
 // API Routes
 app.use('/api/studentvue', studentVueRouter);
 app.use('/api/canvas', canvasRouter);
@@ -36,6 +46,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // Static file serving (after API routes)
+app.use(express.static('dist'));
+app.use(express.static('public'));
 app.use(express.static('.'));
 
 // Session middleware for storing Spotify tokens temporarily
@@ -541,16 +553,16 @@ app.post('/api/google/refresh', async (req, res) => {
 
 // Legal pages routes
 app.get('/privacy-policy', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.get('/terms-of-service', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-// Serve the main app
+// Serve the main app (SPA routing)
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(PORT, () => {
