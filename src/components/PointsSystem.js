@@ -125,9 +125,9 @@ export class PointsSystem {
       }
 
       const { data, error } = await supabase
-        .from('user_metadata')
-        .select('points, lifetime_points, level, rank, unlocked_rewards')
-        .eq('user_id', user.id)
+        .from('profiles')
+        .select('points, lifetime_points, level, unlocked_rewards')
+        .eq('id', user.id)
         .single()
 
       if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
@@ -158,9 +158,9 @@ export class PointsSystem {
   async createInitialUserData(userId) {
     try {
       const { error } = await supabase
-        .from('user_metadata')
+        .from('profiles')
         .insert({
-          user_id: userId,
+          id: userId,
           points: 0,
           lifetime_points: 0,
           level: 1,
@@ -552,8 +552,8 @@ export class PointsSystem {
   async loadLeaderboard() {
     try {
       const { data, error } = await supabase
-        .from('user_metadata')
-        .select('user_id, points, level, created_at')
+        .from('profiles')
+        .select('id, points, level, created_at')
         .order('points', { ascending: false })
         .limit(10)
 
@@ -608,9 +608,9 @@ export class PointsSystem {
       unlockedRewards.push(rewardId)
 
       const { error: updateError } = await supabase
-        .from('user_metadata')
+        .from('profiles')
         .upsert({
-          user_id: user.id,
+          id: user.id,
           points: newPoints,
           unlocked_rewards: unlockedRewards
         })
@@ -667,9 +667,9 @@ export class PointsSystem {
       const newLevel = this.calculateLevel(newLifetimePoints)
 
       const { error: updateError } = await supabase
-        .from('user_metadata')
+        .from('profiles')
         .upsert({
-          user_id: user.id,
+          id: user.id,
           points: newPoints,
           lifetime_points: newLifetimePoints,
           level: newLevel

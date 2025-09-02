@@ -44,7 +44,6 @@ export class PomodoroTimer {
   async init() {
     await this.loadSettings()
     await this.loadProgress()
-    this.requestNotificationPermission()
     this.createUI()
     this.attachEventListeners()
     this.updateDisplay()
@@ -54,12 +53,13 @@ export class PomodoroTimer {
   async loadSettings() {
     try {
       const { data } = await supabase
-        .from('user_metadata')
-        .select('pomodoro_settings')
+        .from('profiles')
+        .select('settings')
+        .eq('id', user.id)
         .single()
 
-      if (data?.pomodoro_settings) {
-        this.settings = { ...this.settings, ...data.pomodoro_settings }
+      if (data?.settings?.pomodoro_settings) {
+        this.settings = { ...this.settings, ...data.settings.pomodoro_settings }
       }
     } catch (error) {
       console.log('Using default Pomodoro settings')
@@ -72,10 +72,12 @@ export class PomodoroTimer {
       if (!user) return
 
       await supabase
-        .from('user_metadata')
+        .from('profiles')
         .upsert({
-          user_id: user.id,
-          pomodoro_settings: this.settings
+          id: user.id,
+          settings: {
+            pomodoro_settings: this.settings
+          }
         })
     } catch (error) {
       console.error('Error saving Pomodoro settings:', error)
@@ -84,10 +86,17 @@ export class PomodoroTimer {
 
   async loadProgress() {
     try {
+      const { data: { user } } = await auth.getCurrentUser()
+      if (!user) {
+        console.log('No user logged in, skipping progress load')
+        return
+      }
+
       const today = new Date().toISOString().split('T')[0]
       const { data } = await supabase
         .from('pomodoro_sessions')
         .select('*')
+        .eq('user_id', user.id)
         .gte('created_at', today)
         .order('created_at', { ascending: false })
 
@@ -107,9 +116,16 @@ export class PomodoroTimer {
 
   async calculateDailyStreak() {
     try {
+      const { data: { user } } = await auth.getCurrentUser()
+      if (!user) {
+        console.log('No user logged in, skipping streak calculation')
+        return
+      }
+
       const { data } = await supabase
         .from('pomodoro_sessions')
         .select('created_at')
+        .eq('user_id', user.id)
         .eq('session_type', 'work')
         .eq('completed', true)
         .order('created_at', { ascending: false })
@@ -310,6 +326,11 @@ export class PomodoroTimer {
   startTimer() {
     if (this.timerState.isRunning) return
 
+    // Request notification permission on first user interaction
+    if (this.notifications.permission === 'default') {
+      this.requestNotificationPermission()
+    }
+
     this.timerState.isRunning = true
     this.interval = setInterval(() => {
       this.timerState.timeLeft--
@@ -424,18 +445,18 @@ export class PomodoroTimer {
       if (!user) return
 
       const { data: userData } = await supabase
-        .from('user_metadata')
+        .from('profiles')
         .select('points')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single()
 
       const currentPoints = userData?.points || 0
       const newPoints = currentPoints + points
 
       await supabase
-        .from('user_metadata')
+        .from('profiles')
         .upsert({
-          user_id: user.id,
+          id: user.id,
           points: newPoints
         })
 
@@ -659,10 +680,17 @@ export class PomodoroTimer {
 
   async getDailyStats() {
     try {
+      const { data: { user } } = await auth.getCurrentUser()
+      if (!user) {
+        console.log('No user logged in, skipping daily stats')
+        return { sessions: 0, totalTime: 0 }
+      }
+
       const today = new Date().toISOString().split('T')[0]
       const { data } = await supabase
         .from('pomodoro_sessions')
         .select('*')
+        .eq('user_id', user.id)
         .eq('completed', true)
         .gte('created_at', today)
 

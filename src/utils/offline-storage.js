@@ -242,29 +242,24 @@ class OfflineStorage {
             throw new OfflineStorageError('Data must be a valid object', 'INVALID_DATA')
         }
         
-        // Check for potentially dangerous properties
-        const dangerousProps = ['__proto__', 'constructor', 'prototype']
-        for (const prop of dangerousProps) {
-            if (prop in data) {
-                throw new OfflineStorageError(`Dangerous property detected: ${prop}`, 'DANGEROUS_PROPERTY')
-            }
-        }
-        
         return true
     }
 
     sanitizeData(data) {
-        // Create a clean copy without potentially dangerous properties
+        if (!data || typeof data !== 'object') {
+            return data
+        }
+        
+        // Create a clean copy without prototype properties
         const sanitized = {}
         for (const [key, value] of Object.entries(data)) {
-            if (typeof key === 'string' && !key.startsWith('__')) {
-                // 🔒 SECURITY: Sanitize both key and value
-                const cleanKey = this.sanitizeString(key)
-                if (cleanKey) {
-                    sanitized[cleanKey] = this.sanitizeValue(value)
-                }
+            // Skip dangerous properties
+            if (['__proto__', 'constructor', 'prototype'].includes(key)) {
+                continue
             }
+            sanitized[key] = value
         }
+        
         return sanitized
     }
 
@@ -505,6 +500,9 @@ class OfflineStorage {
             this.validateTableName(tableName)
             this.validateData(data)
             
+            // Sanitize data to remove dangerous properties
+            const sanitizedData = this.sanitizeData(data)
+            
             if (!this.currentUserId || !this.db) {
                 throw new OfflineStorageError('Storage not initialized', 'NOT_INITIALIZED')
             }
@@ -523,8 +521,7 @@ class OfflineStorage {
                 throw new OfflineStorageError('Storage quota exceeded', 'QUOTA_EXCEEDED')
             }
 
-            // Sanitize and prepare data
-            const sanitizedData = this.sanitizeData(data)
+            // Prepare data
             const record = {
                 ...sanitizedData,
                 user_id: this.currentUserId,

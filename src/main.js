@@ -15,7 +15,8 @@ import { PrivacyPolicy } from './components/PrivacyPolicy.js'
 import { TermsOfService } from './components/TermsOfService.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 import { kidMode } from './utils/kid-mode.js'
-import { offlineStatus } from './components/OfflineStatus.js'
+// import { offlineStatus } from './components/OfflineStatus.js' // Disabled offline functionality
+import { Chart } from 'chart.js/auto'
 
 console.log('🚀 Main.js loaded - starting initialization...')
 
@@ -351,11 +352,11 @@ async function initializeApp() {
             currentUser = user
             
             // Refresh offline storage session for existing user
-            if (window.offlineStorage) {
+            if (false && window.offlineStorage) {
                 try {
                     const { data: { session } } = await auth.getSession()
                     if (session) {
-                        await window.offlineStorage.refreshSessionFromApp(session.access_token)
+                        await false && window.offlineStorage.refreshSessionFromApp(session.access_token)
                         console.log('🔄 Offline storage session refreshed for existing user')
                     }
                 } catch (error) {
@@ -381,9 +382,9 @@ async function initializeApp() {
                 currentUser = session.user
                 
                 // Refresh offline storage session
-                if (window.offlineStorage && currentUser) {
+                if (false && window.offlineStorage && currentUser) {
                     try {
-                        await window.offlineStorage.refreshSessionFromApp(session.access_token)
+                        await false && window.offlineStorage.refreshSessionFromApp(session.access_token)
                         console.log('🔄 Offline storage session refreshed')
                     } catch (error) {
                         console.warn('Failed to refresh offline storage session:', error)
@@ -459,9 +460,9 @@ async function initializeApp() {
                 const { data: { session } } = await auth.getSession()
                 
                 // Refresh offline storage session for demo user
-                if (window.offlineStorage && session) {
+                if (false && window.offlineStorage && session) {
                     try {
-                        await window.offlineStorage.refreshSessionFromApp(session.access_token)
+                        await false && window.offlineStorage.refreshSessionFromApp(session.access_token)
                         console.log('🔄 Offline storage session refreshed for demo user')
                     } catch (refreshError) {
                         console.warn('Failed to refresh offline storage session for demo user:', refreshError)
@@ -498,8 +499,8 @@ async function initializeApp() {
         
         // Add global debug function for offline storage
         window.checkOfflineStorageStatus = () => {
-            if (window.offlineStorage) {
-                const status = window.offlineStorage.getSessionStatus()
+            if (false && window.offlineStorage) {
+                const status = false && window.offlineStorage.getSessionStatus()
                 console.log('🔍 Offline Storage Session Status:', status)
                 return status
             } else {
@@ -605,9 +606,9 @@ async function handleLogin(event) {
         if (error) throw error
         
         // Refresh offline storage session after successful login
-        if (window.offlineStorage && data.session) {
+        if (false && window.offlineStorage && data.session) {
             try {
-                await window.offlineStorage.refreshSessionFromApp(data.session.access_token)
+                await false && window.offlineStorage.refreshSessionFromApp(data.session.access_token)
                 console.log('🔄 Offline storage session refreshed after login')
             } catch (refreshError) {
                 console.warn('Failed to refresh offline storage session after login:', refreshError)
@@ -682,9 +683,9 @@ async function handleSignup(event) {
         if (error) throw error
         
         // Refresh offline storage session after successful signup
-        if (window.offlineStorage && data.session) {
+        if (false && window.offlineStorage && data.session) {
             try {
-                await window.offlineStorage.refreshSessionFromApp(data.session.access_token)
+                await false && window.offlineStorage.refreshSessionFromApp(data.session.access_token)
                 console.log('🔄 Offline storage session refreshed after signup')
             } catch (refreshError) {
                 console.warn('Failed to refresh offline storage session after signup:', refreshError)

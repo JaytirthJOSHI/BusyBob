@@ -34,6 +34,35 @@ app.use(session({
 app.use('/api/studentvue', studentVueRouter);
 app.use('/api/canvas', canvasRouter);
 
+// Spotify action endpoint
+app.post('/api/spotify/action', async (req, res) => {
+    try {
+        const { action, data } = req.body;
+        const spotifyData = req.session.spotifyData;
+        
+        if (!spotifyData || !spotifyData.access_token) {
+            return res.status(401).json({ error: 'Not authenticated with Spotify' });
+        }
+        
+        // Handle different Spotify actions
+        switch (action) {
+            case 'play':
+                // Implementation for play action
+                res.json({ success: true, message: 'Play action executed' });
+                break;
+            case 'pause':
+                // Implementation for pause action
+                res.json({ success: true, message: 'Pause action executed' });
+                break;
+            default:
+                res.status(400).json({ error: 'Unknown action' });
+        }
+    } catch (error) {
+        console.error('Spotify action error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Google OAuth callback
 app.get('/auth/google/callback', async (req, res) => {
     try {

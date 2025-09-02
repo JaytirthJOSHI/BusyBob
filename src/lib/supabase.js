@@ -226,6 +226,30 @@ export const auth = {
       return { data: null, error: err };
     }
   },
+
+  getSession: async () => {
+    try {
+      const { data, error } = await supabase.auth.getSession()
+      return { data, error }
+    } catch (err) {
+      console.error('getSession error:', err)
+      return { data: null, error: err }
+    }
+  },
+
+  getUser: async () => {
+    try {
+      const { data, error } = await supabase.auth.getUser()
+      return { data, error }
+    } catch (err) {
+      console.error('getUser error:', err)
+      return { data: null, error: err }
+    }
+  },
+
+  onAuthStateChange: (callback) => {
+    return supabase.auth.onAuthStateChange(callback)
+  }
 }
 
 // Database helpers

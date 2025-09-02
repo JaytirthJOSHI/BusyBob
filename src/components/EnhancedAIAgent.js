@@ -22,7 +22,7 @@ export class EnhancedAIAgent {
       learning: true
     }
     
-    this.initializeAgents()
+    // Initialize agents after subsystems are ready
     setTimeout(() => this.init(), 100)
   }
 
@@ -40,13 +40,16 @@ export class EnhancedAIAgent {
     
     console.log('🚀 Initializing Enhanced AI Agent System...')
     
-    // Initialize all subsystems
+    // Initialize all subsystems first
     await Promise.all([
       this.memorySystem.initialize(),
       this.planningSystem.initialize(),
       this.toolRegistry.initialize(),
       this.collaborationHub.initialize()
     ])
+    
+    // Initialize agents after subsystems are ready
+    this.initializeAgents()
     
     // Initialize each agent
     for (const [name, agent] of this.agents) {
@@ -518,15 +521,17 @@ class ToolRegistry {
 
   async loadCustomTools() {
     // Load custom tools from database
+    // Note: custom_tools table doesn't exist yet, skipping for now
     try {
-      const { data: customTools } = await supabase
-        .from('custom_tools')
-        .select('*')
+      // const { data: customTools } = await supabase
+      //   .from('custom_tools')
+      //   .select('*')
       
-      customTools?.forEach(toolData => {
-        const tool = new CustomTool(toolData)
-        this.register(toolData.name, tool)
-      })
+      // customTools?.forEach(toolData => {
+      //   const tool = new CustomTool(toolData)
+      //   this.register(toolData.name, tool)
+      // })
+      console.log('Custom tools loading skipped - table not implemented yet')
     } catch (error) {
       console.error('Error loading custom tools:', error)
     }
@@ -615,7 +620,9 @@ class BaseAgent {
   }
 
   async initialize() {
-    this.memory = this.aiSystem.memorySystem
+    if (this.aiSystem && this.aiSystem.memorySystem) {
+      this.memory = this.aiSystem.memorySystem
+    }
     this.setupCapabilities()
     this.registerTools()
   }
