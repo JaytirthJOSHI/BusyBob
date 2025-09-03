@@ -152,10 +152,10 @@ export class Calendar {
     try {
       if (!this.isDemoMode()) {
         const clientId = 'YOUR_MICROSOFT_CLIENT_ID'
-        const scope = 'https:
+        const scope = 'https://graph.microsoft.com/calendars.read'
         const redirectUri = window.location.origin + '/auth/microsoft/callback'
         
-        const authUrl = `https:
+        const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_mode=query`
         
         const popup = window.open(authUrl, 'outlookAuth', 'width=500,height=600')
         
