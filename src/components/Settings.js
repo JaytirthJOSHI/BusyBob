@@ -170,10 +170,10 @@ export class Settings {
                             ${this.renderOutlookConnection()}
                         </div>
 
-                        <!-- Spotify Connection -->
-                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+                        <!-- Spotify Connection (temporarily disabled) -->
+                        <!-- <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
                             ${this.renderSpotifyConnection()}
-                        </div>
+                        </div> -->
 
                         <!-- More connected accounts can be added here -->
                         <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4 opacity-50">
@@ -702,8 +702,9 @@ export class Settings {
             if (event.target.id === 'disconnect-studentvue') this.disconnectStudentVue();
             if (event.target.id === 'connect-canvas') this.showCanvasConnectionModal();
             if (event.target.id === 'disconnect-canvas') this.disconnectCanvas();
-            if (event.target.id === 'connect-spotify') this.connectSpotify();
-            if (event.target.id === 'disconnect-spotify') this.disconnectSpotify();
+            // Spotify functionality temporarily disabled
+            // if (event.target.id === 'connect-spotify') this.connectSpotify();
+            // if (event.target.id === 'disconnect-spotify') this.disconnectSpotify();
             if (event.target.id === 'privacy-policy-link') this.showPrivacyPolicy();
             if (event.target.id === 'terms-of-service-link') this.showTermsOfService();
             

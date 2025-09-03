@@ -7,9 +7,9 @@ import { PomodoroTimer } from './components/PomodoroTimer.js'
 import { AuthPages } from './components/AuthPages.js'
 import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
-import { AcademicHub } from './components/AcademicHub.js'
-import { Music } from './components/Music.js'
-import { AINotes } from './components/AINotes.js'
+// import { AcademicHub } from './components/AcademicHub.js' // Temporarily disabled
+// import { Music } from './components/Music.js' // Temporarily disabled
+// import { AINotes } from './components/AINotes.js' // Temporarily disabled
 import { Settings } from './components/Settings.js'
 import { PrivacyPolicy } from './components/PrivacyPolicy.js'
 import { TermsOfService } from './components/TermsOfService.js'
@@ -254,10 +254,10 @@ async function initializeApp() {
         authPages = new AuthPages()
         navigation = new Navigation()
         landingPage = new LandingPage()
-        academicHub = new AcademicHub()
+        // academicHub = new AcademicHub() // Temporarily disabled
         calendar = new Calendar('calendar-container', onDateSelect)
-        music = new Music()
-        aiNotes = new AINotes()
+        // music = new Music() // Temporarily disabled
+        // aiNotes = new AINotes() // Temporarily disabled
         settings = new Settings(calendar)
         privacyPolicy = new PrivacyPolicy()
         termsOfService = new TermsOfService()
@@ -294,9 +294,9 @@ async function initializeApp() {
         authPages = new AuthPages()
         navigation = new Navigation()
         landingPage = new LandingPage()
-        academicHub = new AcademicHub()
-        music = new Music()
-        aiNotes = new AINotes()
+        // academicHub = new AcademicHub() // Temporarily disabled
+        // music = new Music() // Temporarily disabled
+        // aiNotes = new AINotes() // Temporarily disabled
         settings = new Settings(calendar)
         privacyPolicy = new PrivacyPolicy()
         termsOfService = new TermsOfService()
@@ -951,20 +951,17 @@ function showPage(pageName) {
             loadJournalData()
             break
         case 'academic-hub':
-            if (academicHub) {
-                academicHub.init()
-            }
-            break
+            // Academic Hub temporarily disabled
+            showPage('home')
+            return
         case 'music':
-            if (music) {
-                music.init()
-            }
-            break
+            // Music temporarily disabled
+            showPage('home')
+            return
         case 'ai-notes':
-            if (aiNotes) {
-                aiNotes.init()
-            }
-            break
+            // AI Notes temporarily disabled
+            showPage('home')
+            return
         case 'settings':
             if (settings) {
                 settings.init()
