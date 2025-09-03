@@ -18,7 +18,7 @@ import { kidMode } from './utils/kid-mode.js'
 // import { offlineStatus } from './components/OfflineStatus.js' 
 import { Chart } from 'chart.js/auto'
 
-console.log('🚀 Main.js loaded - starting initialization...')
+console.log('Main.js loaded - starting initialization...')
 
 
 let currentUser = null
@@ -250,7 +250,7 @@ async function initializeApp() {
             const page = path === '/privacy-policy' ? 'privacy-policy' : 'terms-of-service'
             console.log(`📄 Direct access to ${page} detected`)
 
-                    console.log('📦 Creating components...')
+                    console.log('Creating components...')
         authPages = new AuthPages()
         navigation = new Navigation()
         landingPage = new LandingPage()
@@ -263,7 +263,7 @@ async function initializeApp() {
         termsOfService = new TermsOfService()
             
             // Initialize theme
-            console.log('🎨 Initializing theme...')
+            console.log('Initializing theme...')
             theme.initialize()
             
             // Set up theme toggle
@@ -274,23 +274,21 @@ async function initializeApp() {
             await showMainApp()
             setTimeout(() => {
                 showPage(page)
-                console.log(`✅ Navigated to ${page} page`)
+                console.log(`Navigated to ${page} page`)
             }, 100)
             
             // Set up event listeners
             setupFormListeners()
             setupNavigationListeners()
-            
-            console.log('🎉 Legal page initialization complete!')
             return
         }
         
         // Initialize theme
-        console.log('🎨 Initializing theme...')
+        console.log('Initializing theme...')
         theme.initialize()
         
         // Initialize components
-        console.log('📦 Creating components...')
+        console.log('Creating components...')
         authPages = new AuthPages()
         navigation = new Navigation()
         landingPage = new LandingPage()
@@ -300,7 +298,7 @@ async function initializeApp() {
         settings = new Settings(calendar)
         privacyPolicy = new PrivacyPolicy()
         termsOfService = new TermsOfService()
-        console.log('✅ Components created successfully')
+        console.log('Components created successfully')
         
         // Initialize gamification systems
         console.log('🎮 Initializing gamification systems...')
@@ -308,14 +306,14 @@ async function initializeApp() {
             // pointsSystem = new PointsSystem() // Disabled points system
             // await pointsSystem.init()
             // false && window.pointsSystem = pointsSystem
-            console.log('✅ Points System disabled')
+            console.log('Points System disabled')
 
             pomodoroTimer = new PomodoroTimer()
             await pomodoroTimer.init()
             window.pomodoroTimer = pomodoroTimer
-            console.log('✅ Pomodoro Timer initialized')
+            console.log('Pomodoro Timer initialized')
         } catch (gameError) {
-            console.error('❌ Error initializing gamification systems:', gameError)
+            console.error('ERROR: Error initializing gamification systems:', gameError)
         }
         
         // Initialize Enhanced AI Agent
@@ -324,9 +322,9 @@ async function initializeApp() {
             aiAgent = new EnhancedAIAgent()
             await aiAgent.init()
             window.enhancedAI = aiAgent
-            console.log('✅ Enhanced AI Agent initialized')
+            console.log('Enhanced AI Agent initialized')
         } catch (aiError) {
-            console.error('❌ Error initializing AI Agent:', aiError)
+            console.error('ERROR: Error initializing AI Agent:', aiError)
         }
         
         // Set up theme toggle
@@ -502,13 +500,13 @@ async function initializeApp() {
                 console.log('🔍 Offline Storage Session Status:', status)
                 return status
             } else {
-                console.log('❌ Offline storage not initialized')
+                console.log('ERROR: Offline storage not initialized')
                 return null
             }
         }
         
     } catch (error) {
-        console.error('❌ Error during app initialization:', error)
+        console.error('ERROR: Error during app initialization:', error)
         // Show error message to user
         document.body.innerHTML = `
             <div class="min-h-screen bg-red-50 flex items-center justify-center p-4">
@@ -735,7 +733,7 @@ async function signOut() {
         showLandingPage()
         ui.showMessage('Signed out successfully - all offline data cleared', 'success')
         
-        console.log('✅ User signed out successfully with data cleanup')
+        console.log('User signed out successfully with data cleanup')
     } catch (error) {
         console.error('Error signing out:', error)
         ui.showMessage('Error signing out', 'error')
@@ -777,7 +775,7 @@ async function handleSpotifyAuth() {
 
         window.location.href = authUrl.toString()
     } catch (error) {
-        console.error('❌ Error starting Spotify authentication:', error)
+        console.error('ERROR: Error starting Spotify authentication:', error)
         ui.showMessage('Failed to start Spotify authentication', 'error')
     }
 }
@@ -810,7 +808,7 @@ async function handleSpotifyAuthCompletion() {
             throw error
         }
 
-        console.log('✅ Spotify authentication completed successfully!')
+        console.log('Spotify authentication completed successfully!')
         
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname)
@@ -821,7 +819,7 @@ async function handleSpotifyAuthCompletion() {
         showMainApp()
 
     } catch (error) {
-        console.error('❌ Error completing Spotify authentication:', error)
+        console.error('ERROR: Error completing Spotify authentication:', error)
         ui.showMessage(`Spotify sign-in failed: ${error.message}`, 'error')
         
         // Clean up URL and redirect to landing page
@@ -837,12 +835,12 @@ function showLandingPage() {
     const mainApp = document.getElementById('main-app')
     
     if (!authContainer) {
-        console.error('❌ auth-container element not found!')
+        console.error('ERROR: auth-container element not found!')
         return
     }
     
     if (!mainApp) {
-        console.error('❌ main-app element not found!')
+        console.error('ERROR: main-app element not found!')
         return
     }
     
@@ -858,7 +856,7 @@ function showLandingPage() {
     // Load landing page content
     console.log('📄 Mounting landing page content...')
     landingPage.mount(authContainer)
-    console.log('✅ Landing page mounted successfully!')
+    console.log('Landing page mounted successfully!')
 }
 
 function showAuthPages(page = 'login') {
@@ -890,9 +888,9 @@ async function showMainApp() {
     // 🔒 SECURITY: Ensure secure user initialization
     try {
         await db.ensureUser()
-        console.log('✅ User database initialized securely')
+        console.log('User database initialized securely')
     } catch (error) {
-        console.error('❌ Failed to initialize user securely:', error)
+        console.error('ERROR: Failed to initialize user securely:', error)
         ui.showMessage('Security initialization failed. Please sign out and back in.', 'error')
         return
     }
@@ -1001,12 +999,12 @@ async function loadAllData() {
             })
         }
         
-        console.log('✅ Data loading completed')
+        console.log('Data loading completed')
         loadHomeData()
         loadCharts()
         
     } catch (error) {
-        console.error('❌ Error in loadAllData:', error)
+        console.error('ERROR: Error in loadAllData:', error)
         ui.showMessage('Error loading data. Please refresh the page.', 'error')
     }
 }
@@ -1593,7 +1591,7 @@ async function applyKidModeStyles() {
     // Initialize content filtering observer
     initKidModeObserver()
     
-    console.log('✅ Kid Mode styles applied successfully')
+    console.log('Kid Mode styles applied successfully')
 }
 
 function applyKidModeRestrictions() {
@@ -1637,7 +1635,7 @@ function applyKidModeRestrictions() {
         })
     }
     
-    console.log('✅ Kid Mode restrictions applied')
+    console.log('Kid Mode restrictions applied')
 }
 
 // Apply content filtering
