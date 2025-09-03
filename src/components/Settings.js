@@ -5,7 +5,7 @@ import { db } from '../lib/offline-db.js'
 
 export class Settings {
     constructor(calendar) {
-        this.calendar = calendar; // Pass the calendar instance
+        this.calendar = calendar;
         this.studentVueConnected = false
         this.studentVueCredentials = null
         this.canvasConnected = false
@@ -30,7 +30,6 @@ export class Settings {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) return
 
-            // Check for StudentVue
             const { data: studentVueData } = await supabase
                 .from('studentvue_credentials')
                 .select('district_url, username')
@@ -45,7 +44,6 @@ export class Settings {
                 }
             }
 
-            // Check for Canvas
             const { data: canvasData } = await supabase
                 .from('canvas_credentials')
                 .select('canvas_url')
@@ -59,7 +57,6 @@ export class Settings {
                 }
             }
 
-            // Check for Spotify connection
             const { data: spotifyData } = await supabase
                 .from('music_connections')
                 .select('*')
@@ -69,7 +66,6 @@ export class Settings {
 
             this.spotifyConnected = !!spotifyData
             if (spotifyData) {
-                // Try to get fresh Spotify profile
                 try {
                     const profileResponse = await fetch('https://api.spotify.com/v1/me', {
                         headers: {
@@ -84,14 +80,12 @@ export class Settings {
                 }
             }
 
-            // Check for Google and Outlook from the Calendar component's state
             if (this.calendar) {
                 this.googleConnected = this.calendar.connectedCalendars.some(c => c.type === 'google');
                 this.outlookConnected = this.calendar.connectedCalendars.some(c => c.type === 'outlook');
             }
 
         } catch (error) {
-            // It's normal for queries to fail if no record is found (PGRST116), so we can often ignore those.
             if (error.code !== 'PGRST116') {
                 console.error('Error loading connected accounts:', error)
             }
@@ -156,10 +150,10 @@ export class Settings {
                         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Connected Accounts</h2>
                         <p class="text-gray-600 dark:text-gray-400 mb-6">Connect your accounts to sync data and enhance your experience.</p>
                         
-                        <!-- StudentVue Connection -->
-                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+                        <!-- StudentVue Connection (temporarily disabled) -->
+                        <!-- <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
                             ${this.renderStudentVueConnection()}
-                        </div>
+                        </div> -->
 
                         <!-- Canvas Connection -->
                         <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
@@ -713,16 +707,13 @@ export class Settings {
             if (event.target.id === 'privacy-policy-link') this.showPrivacyPolicy();
             if (event.target.id === 'terms-of-service-link') this.showTermsOfService();
             
-            // Kid Mode event listeners
             if (event.target.id === 'save-dob-btn') this.saveDateOfBirth();
             if (event.target.id === 'enable-kid-mode-btn') this.enableKidMode();
             if (event.target.id === 'disable-kid-mode-btn') this.showDisableKidModeModal();
         });
 
-        // Load user email
         this.loadUserEmail()
 
-        // Theme toggle
         const themeToggle = container.querySelector('#settings-theme-toggle')
         if (themeToggle) {
             themeToggle.addEventListener('click', () => {
@@ -732,17 +723,14 @@ export class Settings {
             })
         }
 
-        // Timezone selector
         const timezoneSelector = container.querySelector('#timezone-selector');
         if (timezoneSelector) {
             timezoneSelector.addEventListener('change', (e) => {
                 localStorage.setItem('timezone', e.target.value);
-                // Optionally, dispatch an event to notify the clock to update immediately
                 window.dispatchEvent(new Event('timezoneChange'));
             });
         }
 
-        // Grades tab toggle
         const gradesTabToggle = container.querySelector('#grades-tab-toggle');
         if (gradesTabToggle) {
             this.updateGradesToggleVisual();
@@ -754,19 +742,15 @@ export class Settings {
             });
         }
 
-        // Google Calendar listeners
         document.getElementById('connect-google-btn')?.addEventListener('click', () => this.connectGoogle())
         document.getElementById('disconnect-google-btn')?.addEventListener('click', () => this.disconnectGoogle())
 
-        // Outlook Calendar listeners
         document.getElementById('connect-outlook-btn')?.addEventListener('click', () => this.connectOutlook())
         document.getElementById('disconnect-outlook-btn')?.addEventListener('click', () => this.disconnectOutlook())
         
-        // Interface customization listeners
         document.getElementById('save-interface-settings')?.addEventListener('click', () => this.saveInterfaceSettings())
         document.getElementById('reset-interface-settings')?.addEventListener('click', () => this.resetInterfaceSettings())
         
-        // Toolbox settings
         document.getElementById('toolbox-academic-hub')?.addEventListener('change', (e) => {
             if (window.toolbox) {
                 window.toolbox.setToolVisibility('academic-hub', e.target.checked)
@@ -998,7 +982,7 @@ export class Settings {
                         <div class="form-group">
                             <label for="canvas-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Canvas URL</label>
                             <input type="url" id="canvas-url" name="canvas_url" required
-                                   placeholder="https://yourschool.instructure.com/courses/123"
+                                   placeholder="https:
                                    class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                         </div>
                         <div class="mt-6 flex justify-end">
@@ -1036,12 +1020,10 @@ export class Settings {
         `;
         document.body.appendChild(modal);
 
-        // Animate modal in
         setTimeout(() => {
             document.getElementById('canvas-modal-content')?.classList.remove('scale-95', 'opacity-0');
         }, 10);
 
-        // Event listeners
         const step1 = modal.querySelector('#canvas-step-1');
         const step2 = modal.querySelector('#canvas-step-2');
 
@@ -1094,14 +1076,14 @@ export class Settings {
 
             const { error } = await supabase.from('canvas_credentials').upsert({
                 user_id: user.id,
-                canvas_url: baseUrl, // This is now correct
+                canvas_url: baseUrl,
                 access_token: accessToken
             })
 
             if (error) throw error
 
             this.showMessage('Successfully connected to Canvas!', 'success')
-            this.loadConnectedAccounts().then(() => this.render()) // Reload and re-render
+            this.loadConnectedAccounts().then(() => this.render())
             modal.remove()
 
         } catch (error) {
@@ -1123,7 +1105,7 @@ export class Settings {
             if (error) throw error
 
             this.showMessage('Disconnected from Canvas.', 'info')
-            this.loadConnectedAccounts().then(() => this.render()) // Reload and re-render
+            this.loadConnectedAccounts().then(() => this.render())
 
         } catch (error) {
             console.error('Error disconnecting from Canvas:', error)
@@ -1140,12 +1122,10 @@ export class Settings {
     }
 
     showPrivacyPolicy() {
-        // Navigate to privacy policy page
         document.dispatchEvent(new CustomEvent('pageChange', { detail: { page: 'privacy-policy' } }));
     }
 
     showTermsOfService() {
-        // Navigate to terms of service page
         document.dispatchEvent(new CustomEvent('pageChange', { detail: { page: 'terms-of-service' } }));
     }
 
@@ -1161,7 +1141,7 @@ export class Settings {
             if (googleCalendar) {
                 this.calendar.removeCalendar(googleCalendar.id);
                 this.showMessage('Google Calendar disconnected.', 'success');
-                await this.init(); // Re-initialize to update the view
+                await this.init();
             }
         }
     }
@@ -1178,7 +1158,7 @@ export class Settings {
             if (outlookCalendar) {
                 this.calendar.removeCalendar(outlookCalendar.id);
                 this.showMessage('Outlook Calendar disconnected.', 'success');
-                await this.init(); // Re-initialize to update the view
+                await this.init();
             }
         }
     }
@@ -1187,7 +1167,6 @@ export class Settings {
         try {
             console.log('🎵 Connecting to Spotify from settings...')
             
-            // Generate a random state for security
             const state = Math.random().toString(36).substring(2, 15)
             localStorage.setItem('spotify_settings_state', state)
 
@@ -1199,7 +1178,7 @@ export class Settings {
             authUrl.searchParams.append('scope', scope)
             authUrl.searchParams.append('redirect_uri', `${window.location.origin}/auth/spotify/callback`)
             authUrl.searchParams.append('state', state)
-            authUrl.searchParams.append('show_dialog', 'false') // Don't force reauth for integration
+            authUrl.searchParams.append('show_dialog', 'false')
 
             window.location.href = authUrl.toString()
         } catch (error) {
@@ -1215,7 +1194,6 @@ export class Settings {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) throw new Error('User not authenticated')
 
-            // Remove Spotify connection from database
             const { error } = await supabase
                 .from('music_connections')
                 .delete()
@@ -1224,11 +1202,9 @@ export class Settings {
 
             if (error) throw error
 
-            // Update local state
             this.spotifyConnected = false
             this.spotifyProfile = null
             
-            // Re-render the connected accounts section
             this.init()
 
             this.showMessage('Spotify disconnected successfully', 'success')
@@ -1238,7 +1214,6 @@ export class Settings {
         }
     }
 
-    // Kid Mode Methods
     async saveDateOfBirth() {
         const dobInput = document.getElementById('kid-mode-dob')
         if (!dobInput) return
@@ -1273,7 +1248,6 @@ export class Settings {
             this.render()
             this.showMessage('Kid Mode enabled successfully', 'success')
             
-            // Reload the page to apply kid mode styling
             setTimeout(() => {
                 window.location.reload()
             }, 1500)
@@ -1345,10 +1319,8 @@ export class Settings {
         const modal = document.getElementById(modalId)
         const adminCodeInput = modal.querySelector('#admin-code-input')
         
-        // Focus on the input
         adminCodeInput.focus()
         
-        // Event listeners
         modal.querySelector('#close-disable-modal-btn').addEventListener('click', () => modal.remove())
         modal.querySelector('#cancel-disable-btn').addEventListener('click', () => modal.remove())
         
@@ -1357,7 +1329,6 @@ export class Settings {
             modal.remove()
         })
         
-        // Enter key support
         adminCodeInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.disableKidMode(adminCodeInput.value)
@@ -1365,7 +1336,6 @@ export class Settings {
             }
         })
         
-        // Close modal on outside click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 modal.remove()
@@ -1375,16 +1345,13 @@ export class Settings {
 
     async disableKidMode(adminCode) {
         try {
-            // Validate admin code
             if (adminCode !== '1337') {
                 throw new Error('Invalid admin code')
             }
 
-            // Disable Kid Mode
             await kidMode.disableKidMode()
             this.kidModeSettings.enabled = false
 
-            // Update UI
             this.render()
             this.showMessage('Kid Mode disabled successfully', 'success')
 
@@ -1478,7 +1445,6 @@ export class Settings {
                 </div>
             `
 
-            // Setup action handlers
             this.setupOfflineStorageActions()
 
         } catch (error) {
@@ -1503,7 +1469,7 @@ export class Settings {
                     forceSyncBtn.textContent = 'Syncing...'
                     
                     await db.syncOfflineData()
-                    await this.loadOfflineStorageStatus() // Refresh status
+                    await this.loadOfflineStorageStatus()
                     
                     this.showMessage('Sync completed successfully', 'success')
                 } catch (error) {
@@ -1527,7 +1493,7 @@ export class Settings {
                         clearDataBtn.textContent = 'Clearing...'
                         
                         await db.clearCurrentUserData()
-                        await this.loadOfflineStorageStatus() // Refresh status
+                        await this.loadOfflineStorageStatus()
                         
                         this.showMessage('Offline data cleared successfully', 'success')
                     } catch (error) {
@@ -1554,7 +1520,6 @@ export class Settings {
     saveInterfaceSettings() {
         try {
             const settings = {
-                // Tab visibility
                 home: document.getElementById('tab-home')?.checked ?? true,
                 tasks: document.getElementById('tab-tasks')?.checked ?? true,
                 calendar: document.getElementById('tab-calendar')?.checked ?? true,
@@ -1563,13 +1528,11 @@ export class Settings {
                 music: document.getElementById('tab-music')?.checked ?? true,
                 aiNotes: document.getElementById('tab-ai-notes')?.checked ?? true,
                 
-                // Home page sections
                 upcomingTasks: document.getElementById('section-upcoming-tasks')?.checked ?? true,
                 moodLogging: document.getElementById('section-mood-logging')?.checked ?? true,
                 pomodoroWidget: document.getElementById('section-pomodoro-widget')?.checked ?? true,
                 statistics: document.getElementById('section-statistics')?.checked ?? true,
                 
-                // Toolbox settings
                 toolboxAcademicHub: document.getElementById('toolbox-academic-hub')?.checked ?? true,
                 toolboxAiNotes: document.getElementById('toolbox-ai-notes')?.checked ?? true,
                 toolboxMusic: document.getElementById('toolbox-music')?.checked ?? true,
@@ -1578,10 +1541,8 @@ export class Settings {
             
             localStorage.setItem('interface-settings', JSON.stringify(settings))
             
-            // Apply settings immediately
             this.applyInterfaceSettings(settings)
             
-            // Update toolbox visibility
             if (window.toolbox) {
                 window.toolbox.setToolVisibility('academic-hub', settings.toolboxAcademicHub)
                 window.toolbox.setToolVisibility('ai-notes', settings.toolboxAiNotes)
@@ -1598,9 +1559,7 @@ export class Settings {
 
     resetInterfaceSettings() {
         try {
-            // Reset to default values
             const defaultSettings = {
-                // Tab visibility - all enabled by default
                 home: true,
                 tasks: true,
                 calendar: true,
@@ -1609,13 +1568,11 @@ export class Settings {
                 music: true,
                 aiNotes: true,
                 
-                // Home page sections - all enabled by default
                 upcomingTasks: true,
                 moodLogging: true,
                 pomodoroWidget: true,
                 statistics: true,
                 
-                // Toolbox settings - all enabled by default
                 toolboxAcademicHub: true,
                 toolboxAiNotes: true,
                 toolboxMusic: true,
@@ -1639,11 +1596,9 @@ export class Settings {
             el = document.getElementById('toolbox-music'); if (el) el.checked = defaultSettings.toolboxMusic;
             el = document.getElementById('toolbox-dev-tools'); if (el) el.checked = defaultSettings.toolboxDevTools;
             
-            // Save and apply
             localStorage.setItem('interface-settings', JSON.stringify(defaultSettings))
             this.applyInterfaceSettings(defaultSettings)
             
-            // Reset toolbox visibility
             if (window.toolbox) {
                 window.toolbox.toolVisibility = {
                     'academic-hub': true,
@@ -1663,11 +1618,7 @@ export class Settings {
     }
 
     applyInterfaceSettings(settings) {
-        // This method is called when settings are saved or reset
-        // The actual application of settings is handled by the individual components
-        // and the toolbox system
         
-        // Dispatch event to notify other components of settings change
         window.dispatchEvent(new CustomEvent('interfaceSettingsChanged', { detail: settings }))
     }
 
@@ -1675,7 +1626,6 @@ export class Settings {
         try {
             const settings = JSON.parse(localStorage.getItem('interface-settings') || '{}')
             let el;
-            // Load tab visibility
             el = document.getElementById('tab-home'); if (el) el.checked = settings.home ?? true;
             el = document.getElementById('tab-tasks'); if (el) el.checked = settings.tasks ?? true;
             el = document.getElementById('tab-calendar'); if (el) el.checked = settings.calendar ?? true;
@@ -1683,12 +1633,10 @@ export class Settings {
             el = document.getElementById('tab-academic-hub'); if (el) el.checked = settings.academicHub ?? true;
             el = document.getElementById('tab-music'); if (el) el.checked = settings.music ?? true;
             el = document.getElementById('tab-ai-notes'); if (el) el.checked = settings.aiNotes ?? true;
-            // Load home page sections
             el = document.getElementById('section-upcoming-tasks'); if (el) el.checked = settings.upcomingTasks ?? true;
             el = document.getElementById('section-mood-logging'); if (el) el.checked = settings.moodLogging ?? true;
             el = document.getElementById('section-pomodoro-widget'); if (el) el.checked = settings.pomodoroWidget ?? true;
             el = document.getElementById('section-statistics'); if (el) el.checked = settings.statistics ?? true;
-            // Load toolbox settings
             if (window.toolbox) {
                 el = document.getElementById('toolbox-academic-hub'); if (el) el.checked = window.toolbox.toolVisibility['academic-hub'] ?? true;
                 el = document.getElementById('toolbox-ai-notes'); if (el) el.checked = window.toolbox.toolVisibility['ai-notes'] ?? true;

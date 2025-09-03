@@ -15,7 +15,6 @@ export class AIAgent {
     this.pendingActions = []
     this.initialized = false
     
-    // Integration data
     this.studentVueData = null
     this.canvasData = null
     this.spotifyData = null
@@ -23,7 +22,6 @@ export class AIAgent {
     this.userMoods = []
     this.userJournalEntries = []
     
-    // Initialize with delay to ensure DOM is ready
     setTimeout(() => {
       this.init()
     }, 100)
@@ -49,7 +47,6 @@ export class AIAgent {
       const { data: { user } } = await auth.getCurrentUser()
       if (!user) return
 
-      // Load user's tasks, moods, and journal entries
       await Promise.all([
         this.loadUserTasks(),
         this.loadUserMoods(),
@@ -178,7 +175,6 @@ export class AIAgent {
   }
 
   createAIAgentHTML() {
-    // Check if AI Agent already exists
     if (document.getElementById('ai-agent-toggle')) {
       console.log('AI Agent already exists, skipping creation')
       return
@@ -256,7 +252,6 @@ export class AIAgent {
       </div>
     `
 
-    // Insert HTML safely
     try {
       document.body.insertAdjacentHTML('beforeend', aiAgentHTML)
       this.renderMessages()
@@ -282,7 +277,6 @@ export class AIAgent {
       }
     })
 
-    // Listen for action approval/rejection
     document.addEventListener('click', (e) => {
       if (e.target.classList.contains('approve-action')) {
         const actionId = e.target.dataset.actionId
@@ -304,7 +298,6 @@ export class AIAgent {
       this.isOpen = true
       window.classList.add('show')
       
-      // Focus input
       setTimeout(() => {
         document.getElementById('ai-agent-input')?.focus()
       }, 300)
@@ -324,7 +317,6 @@ export class AIAgent {
     
     if (!message) return
     
-    // Add user message
     this.messages.push({
       type: 'user',
       content: message,
@@ -334,10 +326,8 @@ export class AIAgent {
     input.value = ''
     this.renderMessages()
     
-    // Show typing indicator
     this.showTypingIndicator()
     
-    // Generate AI response
     setTimeout(async () => {
       this.hideTypingIndicator()
       const response = await this.generateAIResponse(message)
@@ -348,10 +338,8 @@ export class AIAgent {
         actions: response.actions || []
       })
       
-      // Store conversation in database (optional, for context in future sessions)
       await this.storeConversationHistory(message, response)
       
-      // Add any pending actions
       if (response.actions && response.actions.length > 0) {
         response.actions.forEach(action => {
           this.pendingActions.push({
@@ -372,7 +360,6 @@ export class AIAgent {
       const { data: { user } } = await auth.getCurrentUser()
       if (!user) return
       
-      // Store user message
       await supabase.from('ai_conversations').insert([{
         user_id: user.id,
         message_type: 'user',
@@ -381,7 +368,6 @@ export class AIAgent {
         actions_taken: []
       }])
       
-      // Store AI response
       await supabase.from('ai_conversations').insert([{
         user_id: user.id,
         message_type: 'bot',
@@ -392,23 +378,18 @@ export class AIAgent {
       
     } catch (error) {
       console.error('Error storing conversation history:', error)
-      // Don't block the conversation if storing fails
     }
   }
 
   async generateAIResponse(userMessage) {
     try {
-      // Reload fresh data for better responses
       await this.loadIntegrationData()
       
-      // Build context for the AI
       const context = await this.buildContextForAI()
       
-      // Create the system message with context about BusyBob and user's data
       const systemMessage = this.createSystemMessage(context)
       
-      // Call Hack Club AI API
-      const response = await fetch('https://ai.hackclub.com/chat/completions', {
+      const response = await fetch('https:
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -428,14 +409,12 @@ export class AIAgent {
       const data = await response.json()
       const aiContent = data.choices[0]?.message?.content || "I'm sorry, I couldn't process that request."
       
-      // Parse the AI response to extract any actions
       const parsedResponse = this.parseAIResponseForActions(aiContent, userMessage)
       
       return parsedResponse
       
     } catch (error) {
       console.error('Error calling AI API:', error)
-      // Fallback to rule-based responses
       return await this.generateFallbackResponse(userMessage)
     }
   }
@@ -449,7 +428,6 @@ export class AIAgent {
       currentDate: new Date().toLocaleDateString()
     }
     
-    // Add connected services info
     if (this.studentVueData?.connected) {
       context.connectedServices.push({
         name: 'StudentVue',
@@ -512,17 +490,14 @@ Remember: All actions require human approval before execution. Only suggest acti
     const actions = []
     let content = aiContent
     
-    // Look for action patterns in the AI response
     const actionRegex = /\[ACTION:([^:]+):([^\]]*)\]/g
     let match
     
     while ((match = actionRegex.exec(aiContent)) !== null) {
       const [fullMatch, actionType, actionData] = match
       
-      // Remove the action syntax from the display content
       content = content.replace(fullMatch, '')
       
-      // Parse the action based on type
       switch (actionType) {
         case 'CREATE_TASK':
           actions.push({
@@ -582,37 +557,30 @@ Remember: All actions require human approval before execution. Only suggest acti
   async generateFallbackResponse(userMessage) {
     const message = userMessage.toLowerCase()
     
-    // Task-related queries
     if (message.includes('task') || message.includes('todo') || message.includes('assignment')) {
       return await this.handleTaskQuery(message, userMessage)
     }
     
-    // Mood-related queries
     if (message.includes('mood') || message.includes('feeling') || message.includes('emotion')) {
       return await this.handleMoodQuery(message, userMessage)
     }
     
-    // Journal-related queries
     if (message.includes('journal') || message.includes('diary') || message.includes('write') || message.includes('reflect')) {
       return await this.handleJournalQuery(message, userMessage)
     }
     
-    // Grade/academic queries
     if (message.includes('grade') || message.includes('class') || message.includes('course') || message.includes('homework')) {
       return await this.handleAcademicQuery(message)
     }
     
-    // Music/Spotify queries
     if (message.includes('music') || message.includes('spotify') || message.includes('playlist') || message.includes('song')) {
       return await this.handleMusicQuery(message)
     }
     
-    // Calendar/schedule queries
     if (message.includes('schedule') || message.includes('calendar') || message.includes('today') || message.includes('tomorrow')) {
       return await this.handleScheduleQuery(message)
     }
     
-    // General productivity queries
     return await this.handleGeneralQuery(message)
   }
 
@@ -622,7 +590,6 @@ Remember: All actions require human approval before execution. Only suggest acti
     const pendingTasks = this.userTasks.filter(task => !task.completed).length
     
     if (message.includes('create') || message.includes('add') || message.includes('new')) {
-      // Extract task details from message using simple NLP
       const taskTitle = this.extractTaskFromMessage(originalMessage)
       
       return {
@@ -666,7 +633,6 @@ Remember: All actions require human approval before execution. Only suggest acti
     })
     
     if (message.includes('track') || message.includes('log') || message.includes('add') || message.includes('record')) {
-      // Try to extract mood from message
       const detectedMood = this.extractMoodFromMessage(message)
       
       if (detectedMood) {
@@ -709,7 +675,6 @@ Remember: All actions require human approval before execution. Only suggest acti
     const recentEntry = this.userJournalEntries[0]
     
     if (message.includes('create') || message.includes('write') || message.includes('add') || message.includes('new')) {
-      // Extract journal content from message
       const journalContent = this.extractJournalFromMessage(originalMessage)
       
       return {
@@ -833,9 +798,7 @@ Remember: All actions require human approval before execution. Only suggest acti
     }
   }
 
-  // Helper methods
   extractTaskFromMessage(message) {
-    // Simple extraction - in real implementation, use better NLP
     const taskKeywords = ['create', 'add', 'make', 'new', 'task', 'todo']
     const words = message.split(' ')
     const keywordIndex = words.findIndex(word => taskKeywords.some(kw => word.toLowerCase().includes(kw.toLowerCase())))
@@ -869,7 +832,6 @@ Remember: All actions require human approval before execution. Only suggest acti
   }
 
   extractJournalFromMessage(message) {
-    // Remove journal-related keywords and return the rest
     const journalKeywords = ['journal', 'write', 'create', 'add', 'new', 'entry']
     let content = message
     
@@ -949,11 +911,9 @@ Remember: All actions require human approval before execution. Only suggest acti
           break
       }
       
-      // Remove from pending actions
       this.pendingActions = this.pendingActions.filter(a => a.id !== actionId)
       this.renderPendingActions()
       
-      // Add success message
       this.messages.push({
         type: 'bot',
         content: `✅ Action completed successfully! ${result?.message || ''}`,
@@ -1001,7 +961,7 @@ Remember: All actions require human approval before execution. Only suggest acti
 
     if (error) throw error
 
-    await this.loadUserTasks() // Refresh tasks
+    await this.loadUserTasks()
     return { message: `Task "${action.title}" created successfully!` }
   }
 
@@ -1019,7 +979,7 @@ Remember: All actions require human approval before execution. Only suggest acti
 
     if (error) throw error
 
-    await this.loadUserMoods() // Refresh moods
+    await this.loadUserMoods()
     return { message: `Mood entry (${action.rating}/5) logged successfully!` }
   }
 
@@ -1038,19 +998,15 @@ Remember: All actions require human approval before execution. Only suggest acti
 
     if (error) throw error
 
-    await this.loadJournalEntries() // Refresh entries
+    await this.loadJournalEntries()
     return { message: `Journal entry "${action.title}" created successfully!` }
   }
 
   async fetchAcademicData() {
-    // This would trigger fetching fresh data from StudentVue/Canvas
-    // Implementation would depend on existing academic hub logic
     return { message: 'Academic data refreshed!' }
   }
 
   async playMoodPlaylist(action) {
-    // This would trigger Spotify playlist playback
-    // Implementation would depend on existing music component logic
     return { message: `Started playing ${action.playlist.name} playlist!` }
   }
 
@@ -1120,7 +1076,6 @@ Remember: All actions require human approval before execution. Only suggest acti
     const messagesContainer = document.getElementById('ai-agent-messages')
     if (!messagesContainer) return
     
-    // Clear existing messages (except typing indicator)
     const existingMessages = messagesContainer.querySelectorAll('.message')
     existingMessages.forEach(msg => msg.remove())
     
@@ -1129,7 +1084,6 @@ Remember: All actions require human approval before execution. Only suggest acti
       messagesContainer.insertAdjacentHTML('beforeend', messageHTML)
     })
     
-    // Scroll to bottom
     messagesContainer.scrollTop = messagesContainer.scrollHeight
   }
 

@@ -68,11 +68,11 @@ const moodManager = {
             const { data, error } = await db.createFeeling(feelingData)
             if (error) throw error
             
-            await this.load() // Reload all feelings
+            await this.load()
             this.ui.render()
             ui.showMessage("Mood logged successfully!", "success")
 
-            // Award points for mood logging
+
             if (window.pointsSystem) {
                 try {
                     const points = window.pointsSystem.getPointValue('moodLogged')
@@ -235,7 +235,7 @@ const moodManager = {
     }
 }
 
-// Initialize app
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM loaded, calling initializeApp...')
     initializeApp()

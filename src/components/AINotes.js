@@ -51,7 +51,6 @@ export class AINotes {
             if (!user) throw new Error('User not authenticated');
 
             if (noteData.id) {
-                // Update existing note
                 const { error } = await window.supabase
                     .from('ai_notes')
                     .update({
@@ -63,7 +62,6 @@ export class AINotes {
 
                 if (error) throw error;
             } else {
-                // Create new note
                 const { error } = await window.supabase
                     .from('ai_notes')
                     .insert({
@@ -532,7 +530,6 @@ export class AINotes {
     }
 
     attachEventListeners() {
-        // Search functionality
         const searchInput = document.getElementById('notes-search');
         const searchBtn = document.getElementById('search-btn');
         
@@ -550,7 +547,6 @@ export class AINotes {
             });
         }
 
-        // New note button
         const newNoteBtn = document.getElementById('new-note-btn');
         if (newNoteBtn) {
             newNoteBtn.addEventListener('click', () => {
@@ -559,7 +555,6 @@ export class AINotes {
             });
         }
 
-        // Note selection
         document.querySelectorAll('.note-item').forEach(item => {
             item.addEventListener('click', () => {
                 const noteId = item.dataset.noteId;
@@ -568,7 +563,6 @@ export class AINotes {
             });
         });
 
-        // Editor actions
         const saveBtn = document.getElementById('save-note-btn');
         const deleteBtn = document.getElementById('delete-note-btn');
         const cancelBtn = document.getElementById('cancel-edit-btn');

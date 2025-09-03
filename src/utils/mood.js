@@ -70,10 +70,8 @@ const moodUI = {
 
         document.querySelectorAll('.mood-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                // Reset styles
                 document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('ring-2', 'ring-blue-500'))
                 
-                // Apply style to selected
                 btn.classList.add('ring-2', 'ring-blue-500')
                 selectedRating = parseInt(btn.dataset.rating)
                 saveBtn.disabled = false
@@ -115,7 +113,6 @@ const moodManager = {
             moodUI.render()
             ui.showMessage("Mood logged successfully!", "success")
 
-            // Update home page stats if needed
             if (window.loadHomeData) window.loadHomeData()
             
         } catch (error) {
@@ -126,7 +123,7 @@ const moodManager = {
     
     checkPrompt() {
         const today = new Date().toDateString()
-        if (lastCheckedDate === today) return // Already checked today
+        if (lastCheckedDate === today) return
 
         lastCheckedDate = today
         const yesterday = new Date()
@@ -137,7 +134,6 @@ const moodManager = {
         const todayFeeling = feelings.find(f => f.created_at.startsWith(new Date().toISOString().split('T')[0]))
 
         if (!todayFeeling && !yesterdayFeeling) {
-             // Find last logged feeling
             const lastFeelingDate = feelings.length > 0 ? new Date(feelings[0].created_at) : null
             if (lastFeelingDate) {
                 const daysSinceLastLog = (new Date() - lastFeelingDate) / (1000 * 60 * 60 * 24)
@@ -145,7 +141,7 @@ const moodManager = {
                     this.showYesterdayPrompt()
                 }
             } else {
-                 this.showYesterdayPrompt() // No feelings logged ever
+                 this.showYesterdayPrompt()
             }
         }
     },
@@ -190,7 +186,6 @@ const moodManager = {
                     await db.createFeeling({ rating: selectedRating, created_at: yesterday.toISOString() })
                     ui.showMessage("Yesterday's mood logged!", "success")
                     promptEl.remove()
-                    // We don't need to reload all feelings for this, just don't prompt again
                 } catch (error) {
                     ui.showMessage("Failed to save yesterday's mood.", "error")
                 }

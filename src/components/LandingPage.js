@@ -266,7 +266,6 @@ export class LandingPage {
     }
 
     setupEventListeners() {
-        // All signup buttons lead to signup
         const signupButtons = this.container.querySelectorAll('#landing-signup-btn, #hero-signup-btn, #cta-signup-btn')
         signupButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -274,7 +273,6 @@ export class LandingPage {
             })
         })
 
-        // All login buttons lead to login
         const loginButtons = this.container.querySelectorAll('#landing-login-btn, #cta-login-btn')
         loginButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -282,7 +280,6 @@ export class LandingPage {
             })
         })
 
-        // Demo button (could show a demo or just trigger signup)
         const demoBtn = this.container.querySelector('#hero-demo-btn')
         if (demoBtn) {
             demoBtn.addEventListener('click', () => {
@@ -290,7 +287,6 @@ export class LandingPage {
             })
         }
 
-        // Add event listeners for Try Demo buttons
         const guestBtns = this.container.querySelectorAll('#hero-guest-btn, #cta-guest-btn')
         guestBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -298,7 +294,6 @@ export class LandingPage {
             })
         })
 
-        // Legal links
         const privacyLink = this.container.querySelector('#landing-privacy-link')
         if (privacyLink) {
             privacyLink.addEventListener('click', () => {

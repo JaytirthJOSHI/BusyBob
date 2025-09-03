@@ -4,7 +4,6 @@ export class Navigation {
     this.initializeHTML()
     this.attachEventListeners()
 
-    // Listen for settings changes to re-render the nav
     window.addEventListener('settingsChange', () => this.initializeHTML());
   }
 
@@ -88,7 +87,6 @@ export class Navigation {
         const page = navLink.dataset.page
         if (page) {
           this.setActivePage(page)
-          // Dispatch custom event for page change
           document.dispatchEvent(new CustomEvent('pageChange', { detail: { page } }))
         }
       }
@@ -96,7 +94,6 @@ export class Navigation {
   }
 
   setActivePage(page) {
-    // Remove active class from all nav links
     const navLinks = document.querySelectorAll('.nav-link')
     navLinks.forEach(link => {
       link.classList.remove('active')
@@ -104,7 +101,6 @@ export class Navigation {
       link.classList.remove('text-blue-500', 'dark:text-blue-400')
     })
 
-    // Add active class to current page
     const activeLink = document.querySelector(`[data-page="${page}"]`)
     if (activeLink) {
       activeLink.classList.add('active')

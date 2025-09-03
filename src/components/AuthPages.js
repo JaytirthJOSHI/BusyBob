@@ -7,7 +7,6 @@ export class AuthPages {
     this.container = container
     container.innerHTML = this.getAuthHTML()
     
-    // Store reference globally for onclick handlers
     window.authPages = this
   }
 

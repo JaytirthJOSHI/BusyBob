@@ -260,17 +260,17 @@ export class Canvas {
                                 <div class="url-example">
                                     <strong>Examples:</strong>
                                     <ul>
-                                        <li><code>https://your-school.instructure.com/login</code></li>
-                                        <li><code>https://canvas.your-school.edu/courses/123</code></li>
-                                        <li><code>https://your-school.canvas.com/dashboard</code></li>
-                                        <li><code>https://canvas.instructure.com/courses/11026154</code></li>
+                                        <li><code>https:
+                                        <li><code>https:
+                                        <li><code>https:
+                                        <li><code>https:
                                     </ul>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label for="canvas-login-url">Canvas URL</label>
                                 <input type="url" id="canvas-login-url" name="canvasLoginUrl" required 
-                                       placeholder="https://canvas.instructure.com/courses/11026154">
+                                       placeholder="https:
                                 <small>Enter any Canvas URL - we'll extract the base domain automatically</small>
                             </div>
                             <div class="extracted-url-display" style="display: none;">
@@ -675,12 +675,10 @@ export class Canvas {
     }
 
     setupConnectionEventListeners() {
-        // Step navigation
         const nextButtons = document.querySelectorAll('.next-step');
         const prevButtons = document.querySelectorAll('.prev-step');
         const connectButton = document.getElementById('connect-canvas-btn');
         
-        // Help modal elements
         const tokenHelpLink = document.getElementById('show-token-help');
         const tokenHelpModal = document.getElementById('token-help-modal');
         const closeTokenHelp = document.getElementById('close-token-help');
@@ -689,14 +687,12 @@ export class Canvas {
         const securityInfoModal = document.getElementById('security-info-modal');
         const closeSecurityInfo = document.getElementById('close-security-info');
 
-        // Step navigation
         nextButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 const currentStep = parseInt(btn.closest('.step').dataset.step);
                 const nextStep = parseInt(btn.dataset.next);
                 
-                // Validate current step before proceeding
                 if (currentStep === 1) {
                     const canvasLoginUrl = document.getElementById('canvas-login-url').value.trim();
                     
@@ -709,16 +705,13 @@ export class Canvas {
                         return;
                     }
                     
-                    // Extract base URL and create settings link
                     const baseUrl = this.extractBaseUrl(canvasLoginUrl);
                     const settingsLink = `${baseUrl}/profile/settings#:~:text=Approved%20Integrations`;
                     
-                    // Update summary and display
                     document.getElementById('summary-url').textContent = baseUrl;
                     document.getElementById('display-canvas-url').textContent = baseUrl;
                     document.getElementById('display-canvas-link').textContent = settingsLink;
                     
-                    // Update Canvas settings link
                     const settingsLinkElement = document.getElementById('open-canvas-settings');
                     if (settingsLinkElement) {
                         settingsLinkElement.href = settingsLink;
@@ -735,7 +728,6 @@ export class Canvas {
             });
         });
 
-        // Real-time URL processing
         const loginUrlInput = document.getElementById('canvas-login-url');
         if (loginUrlInput) {
             loginUrlInput.addEventListener('input', (e) => {
@@ -744,15 +736,12 @@ export class Canvas {
                     const baseUrl = this.extractBaseUrl(url);
                     const settingsLink = `${baseUrl}/profile/settings#:~:text=Approved%20Integrations`;
                     
-                    // Show the extracted displays
                     document.querySelector('.extracted-url-display').style.display = 'flex';
                     document.querySelector('.settings-link-display').style.display = 'flex';
                     
-                    // Update the displays
                     document.getElementById('extracted-canvas-url').textContent = baseUrl;
                     document.getElementById('settings-link').textContent = settingsLink;
                 } else {
-                    // Hide the displays if URL is invalid
                     document.querySelector('.extracted-url-display').style.display = 'none';
                     document.querySelector('.settings-link-display').style.display = 'none';
                 }
@@ -767,12 +756,10 @@ export class Canvas {
             });
         });
 
-        // Connection button
         if (connectButton) {
             connectButton.addEventListener('click', (e) => this.handleConnection(e));
         }
 
-        // Help modals
         if (tokenHelpLink) {
             tokenHelpLink.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -799,7 +786,6 @@ export class Canvas {
             });
         }
 
-        // Close modals when clicking outside
         [tokenHelpModal, securityInfoModal].forEach(modal => {
             if (modal) {
                 modal.addEventListener('click', (e) => {
@@ -824,7 +810,6 @@ export class Canvas {
             const urlObj = new URL(url);
             return urlObj.protocol === 'https:' || urlObj.protocol === 'http:';
         } catch {
-            // If URL parsing fails, check if it looks like a URL
             return /^https?:\/\/.+/.test(url);
         }
     }
@@ -890,7 +875,6 @@ export class Canvas {
         }
 
         try {
-            // Show loading state
             const connectBtn = document.getElementById('connect-canvas-btn');
             const btnText = connectBtn.querySelector('.btn-text');
             const btnLoading = connectBtn.querySelector('.btn-loading');
@@ -901,7 +885,6 @@ export class Canvas {
 
             this.showMessage('Connecting to Canvas...', 'info');
             
-            // Extract base URL from login URL
             const baseUrl = this.extractBaseUrl(canvasLoginUrl);
             await this.storeCredentials(baseUrl, accessToken);
             
@@ -916,7 +899,6 @@ export class Canvas {
             console.error('Connection failed:', error);
             this.showMessage(`Connection failed: ${error.message}`, 'error');
             
-            // Reset button state
             const connectBtn = document.getElementById('connect-canvas-btn');
             const btnText = connectBtn.querySelector('.btn-text');
             const btnLoading = connectBtn.querySelector('.btn-loading');
@@ -932,7 +914,6 @@ export class Canvas {
             this.showMessage('Loading course details...', 'info');
             const details = await this.loadCourseDetails(courseId);
             
-            // Create a modal to display course details
             this.showCourseModal(courseId, details);
         } catch (error) {
             console.error('Failed to load course details:', error);
@@ -964,7 +945,6 @@ export class Canvas {
 
         document.body.appendChild(modal);
 
-        // Setup modal event listeners
         const closeBtn = modal.querySelector('.close');
         const tabBtns = modal.querySelectorAll('.course-tab');
 
@@ -979,7 +959,6 @@ export class Canvas {
             });
         });
 
-        // Close modal when clicking outside
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 document.body.removeChild(modal);
@@ -1080,14 +1059,12 @@ export class Canvas {
     }
 
     showMessage(message, type = 'info') {
-        // Create a temporary message element
         const messageEl = document.createElement('div');
         messageEl.className = `message message-${type}`;
         messageEl.textContent = message;
         
         document.body.appendChild(messageEl);
         
-        // Remove after 3 seconds
         setTimeout(() => {
             if (messageEl.parentNode) {
                 messageEl.parentNode.removeChild(messageEl);
@@ -1098,14 +1075,13 @@ export class Canvas {
     extractBaseUrl(url) {
         try {
             const urlObj = new URL(url);
-            return `${urlObj.protocol}//${urlObj.hostname}`;
+            return `${urlObj.protocol}
         } catch (error) {
-            // If URL parsing fails, try to extract domain manually
             const match = url.match(/^https?:\/\/([^\/]+)/);
             if (match) {
-                return `https://${match[1]}`;
+                return `https:
             }
-            return url; // Return original if we can't parse it
+            return url;
         }
     }
 }

@@ -13,37 +13,36 @@ export class Music {
         this.currentMood = null
         this.listeningHistory = []
         
-        // Mood-based playlist recommendations
         this.moodPlaylists = {
-            1: { // Very Bad
+            1: {
                 name: 'Calm & Healing',
                 description: 'Gentle music to lift your spirits',
                 genres: ['ambient', 'classical', 'chill'],
                 energy: 0.2,
                 valence: 0.3
             },
-            2: { // Bad
+            2: {
                 name: 'Comfort Zone',
                 description: 'Soothing sounds for difficult days',
                 genres: ['indie', 'folk', 'soft rock'],
                 energy: 0.3,
                 valence: 0.4
             },
-            3: { // Okay
+            3: {
                 name: 'Study Focus',
                 description: 'Balanced beats for steady work',
                 genres: ['lo-fi', 'instrumental', 'electronic'],
                 energy: 0.5,
                 valence: 0.5
             },
-            4: { // Good
+            4: {
                 name: 'Productive Flow',
                 description: 'Upbeat tracks to keep you moving',
                 genres: ['pop', 'indie', 'electronic'],
                 energy: 0.7,
                 valence: 0.7
             },
-            5: { // Excellent
+            5: {
                 name: 'Peak Performance',
                 description: 'High-energy music for maximum productivity',
                 genres: ['electronic', 'pop', 'rock'],
@@ -81,7 +80,6 @@ export class Music {
                 this.isConnected = true
                 this.accessToken = musicData.access_token
                 
-                // Check if token needs refresh
                 if (musicData.expires_at && new Date(musicData.expires_at) < new Date()) {
                     await this.refreshSpotifyToken(musicData.refresh_token)
                 }
@@ -298,7 +296,6 @@ export class Music {
     }
 
     renderProductiveGenres() {
-        // Mock data - in real implementation, this would come from analytics
         const genres = [
             { name: 'Lo-fi Hip Hop', productivity: 85, color: 'bg-blue-500' },
             { name: 'Classical', productivity: 78, color: 'bg-green-500' },
@@ -320,7 +317,6 @@ export class Music {
     }
 
     setupEventListeners() {
-        // Connect Spotify
         document.addEventListener('click', (e) => {
             if (e.target.id === 'connect-spotify-btn') {
                 this.connectSpotify()
@@ -330,13 +326,11 @@ export class Music {
                 this.disconnectSpotify()
             }
 
-            // Mood playlist selection
             if (e.target.closest('.mood-playlist-card')) {
                 const mood = e.target.closest('.mood-playlist-card').dataset.mood
                 this.selectMoodPlaylist(parseInt(mood))
             }
 
-            // Playback controls
             if (e.target.id === 'play-pause') {
                 this.togglePlayback()
             }
@@ -347,7 +341,6 @@ export class Music {
                 this.nextTrack()
             }
 
-            // Focus session
             if (e.target.id === 'start-focus-session') {
                 this.startFocusSession()
             }
@@ -356,7 +349,6 @@ export class Music {
 
     async connectSpotify() {
         try {
-            // Generate a random state for security
             const state = Math.random().toString(36).substring(2, 15)
             localStorage.setItem('spotify_auth_state', state)
 
@@ -401,15 +393,12 @@ export class Music {
 
     async selectMoodPlaylist(mood) {
         try {
-            // Get mood-based recommendations from Spotify
             const recommendations = await this.getMoodBasedRecommendations(mood)
             
             if (recommendations && recommendations.tracks.length > 0) {
-                // Create a temporary playlist or play the first track
                 await this.playTrack(recommendations.tracks[0].uri)
                 ui.showMessage(`Playing ${this.moodPlaylists[mood].name} playlist`, 'success')
                 
-                // Track this selection for analytics
                 await this.trackMoodPlaylistSelection(mood)
             }
         } catch (error) {
@@ -443,7 +432,6 @@ export class Music {
     async startFocusSession() {
         const duration = document.getElementById('focus-duration').value
         
-        // Show focus session UI
         const statusDiv = document.getElementById('focus-session-status')
         statusDiv.classList.remove('hidden')
         statusDiv.innerHTML = `
@@ -459,7 +447,6 @@ export class Music {
             </div>
         `
 
-        // Start the timer and adapt music
         this.runFocusSession(parseInt(duration))
         ui.showMessage(`Focus session started for ${duration} minutes`, 'success')
     }
@@ -486,7 +473,6 @@ export class Music {
             }
         }, 1000)
 
-        // Track the focus session start
         await this.trackFocusSession(durationMinutes, 'start')
     }
 
@@ -534,29 +520,21 @@ export class Music {
         }
     }
 
-    // Spotify API methods would be implemented here
     async initializeSpotifyPlayer() {
-        // Initialize Spotify Web Playback SDK
-        // This would require loading the Spotify SDK script
     }
 
     async togglePlayback() {
-        // Implement play/pause functionality
     }
 
     async previousTrack() {
-        // Implement previous track functionality
     }
 
     async nextTrack() {
-        // Implement next track functionality
     }
 
     async playTrack(uri) {
-        // Implement track playing functionality
     }
 
     async refreshSpotifyToken(refreshToken) {
-        // Implement token refresh
     }
 }

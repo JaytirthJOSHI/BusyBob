@@ -6,7 +6,7 @@ export class OfflineStatus {
         this.statusElement = null
         this.syncQueueCount = 0
         this.isMinimized = false
-        this.position = 'bottom-left' // Options: 'bottom-left', 'top-left', 'top-right', 'bottom-right', 'compact'
+        this.position = 'bottom-left'
     }
 
     init(position = 'compact') {
@@ -23,12 +23,12 @@ export class OfflineStatus {
             case 'top-right':
                 return 'fixed top-4 right-4 z-50'
             case 'bottom-right':
-                return 'fixed bottom-4 right-20 z-50' // Leave space for AI toggle
+                return 'fixed bottom-4 right-20 z-50'
             case 'compact':
-                return 'fixed top-4 right-4 z-50' // Compact in top-right
+                return 'fixed top-4 right-4 z-50'
             case 'bottom-left':
             default:
-                return 'fixed bottom-20 left-4 z-50' // Moved up to avoid navigation
+                return 'fixed bottom-20 left-4 z-50'
         }
     }
 
@@ -84,7 +84,6 @@ export class OfflineStatus {
     }
 
     render() {
-        // Create status indicator
         const positionClasses = this.getPositionClasses()
         const compactClass = this.position === 'compact' ? 'compact' : ''
         const minimizedClass = this.isMinimized ? 'minimized' : ''
@@ -181,7 +180,6 @@ export class OfflineStatus {
             </style>
         `
 
-        // Add to page if not already present
         if (!document.getElementById('offline-status')) {
             document.body.insertAdjacentHTML('beforeend', statusHtml)
         }
@@ -225,19 +223,15 @@ export class OfflineStatus {
         }
     }
 
-    // Method to change position dynamically
     changePosition(newPosition) {
         if (this.statusElement) {
-            // Remove old position classes
             const oldClasses = this.getPositionClasses().split(' ')
             this.statusElement.classList.remove(...oldClasses)
             
-            // Update position and apply new classes
             this.position = newPosition
             const newClasses = this.getPositionClasses().split(' ')
             this.statusElement.classList.add(...newClasses)
             
-            // Update compact mode
             if (newPosition === 'compact') {
                 this.statusElement.classList.add('compact')
                 this.setupCompactHandlers()
@@ -250,7 +244,6 @@ export class OfflineStatus {
         }
     }
 
-    // Convenience methods for common positions
     moveToTopRight() {
         this.changePosition('top-right')
     }
@@ -284,7 +277,6 @@ export class OfflineStatus {
         const dbStatus = await db.getStatus()
         this.syncQueueCount = dbStatus.offlineStatus?.syncQueueLength || 0
 
-        // Update connection indicators
         const indicatorClass = 'w-3 h-3 rounded-full'
         indicator.className = indicatorClass
         if (indicatorCompact) {
@@ -315,7 +307,6 @@ export class OfflineStatus {
             }
         }
         
-        // Apply status class to both indicators
         indicator.classList.add(statusClass)
         if (indicatorCompact) {
             indicatorCompact.classList.add(statusClass)
@@ -324,7 +315,6 @@ export class OfflineStatus {
         statusText.textContent = statusTextContent
         syncText.textContent = syncTextContent
         
-        // Update title for compact mode
         if (this.position === 'compact' && this.statusElement) {
             this.statusElement.title = `${statusTextContent} - ${syncTextContent}`
         }
@@ -343,7 +333,6 @@ export class OfflineStatus {
     }
 
     startStatusUpdates() {
-        // Update status every 5 seconds
         setInterval(() => {
             this.updateStatus().catch(console.error)
         }, 5000)
@@ -368,7 +357,6 @@ export class OfflineStatus {
         }
     }
 
-    // Manual sync trigger
     async triggerSync() {
         if (this.isOnline) {
             this.showTemporaryMessage('🔄 Syncing now...', 2000)
@@ -386,5 +374,4 @@ export class OfflineStatus {
     }
 }
 
-// Global instance
 export const offlineStatus = new OfflineStatus()

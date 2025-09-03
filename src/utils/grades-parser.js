@@ -63,8 +63,6 @@ export function parseGradebook(gradebook) {
         });
     } catch (error) {
         console.error('Error parsing gradebook:', error);
-        // In a utility function, it's better to re-throw or return an error indicator
-        // rather than trying to show a UI message directly.
         throw new Error('There was an error parsing your gradebook data.');
     }
     return grades;

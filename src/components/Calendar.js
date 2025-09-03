@@ -9,7 +9,7 @@ export class Calendar {
     this.tasks = []
     this.connectedCalendars = []
     this.events = []
-    this.view = 'month' // month, week, day
+    this.view = 'month'
     this.showCalendarSettings = false
     this.showTaskForm = false
     
@@ -24,7 +24,6 @@ export class Calendar {
 
   async loadConnectedCalendars() {
     try {
-      // Load from localStorage for now, later integrate with Supabase
       const saved = localStorage.getItem('connectedCalendars')
       this.connectedCalendars = saved ? JSON.parse(saved) : []
     } catch (error) {
@@ -67,7 +66,6 @@ export class Calendar {
 
   async addGoogleCalendar() {
     try {
-      // Use existing Google OAuth from Supabase
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
@@ -75,9 +73,7 @@ export class Calendar {
         return
       }
 
-      // Check if user already has Google OAuth
       if (user.app_metadata?.provider === 'google') {
-        // User is already signed in with Google, we can use their access token
         const { data, error } = await supabase.auth.getSession()
         
         if (error || !data.session) {
@@ -85,19 +81,17 @@ export class Calendar {
           return
         }
 
-        // Get the access token from the session
         const accessToken = data.session.provider_token
         
         if (!accessToken) {
-          // Request additional scopes for calendar access
           const { data: oauthData, error: oauthError } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-              redirectTo: 'https://busybob.site',
+              redirectTo: 'http://localhost:3000/auth/google/callback',
               queryParams: {
                 access_type: 'offline',
                 prompt: 'consent',
-                scope: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'
+                scope: 'https://www.googleapis.com/auth/calendar.readonly'//www.googleapis.com/auth/calendar.readonly'
               },
             }
           })
@@ -111,7 +105,6 @@ export class Calendar {
           return
         }
 
-        // Add Google Calendar with existing token
         const newCalendar = {
           id: `google_${Date.now()}`,
           name: 'Google Calendar',
@@ -130,18 +123,16 @@ export class Calendar {
         this.showMessage('Google Calendar connected successfully!', 'success')
         
       } else {
-        // User is not signed in with Google, prompt them to sign in
         this.showMessage('Please sign in with Google to connect your calendar', 'info')
         
-        // Redirect to Google sign-in
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: 'https://busybob.site',
+            redirectTo: 'http://localhost:3000/auth/google/callback',
             queryParams: {
               access_type: 'offline',
               prompt: 'consent',
-              scope: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'
+              scope: 'https://www.googleapis.com/auth/calendar.readonly'
             },
           }
         })
@@ -159,19 +150,15 @@ export class Calendar {
 
   async addOutlookCalendar() {
     try {
-      // Demo mode - show how it would work
       if (!this.isDemoMode()) {
-        // Microsoft Graph OAuth flow
-        const clientId = 'YOUR_MICROSOFT_CLIENT_ID' // Replace with actual client ID
-        const scope = 'https://graph.microsoft.com/Calendars.Read'
+        const clientId = 'YOUR_MICROSOFT_CLIENT_ID'
+        const scope = 'https:
         const redirectUri = window.location.origin + '/auth/microsoft/callback'
         
-        const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`
+        const authUrl = `https:
         
-        // Open popup for OAuth
         const popup = window.open(authUrl, 'outlookAuth', 'width=500,height=600')
         
-        // Handle the OAuth callback
         window.addEventListener('message', async (event) => {
           if (event.origin !== window.location.origin) return
           
@@ -196,7 +183,6 @@ export class Calendar {
           }
         })
       } else {
-        // Demo mode - add mock Outlook Calendar
         const newCalendar = {
           id: `outlook_${Date.now()}`,
           name: 'Outlook Calendar (Demo)',
@@ -221,12 +207,10 @@ export class Calendar {
   }
 
   isDemoMode() {
-    // Check if we're in demo mode (no OAuth credentials configured)
     return !process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID === 'your-google-client-id'
   }
 
   async loadDemoEvents() {
-    // Add some demo events to show how the calendar would look
     const demoEvents = [
       {
         id: 'demo-1',
@@ -312,7 +296,6 @@ export class Calendar {
       this.events.push(...events)
     } catch (error) {
       console.error('Error loading Google Calendar events:', error)
-      // Handle token refresh if needed
       if (error.message.includes('invalid_token') || error.message.includes('expired')) {
         await this.refreshGoogleToken(calendar)
       }
@@ -347,7 +330,6 @@ export class Calendar {
       this.events.push(...events)
     } catch (error) {
       console.error('Error loading Outlook Calendar events:', error)
-      // Handle token refresh if needed
       if (error.message.includes('invalid_token') || error.message.includes('expired')) {
         await this.refreshOutlookToken(calendar)
       }
@@ -385,7 +367,6 @@ export class Calendar {
 
   async refreshOutlookToken(calendar) {
     try {
-      // Microsoft Graph tokens typically last longer, but you can implement refresh logic here
       console.log('Outlook token refresh not implemented yet')
     } catch (error) {
       console.error('Error refreshing Outlook token:', error)
@@ -422,7 +403,6 @@ export class Calendar {
   toggleTaskForm() {
     this.showTaskForm = !this.showTaskForm
     if (this.showTaskForm) {
-      // Set default due date to selected date or today
       const defaultDate = this.selectedDate || new Date()
       const dateInput = document.getElementById('calendar-task-due-date')
       if (dateInput) {
@@ -467,7 +447,6 @@ export class Calendar {
       this.render()
       this.refreshTaskSidebar()
       
-      // Show success message
       this.showMessage('Task created successfully!', 'success')
       event.target.reset()
     } catch (error) {
@@ -477,14 +456,12 @@ export class Calendar {
   }
 
   refreshTaskSidebar() {
-    // Trigger the main.js function to refresh the task sidebar
     if (typeof loadSelectedDateTasks === 'function') {
       loadSelectedDateTasks(this.selectedDate || new Date())
     }
   }
 
   showMessage(message, type = 'info') {
-    // Create a simple toast notification
     const toast = document.createElement('div')
     toast.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white ${
       type === 'success' ? 'bg-green-500' : 
@@ -774,7 +751,6 @@ export class Calendar {
   }
 
   renderWeekView() {
-    // Simplified week view for now
     return `
       <div class="text-center py-8 text-gray-500 dark:text-gray-400">
         <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -786,7 +762,6 @@ export class Calendar {
   }
 
   renderDayView() {
-    // Simplified day view for now
     return `
       <div class="text-center py-8 text-gray-500 dark:text-gray-400">
         <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -808,13 +783,11 @@ export class Calendar {
       const isToday = currentDate.toDateString() === today.toDateString()
       const isSelected = this.selectedDate && currentDate.toDateString() === this.selectedDate.toDateString()
       
-      // Get tasks for this date
       const dateStr = currentDate.toISOString().split('T')[0]
       const dayTasks = this.tasks.filter(task => task.due_date === dateStr)
       const hasHighPriorityTasks = dayTasks.some(task => task.priority === 'high' && !task.completed)
       const hasOverdueTasks = dayTasks.some(task => new Date(task.due_date) < today && !task.completed)
 
-      // Get events for this date
       const dayEvents = this.events.filter(event => {
         const eventDate = new Date(event.start).toDateString()
         return eventDate === currentDate.toDateString()
@@ -881,7 +854,6 @@ export class Calendar {
   }
 
   addEventListeners() {
-    // Navigation buttons
     document.getElementById('prevMonth')?.addEventListener('click', () => {
       this.currentDate.setMonth(this.currentDate.getMonth() - 1)
       this.render()
@@ -897,32 +869,26 @@ export class Calendar {
       this.render()
     })
 
-    // View toggle buttons
     document.getElementById('viewMonth')?.addEventListener('click', () => this.changeView('month'))
     document.getElementById('viewWeek')?.addEventListener('click', () => this.changeView('week'))
     document.getElementById('viewDay')?.addEventListener('click', () => this.changeView('day'))
 
-    // Task form buttons
     document.getElementById('addTaskBtn')?.addEventListener('click', () => this.toggleTaskForm())
     document.getElementById('closeTaskFormBtn')?.addEventListener('click', () => this.toggleTaskForm())
     document.getElementById('cancelTaskBtn')?.addEventListener('click', () => this.toggleTaskForm())
     document.getElementById('calendar-task-form')?.addEventListener('submit', (e) => this.handleTaskSubmit(e))
 
-    // Settings button
     document.getElementById('calendarSettingsBtn')?.addEventListener('click', () => this.toggleCalendarSettings())
     document.getElementById('closeSettingsBtn')?.addEventListener('click', () => this.toggleCalendarSettings())
 
-    // Calendar connection buttons
     document.getElementById('addGoogleBtn')?.addEventListener('click', () => this.addGoogleCalendar())
     document.getElementById('addOutlookBtn')?.addEventListener('click', () => this.addOutlookCalendar())
 
-    // Calendar toggle and remove buttons
     this.connectedCalendars.forEach(calendar => {
       document.getElementById(`toggle-${calendar.id}`)?.addEventListener('click', () => this.toggleCalendar(calendar.id))
       document.getElementById(`remove-${calendar.id}`)?.addEventListener('click', () => this.removeCalendar(calendar.id))
     })
 
-    // Calendar day clicks
     this.container.querySelectorAll('.calendar-day').forEach(day => {
       day.addEventListener('click', (e) => {
         const date = e.currentTarget.dataset.date

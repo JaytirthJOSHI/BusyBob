@@ -15,11 +15,9 @@ export class PrivacyPolicy {
     const backBtn = document.getElementById('privacy-back-btn')
     if (backBtn) {
       backBtn.addEventListener('click', () => {
-        // Check if we came from within the app or from a direct URL
         if (document.referrer && document.referrer.includes(window.location.origin)) {
           window.history.back()
         } else {
-          // If accessed directly, go to home
           window.location.href = '/'
         }
       })

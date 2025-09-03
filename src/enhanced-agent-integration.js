@@ -1,9 +1,9 @@
-// Enhanced AI Agent Integration Guide
-// This file shows how to integrate the new enhanced AI agent system into BusyBob
+
+
 
 import { EnhancedAIAgent } from './components/EnhancedAIAgent.js'
 
-// Integration Instructions:
+
 
 /* 
 1. Import the enhanced agent CSS in your main.css:
@@ -22,12 +22,12 @@ import { EnhancedAIAgent } from './components/EnhancedAIAgent.js'
 5. The enhanced agent will automatically create its own UI and handle all interactions
 */
 
-// Example implementation in main.js:
+
 export function initializeEnhancedAI() {
-  // Create the enhanced AI agent system
+
   window.enhancedAI = new EnhancedAIAgent()
   
-  // Optional: Add custom event listeners for integration with existing components
+
   document.addEventListener('busybob:task-created', (event) => {
     if (window.enhancedAI) {
       window.enhancedAI.memorySystem.recordInteraction(
@@ -46,7 +46,7 @@ export function initializeEnhancedAI() {
     }
   })
   
-  // Integration with navigation
+
   document.addEventListener('busybob:navigation-change', (event) => {
     if (window.enhancedAI) {
       window.enhancedAI.memorySystem.updateContext({
@@ -57,56 +57,56 @@ export function initializeEnhancedAI() {
   })
 }
 
-// Advanced Configuration Options:
+
 export const enhancedAIConfig = {
-  // Enable specific agent types
+
   enabledAgents: ['planner', 'executor', 'researcher', 'analyst', 'coordinator'],
   
-  // Memory system configuration
+
   memory: {
     maxEpisodicMemories: 1000,
     maxSemanticConcepts: 500,
-    contextWindow: 10 // Number of recent interactions to consider
+    contextWindow: 10
   },
   
-  // Planning system configuration
+
   planning: {
     maxPlanDepth: 5,
     enableParallelExecution: true,
     enableConditionalExecution: true
   },
   
-  // Tool registry configuration
+
   tools: {
     enableCustomTools: true,
     autoLoadFromDatabase: true,
     enableCaching: true
   },
   
-  // Collaboration settings
+
   collaboration: {
     enableInterAgentCommunication: true,
     maxCollaborations: 10,
-    collaborationTimeout: 30000 // 30 seconds
+    collaborationTimeout: 30000
   },
   
-  // UI customization
+
   ui: {
-    theme: 'auto', // 'light', 'dark', 'auto'
-    position: 'bottom-right', // 'bottom-right', 'bottom-left', 'top-right', 'top-left'
+    theme: 'auto',
+    position: 'bottom-right',
     animations: true,
     compactMode: false
   },
   
-  // API configuration
+
   api: {
     fallbackToBuiltinResponses: true,
-    enableWebSearch: false, // Set to true if you have a search API
+    enableWebSearch: false,
     enableRealTimeData: true
   }
 }
 
-// Custom Tool Examples:
+
 export const customTools = [
   {
     name: 'spotify_integration',
@@ -133,18 +133,18 @@ export const customTools = [
     description: 'Syncs with external calendar services',
     implementation: `
       async function execute(params) {
-        // Implementation for calendar synchronization
+
         return { success: true, events: [] }
       }
     `
   }
 ]
 
-// Performance Monitoring:
+
 export function setupAgentMonitoring() {
   if (!window.enhancedAI) return
   
-  // Monitor agent performance
+
   setInterval(() => {
     const metrics = window.enhancedAI.performanceMonitor.getMetrics()
     const averageTime = window.enhancedAI.memorySystem.getAverageOperationTime()
@@ -155,16 +155,16 @@ export function setupAgentMonitoring() {
       memoryUsage: window.enhancedAI.memorySystem.episodicMemory.length,
       activeAgents: Array.from(window.enhancedAI.agents.keys())
     })
-  }, 60000) // Every minute
+  }, 60000)
 }
 
-// Error Handling and Recovery:
+
 export function setupErrorRecovery() {
   window.addEventListener('error', (event) => {
     if (event.error && event.error.message.includes('EnhancedAI')) {
       console.error('Enhanced AI Agent Error:', event.error)
       
-      // Attempt recovery
+
       if (window.enhancedAI) {
         setTimeout(() => {
           try {
@@ -179,7 +179,7 @@ export function setupErrorRecovery() {
   })
 }
 
-// Export the complete integration package
+
 export default {
   EnhancedAIAgent,
   initializeEnhancedAI,
@@ -198,20 +198,20 @@ import {
   setupErrorRecovery 
 } from './enhanced-agent-integration.js'
 
-// In your app initialization:
+
 async function initializeApp() {
-  // ... other initialization code ...
+
   
-  // Initialize enhanced AI agent
+
   await initializeEnhancedAI()
   
-  // Setup monitoring and error recovery
+
   setupAgentMonitoring()
   setupErrorRecovery()
   
   console.log('🚀 BusyBob with Enhanced AI Agent ready!')
 }
 
-// Call when app starts
+
 document.addEventListener('DOMContentLoaded', initializeApp)
 */

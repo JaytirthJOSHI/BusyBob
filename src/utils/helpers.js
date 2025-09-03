@@ -1,4 +1,3 @@
-// Theme management utilities
 export const theme = {
   toggle() {
     if (document.documentElement.classList.contains('dark')) {
@@ -19,7 +18,6 @@ export const theme = {
   }
 }
 
-// Date formatting utilities
 export const dateUtils = {
   formatDate(dateStr) {
     const date = new Date(dateStr)
@@ -68,7 +66,6 @@ export const dateUtils = {
   }
 }
 
-// Priority and category utilities
 export const taskUtils = {
   getPriorityColor(priority) {
     switch (priority) {
@@ -104,10 +101,8 @@ export const taskUtils = {
   }
 }
 
-// UI feedback utilities
 export const ui = {
   showMessage(message, type = 'info', duration = 5000) {
-    // Remove existing flash messages
     const existingMessages = document.querySelectorAll('.flash-message')
     existingMessages.forEach(msg => msg.remove())
 
@@ -152,7 +147,6 @@ export const ui = {
 
     document.body.appendChild(flashMessage)
 
-    // Auto-remove after duration
     setTimeout(() => {
       if (flashMessage.parentElement) {
         flashMessage.style.transform = 'translateY(-100%)'
@@ -179,7 +173,6 @@ export const ui = {
   }
 }
 
-// Animation utilities
 export const animations = {
   fadeIn(element, duration = 300) {
     element.style.opacity = '0'
@@ -216,7 +209,6 @@ export const animations = {
   }
 }
 
-// Validation utilities
 export const validation = {
   email(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

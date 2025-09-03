@@ -23,7 +23,6 @@ export class KidMode {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) return
 
-            // Load from kid_mode_settings table
             const { data: kidModeData } = await supabase
                 .from('kid_mode_settings')
                 .select('*')
@@ -40,7 +39,6 @@ export class KidMode {
                 }
             }
 
-            // Also check users table for fallback
             const { data: userData } = await supabase
                 .from('users')
                 .select('kid_mode_enabled, date_of_birth')
@@ -94,7 +92,6 @@ export class KidMode {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) return
 
-            // Update kid_mode_settings
             await supabase
                 .from('kid_mode_settings')
                 .upsert({
@@ -106,7 +103,6 @@ export class KidMode {
                     updated_at: new Date().toISOString()
                 })
 
-            // Update users table
             await supabase
                 .from('users')
                 .update({ 
@@ -116,7 +112,6 @@ export class KidMode {
 
             this.isEnabled = false
             
-            // Show notification
             this.showAutoDisableNotification()
 
         } catch (error) {
@@ -139,7 +134,6 @@ export class KidMode {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) throw new Error('User not authenticated')
 
-            // Update kid_mode_settings
             const { error } = await supabase
                 .from('kid_mode_settings')
                 .upsert({
@@ -174,7 +168,6 @@ export class KidMode {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) throw new Error('User not authenticated')
 
-            // Update kid_mode_settings
             const { error } = await supabase
                 .from('kid_mode_settings')
                 .update({
@@ -200,7 +193,6 @@ export class KidMode {
         const age = this.calculateAge(dateOfBirth)
         
         if (age >= 13 && this.isEnabled) {
-            // Auto-disable if setting age to 13+
             await this.autoDisableKidMode()
             return false
         }
@@ -209,7 +201,6 @@ export class KidMode {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) throw new Error('User not authenticated')
 
-            // Update kid_mode_settings
             await supabase
                 .from('kid_mode_settings')
                 .upsert({
@@ -245,14 +236,12 @@ export class KidMode {
 
         document.body.appendChild(notification)
 
-        // Auto-remove after 10 seconds
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.parentNode.removeChild(notification)
             }
         }, 10000)
 
-        // Add click to dismiss
         notification.addEventListener('click', () => {
             if (notification.parentNode) {
                 notification.parentNode.removeChild(notification)
@@ -260,18 +249,17 @@ export class KidMode {
         })
     }
 
-    // Feature restrictions for Kid Mode
     getRestrictedFeatures() {
         if (!this.isEnabled) return []
 
         return [
-            'spotify_integration',  // No music streaming
-            'external_links',       // No external website links
-            'file_uploads',         // No file upload capabilities
-            'advanced_settings',    // Simplified settings only
-            'data_export',          // No data export
-            'account_deletion',     // No account deletion
-            'third_party_auth'      // No third-party authentication
+            'spotify_integration',
+            'external_links',
+            'file_uploads',
+            'advanced_settings',
+            'data_export',
+            'account_deletion',
+            'third_party_auth'
         ]
     }
 
@@ -279,7 +267,6 @@ export class KidMode {
         return this.isEnabled && this.getRestrictedFeatures().includes(featureName)
     }
 
-    // UI modifications for Kid Mode
     getKidModeStyles() {
         if (!this.isEnabled) return ''
 
@@ -326,15 +313,12 @@ export class KidMode {
         `
     }
 
-    // Data sanitization for Kid Mode
     sanitizeContent(content) {
         if (!this.isEnabled) return content
 
-        // Remove any potentially inappropriate content
-        // This is a basic implementation - you might want to use a proper content filter
         const sensitivePatterns = [
-            /https?:\/\/[^\s]+/gi,  // Remove external links
-            /\b[\w._%+-]+@[\w.-]+\.[A-Z]{2,}\b/gi  // Remove email addresses
+            /https?:\/\/[^\s]+/gi,
+            /\b[\w._%+-]+@[\w.-]+\.[A-Z]{2,}\b/gi
         ]
 
         let sanitized = content
@@ -345,5 +329,4 @@ export class KidMode {
         return sanitized
     }
 }
-// Global instance
 export const kidMode = new KidMode()

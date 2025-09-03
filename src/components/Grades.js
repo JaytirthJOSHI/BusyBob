@@ -66,7 +66,6 @@ export class Grades {
         try {
             console.log('🔐 Attempting to store credentials...')
             
-            // First, check if we have a current user
             const authResult = await auth.getCurrentUser()
             console.log('Auth result:', authResult)
             
@@ -132,16 +131,13 @@ export class Grades {
                         const errorBody = await response.json();
                         errorMessage = errorBody.error || errorMessage;
                     } catch (e) {
-                        // If we can't parse the error response, use the status text
                         errorMessage = response.statusText || errorMessage;
                     }
                     
-                    // If it's the last attempt, throw the error
                     if (attempt === retries) {
                         throw new Error(errorMessage);
                     }
                     
-                    // Otherwise, wait and retry
                     console.log(`Attempt ${attempt} failed for ${action}, retrying in ${attempt * 1000}ms...`);
                     await new Promise(resolve => setTimeout(resolve, attempt * 1000));
                     continue;
@@ -159,12 +155,10 @@ export class Grades {
                     throw new Error('Invalid response format from server');
                 }
             } catch (error) {
-                // If it's the last attempt, throw the error
                 if (attempt === retries) {
                     throw error;
                 }
                 
-                // Otherwise, wait and retry
                 console.log(`Attempt ${attempt} failed for ${action}, retrying in ${attempt * 1000}ms...`);
                 await new Promise(resolve => setTimeout(resolve, attempt * 1000));
             }
@@ -184,7 +178,6 @@ export class Grades {
 
         await Promise.all(dataPromises.map(p => p.catch(e => {
             console.error('Data loading failed for one of the items:', e);
-            // The error is handled inside each load function
             return e; 
         })));
 
@@ -201,7 +194,7 @@ export class Grades {
             console.log('📊 Grades loaded:', this.grades);
         } catch (error) {
             console.error('Error loading grades:', error);
-            this.grades = -1; // -1 indicates an error
+            this.grades = -1;
             this.showMessage(`Could not load grades: ${error.message}`, 'error');
         }
     }
@@ -301,7 +294,6 @@ export class Grades {
     }
 
     renderGradesContent() {
-        // Tab navigation
         return `
             <div class="mb-4 border-b border-gray-200 dark:border-gray-700">
                 <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="studentvue-tabs" role="tablist">
@@ -422,7 +414,6 @@ export class Grades {
         
         const { Absences, TotalExcused, TotalTardies, TotalUnexcused, TotalActivities, TotalUnexcusedTardies, SchoolName } = this.attendance
 
-        // Helper function to get total from period totals
         const getTotal = (periodTotals, type = '0') => {
             if (!periodTotals || !Array.isArray(periodTotals)) return '0'
             const total = periodTotals.find(p => p.Number === type || p.Number === '0')
@@ -589,7 +580,7 @@ export class Grades {
     }
 
     renderCourseCard(course) {
-        const mark = course.marks[0] // Assuming one mark per course for simplicity
+        const mark = course.marks[0]
         const percentage = parseFloat(mark?.percentage) || 0
         const gradeColor = getGradeColor(percentage)
         const gradeClass = `text-${gradeColor}-600 dark:text-${gradeColor}-400`
@@ -628,7 +619,7 @@ export class Grades {
                         <div class="flex justify-between items-center pb-3">
                             <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Assignments for ${courseName}</h3>
                             <button id="close-assignments-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http:
                             </button>
                         </div>
                         <p class="text-gray-600 dark:text-gray-400">No assignments to display.</p>
@@ -666,7 +657,7 @@ export class Grades {
                     <div class="flex justify-between items-center pb-3">
                         <h3 class="text-2xl font-bold text-gray-900 dark:text-white">Assignments for ${courseName}</h3>
                         <button id="close-assignments-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http:
                         </button>
                     </div>
                     <div class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -686,13 +677,11 @@ export class Grades {
             return;
         }
 
-        let activeTab = 'gradebook-tab'; // Default active tab
+        let activeTab = 'gradebook-tab';
 
         console.log('Setting up event listeners for grades component');
 
-        // Use event delegation for dynamically added elements
         container.addEventListener('click', (event) => {
-            // Handle tab switching
             const tabButton = event.target.closest('[data-tabs-target]');
             if (tabButton) {
                 activeTab = tabButton.id;
@@ -702,12 +691,10 @@ export class Grades {
             if (event.target.id === 'refresh-grades') {
                 this.refreshData();
             } else if (event.target.id === 'go-to-settings') {
-                // Navigate to settings page
                 window.location.hash = '#settings';
             }
         });
 
-        // Setup for dynamically added content like modals
         document.body.addEventListener('click', (event) => {
             if (event.target.closest('#close-assignments-modal')) {
                 const modal = document.getElementById('assignments-modal');
@@ -726,7 +713,7 @@ export class Grades {
 
         if (this.isConnected) {
             console.log('User is connected, setting up initial tab state');
-            this.updateTab(activeTab); // Set the initial active tab
+            this.updateTab(activeTab);
                     } else {
             console.log('User is not connected, skipping tab setup');
         }
@@ -758,7 +745,6 @@ export class Grades {
     }
 
     async handleConnection(form) {
-        // First check if user is authenticated
         try {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) {
@@ -789,25 +775,19 @@ export class Grades {
         connectBtn.textContent = 'Connecting...'
 
         try {
-            // Set credentials for the fetch calls
             this.districtUrl = districtUrl
             this.username = username
             this.password = password
-            this.isConnected = true // Tentatively set to true
+            this.isConnected = true
 
-            // Store credentials first
             await this.storeCredentials(districtUrl, username, password)
             
-            // Now, load all data using the new proxy
             await this.loadAllData()
 
         } catch (error) {
-            // This catch is for storing credentials. Load errors are handled in loadAllData.
             this.showMessage(`Failed to save credentials: ${error.message}`, 'error')
             this.isConnected = false
         } finally {
-            // loadAllData will re-render, so we don't need to reset the button here
-            // It will be gone on the next render.
         }
     }
 

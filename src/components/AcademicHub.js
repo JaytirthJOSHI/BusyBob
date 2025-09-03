@@ -11,7 +11,6 @@ import {
 
 export class AcademicHub {
     constructor() {
-        // Canvas properties
         this.canvasClient = null
         this.canvasCourses = null
         this.canvasAssignments = null
@@ -25,7 +24,6 @@ export class AcademicHub {
         this.canvasUrl = ''
         this.canvasAccessToken = ''
 
-        // StudentVue properties
         this.studentVueClient = null
         this.studentVueGrades = null
         this.studentVueAssignments = null
@@ -37,9 +35,8 @@ export class AcademicHub {
         this.username = ''
         this.password = ''
 
-        // UI state
         this.activeTab = 'overview'
-        this.activeSystem = 'both' // 'canvas', 'studentvue', 'both'
+        this.activeSystem = 'both'
     }
 
     async init() {
@@ -47,7 +44,6 @@ export class AcademicHub {
         
         await this.loadStoredCredentials()
         
-        // Only try to load data if we have actual credentials
         if ((this.isCanvasConnected && this.canvasUrl && this.canvasAccessToken) || 
             (this.isStudentVueConnected && this.districtUrl && this.username && this.password)) {
             await this.loadAllData()
@@ -63,7 +59,6 @@ export class AcademicHub {
             const { data: { user } } = await auth.getCurrentUser()
             if (!user) return
 
-            // Load Canvas credentials
             const { data: canvasData } = await supabase
                 .from('canvas_credentials')
                 .select('*')
@@ -80,7 +75,6 @@ export class AcademicHub {
                 console.log('No valid Canvas credentials found')
             }
 
-            // Load StudentVue credentials
             const { data: studentVueData } = await supabase
                 .from('studentvue_credentials')
                 .select('*')
@@ -91,7 +85,7 @@ export class AcademicHub {
                 this.districtUrl = studentVueData.district_url
                 this.username = studentVueData.username
                 this.password = studentVueData.password
-                this.isStudentVueConnected = true
+                this.isStudentVueConnected = false // Temporarily disabled
                 console.log('StudentVue credentials loaded successfully')
             } else {
                 this.isStudentVueConnected = false
@@ -151,13 +145,11 @@ export class AcademicHub {
         this.showMessage('Academic data loaded successfully.', 'success')
     }
 
-    // Canvas data loading methods
     async fetchCanvasData(endpoint, params = {}, retries = 3) {
         if (!this.canvasUrl || !this.canvasAccessToken) {
             throw new Error('Canvas credentials are not set.')
         }
         
-        // Additional validation
         if (!this.isCanvasConnected) {
             throw new Error('Canvas is not connected.')
         }
@@ -285,7 +277,7 @@ export class AcademicHub {
         try {
             const now = new Date()
             const endDate = new Date()
-            endDate.setDate(now.getDate() + 30) // Next 30 days
+            endDate.setDate(now.getDate() + 30)
             
             this.canvasCalendarEvents = await this.fetchCanvasData('calendar', {
                 startDate: now.toISOString(),
@@ -348,13 +340,11 @@ export class AcademicHub {
         }
     }
 
-    // StudentVue data loading methods
     async fetchStudentVueData(action, retries = 3) {
         if (!this.districtUrl || !this.username || !this.password) {
             throw new Error('StudentVue credentials are not set.')
         }
         
-        // Additional validation
         if (!this.isStudentVueConnected) {
             throw new Error('StudentVue is not connected.')
         }
@@ -478,7 +468,7 @@ export class AcademicHub {
         const container = document.getElementById('academic-hub-container')
         if (!container) return
 
-        if (!this.isCanvasConnected && !this.isStudentVueConnected) {
+        if (!this.isCanvasConnected) { // StudentVue temporarily disabled
             this.renderConnectionForm()
             return
         }
@@ -1028,7 +1018,6 @@ export class AcademicHub {
         const container = document.getElementById('academic-hub-container')
         if (!container) return
 
-        // Tab navigation
         const tabs = container.querySelectorAll('#academic-tabs button')
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -1036,7 +1025,6 @@ export class AcademicHub {
             })
         })
 
-        // System selector
         const systemButtons = container.querySelectorAll('#system-both, #system-canvas, #system-studentvue')
         systemButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1046,7 +1034,6 @@ export class AcademicHub {
             })
         })
 
-        // Quick actions
         const refreshBtn = container.querySelector('#refresh-data')
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => this.refreshData())
@@ -1064,7 +1051,6 @@ export class AcademicHub {
             exportBtn.addEventListener('click', () => this.exportData())
         }
 
-        // Connection form
         const goToSettingsBtn = container.querySelector('#go-to-settings')
         if (goToSettingsBtn) {
             goToSettingsBtn.addEventListener('click', () => {
@@ -1072,7 +1058,6 @@ export class AcademicHub {
             })
         }
 
-        // Set initial tab
         this.updateTab('overview-tab')
     }
 
@@ -1127,7 +1112,6 @@ export class AcademicHub {
         const container = document.getElementById('academic-hub-container')
         if (!container) return
 
-        // Re-render the active tab content based on the selected system
         const activeTabContent = container.querySelector(`#${this.activeTab}`)
         if (activeTabContent) {
             switch (this.activeTab) {
@@ -1192,7 +1176,6 @@ export class AcademicHub {
     }
 
     showMessage(message, type = 'info') {
-        // Create a simple toast notification
         const toast = document.createElement('div')
         toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 ${
             type === 'success' ? 'bg-green-500 text-white' :
