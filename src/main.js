@@ -1307,7 +1307,11 @@ async function handleTaskSubmit(event) {
         const { data, error } = await db.createTask(taskData)
         if (error) throw error
         
-        tasks.push(data[0])
+        // Handle both array and single object responses
+        const newTask = Array.isArray(data) ? data[0] : data
+        if (newTask) {
+            tasks.push(newTask)
+        }
         renderTasks()
         
         // Update calendar

@@ -19,9 +19,18 @@ if (!getEnvVar('VITE_SUPABASE_URL') || !getEnvVar('VITE_SUPABASE_ANON_KEY')) {
   console.warn('Missing Supabase environment variables. Using placeholder values.')
   console.log('VITE_SUPABASE_URL:', getEnvVar('VITE_SUPABASE_URL') ? 'Set' : 'Missing')
   console.log('VITE_SUPABASE_ANON_KEY:', getEnvVar('VITE_SUPABASE_ANON_KEY') ? 'Set' : 'Missing')
+} else {
+  console.log('✅ Supabase environment variables loaded successfully')
+  console.log('Supabase URL:', supabaseUrl)
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
 
 // Auth helpers
 export const auth = {
@@ -87,11 +96,15 @@ export const auth = {
 
   getCurrentUser: async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      return { data: { user } }
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error && error.message?.includes('access control')) {
+        console.warn('CORS issue detected, user might not be authenticated')
+        return { data: { user: null }, error: null }
+      }
+      return { data: { user }, error }
     } catch (err) {
       console.error('GetCurrentUser error:', err)
-      return { data: { user: null } }
+      return { data: { user: null }, error: err }
     }
   },
 
