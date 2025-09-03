@@ -440,6 +440,8 @@ export class PomodoroTimer {
   }
 
   async awardPoints(points, reason) {
+    // Points system disabled
+    return
     try {
       const { data: { user } } = await auth.getCurrentUser()
       if (!user) return

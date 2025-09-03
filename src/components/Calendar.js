@@ -419,11 +419,7 @@ export class Calendar {
     const taskData = {
       title: formData.get('title'),
       description: formData.get('description'),
-      category: formData.get('category'),
-      priority: formData.get('priority'),
       due_date: formData.get('due_date'),
-      due_time: formData.get('due_time'),
-      stress_level: 3,
       completed: false
     }
     
@@ -590,26 +586,12 @@ export class Calendar {
                   class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
               </div>
               
-              <div>
-                <label for="calendar-task-category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-                <select name="category" id="calendar-task-category"
-                  class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <option value="general">General</option>
-                  <option value="study">Study</option>
-                  <option value="work">Work</option>
-                  <option value="personal">Personal</option>
-                  <option value="health">Health</option>
-                </select>
-              </div>
+              <!-- Category and priority fields removed - not in database schema -->
               
-              <div>
-                <label for="calendar-task-priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
-                <select name="priority" id="calendar-task-priority"
-                  class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <option value="low">Low</option>
-                  <option value="medium" selected>Medium</option>
-                  <option value="high">High</option>
-                </select>
+              <div class="sm:col-span-2">
+                <label for="calendar-task-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description (Optional)</label>
+                <textarea name="description" id="calendar-task-description" rows="2"
+                  class="form-input mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
               </div>
               
               <div>

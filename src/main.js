@@ -3,7 +3,7 @@ import { db } from './lib/offline-db.js'
 import { Calendar } from './components/Calendar.js'
 import { EnhancedAIAgent } from './components/EnhancedAIAgent.js'
 import { PomodoroTimer } from './components/PomodoroTimer.js'
-import { PointsSystem } from './components/PointsSystem.js'
+// import { PointsSystem } from './components/PointsSystem.js' 
 import { AuthPages } from './components/AuthPages.js'
 import { Navigation } from './components/Navigation.js'
 import { LandingPage } from './components/LandingPage.js'
@@ -15,12 +15,12 @@ import { PrivacyPolicy } from './components/PrivacyPolicy.js'
 import { TermsOfService } from './components/TermsOfService.js'
 import { theme, dateUtils, taskUtils, ui, animations, validation } from './utils/helpers.js'
 import { kidMode } from './utils/kid-mode.js'
-// import { offlineStatus } from './components/OfflineStatus.js' // Disabled offline functionality
+// import { offlineStatus } from './components/OfflineStatus.js' 
 import { Chart } from 'chart.js/auto'
 
 console.log('🚀 Main.js loaded - starting initialization...')
 
-// Global state
+
 let currentUser = null
 let tasks = []
 let journalEntries = []
@@ -73,10 +73,10 @@ const moodManager = {
             ui.showMessage("Mood logged successfully!", "success")
 
 
-            if (window.pointsSystem) {
+            if (false && window.pointsSystem) {
                 try {
-                    const points = window.pointsSystem.getPointValue('moodLogged')
-                    await window.pointsSystem.awardPoints(points, 'Mood logged', 'mood')
+                    const points = false && window.pointsSystem.getPointValue('moodLogged')
+                    await false && window.pointsSystem.awardPoints(points, 'Mood logged', 'mood')
                 } catch (pointsError) {
                     console.error('Error awarding points for mood:', pointsError)
                 }
@@ -243,15 +243,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function initializeApp() {
     try {
-        console.log('🔧 Starting app initialization...')
-        
-        // Check for direct URL access to legal pages
+        console.log('Starting app initialization...')
+
         const path = window.location.pathname
         if (path === '/privacy-policy' || path === '/terms-of-service') {
             const page = path === '/privacy-policy' ? 'privacy-policy' : 'terms-of-service'
             console.log(`📄 Direct access to ${page} detected`)
-            
-            // Initialize components needed for legal pages
+
                     console.log('📦 Creating components...')
         authPages = new AuthPages()
         navigation = new Navigation()
@@ -307,10 +305,10 @@ async function initializeApp() {
         // Initialize gamification systems
         console.log('🎮 Initializing gamification systems...')
         try {
-            pointsSystem = new PointsSystem()
-            await pointsSystem.init()
-            window.pointsSystem = pointsSystem
-            console.log('✅ Points System initialized')
+            // pointsSystem = new PointsSystem() // Disabled points system
+            // await pointsSystem.init()
+            // false && window.pointsSystem = pointsSystem
+            console.log('✅ Points System disabled')
 
             pomodoroTimer = new PomodoroTimer()
             await pomodoroTimer.init()
@@ -934,8 +932,8 @@ function showPage(pageName) {
     }
     
     // Control points widget visibility
-    if (window.pointsSystem) {
-        window.pointsSystem.showInSection(pageName)
+    if (false && window.pointsSystem) {
+        false && window.pointsSystem.showInSection(pageName)
     }
     
     // Load page-specific data
@@ -1156,7 +1154,6 @@ function createCalendarTaskHTML(task) {
                         <h3 class="font-medium text-gray-900 dark:text-white ${task.completed ? 'line-through opacity-75' : ''} text-sm break-words">${task.title}</h3>
                         ${task.description ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${task.description}</p>` : ''}
                         <div class="flex flex-wrap items-center gap-2 mt-2">
-                            <span class="text-xs px-2 py-1 rounded-full ${taskUtils.getCategoryColor(task.category)} whitespace-nowrap">${task.category}</span>
                             ${task.due_date ? `<span class="text-xs text-gray-500 dark:text-gray-400">
                                 ${dateUtils.formatDateTime(task.due_date, task.due_time)}
                             </span>` : ''}
@@ -1302,11 +1299,7 @@ async function handleTaskSubmit(event) {
     const taskData = {
         title: formData.get('title'),
         description: formData.get('description') || '',
-        category: 'general',
-        priority: 'medium',
         due_date: null,
-        due_time: null,
-        stress_level: 3,
         completed: false
     }
     
@@ -1351,19 +1344,19 @@ async function handleReflectionSubmit(event) {
         await db.addJournalEntry(content)
         
         // Award points for journal entry
-        if (window.pointsSystem) {
+        if (false && window.pointsSystem) {
             try {
                 const wordCount = content.trim().split(/\s+/).length
-                let points = window.pointsSystem.getPointValue('journalEntry')
+                let points = false && window.pointsSystem.getPointValue('journalEntry')
                 let reason = 'Journal entry created'
                 
                 // Bonus points for longer entries
                 if (wordCount >= 50) {
-                    points = window.pointsSystem.getPointValue('longJournalEntry')
+                    points = false && window.pointsSystem.getPointValue('longJournalEntry')
                     reason = 'Long journal entry created'
                 }
                 
-                await window.pointsSystem.awardPoints(points, reason, 'journal')
+                await false && window.pointsSystem.awardPoints(points, reason, 'journal')
             } catch (pointsError) {
                 console.error('Error awarding points for journal:', pointsError)
             }
