@@ -120,6 +120,11 @@ export class EnhancedAIAgent {
   }
 
   createEnhancedUI() {
+    // COMPLETELY DISABLED: Enhanced AI Agent UI creation commented out
+    console.log('Enhanced AI Agent UI creation disabled - no button will be shown')
+    return
+    
+    /*
     const agentHTML = `
       <button id="enhanced-ai-toggle" class="enhanced-ai-toggle">
         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,6 +160,7 @@ export class EnhancedAIAgent {
     `
     
     document.body.insertAdjacentHTML('beforeend', agentHTML)
+    */
   }
 
   attachEventListeners() {

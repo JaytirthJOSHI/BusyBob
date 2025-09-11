@@ -202,6 +202,11 @@ export class AIAgent {
   }
 
   createAIAgentHTML() {
+    // COMPLETELY DISABLED: AI Agent UI creation commented out
+    console.log('AI Agent UI creation disabled - no button will be shown')
+    return
+    
+    /*
     if (document.getElementById('ai-agent-toggle')) {
       console.log('AI Agent already exists, skipping creation')
       return
@@ -286,6 +291,7 @@ export class AIAgent {
     } catch (error) {
       console.error('❌ Error creating AI Agent HTML:', error)
     }
+    */
   }
 
   attachEventListeners() {
