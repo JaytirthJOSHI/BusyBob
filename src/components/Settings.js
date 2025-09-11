@@ -20,7 +20,7 @@ export class Settings {
     async init() {
         console.log('Initializing Settings component...')
         await this.loadConnectedAccounts()
-        await this.loadKidModeSettings()
+        // await this.loadKidModeSettings() // Removed Kid Mode functionality
         this.render()
         this.setupEventListeners()
     }
@@ -122,23 +122,17 @@ export class Settings {
                     <div class="p-6">
                         <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Account Information</h2>
                         <div class="space-y-4">
-                            <div class="flex items-center justify-between">
+                            <div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Email</p>
                                     <p class="text-gray-900 dark:text-white" id="user-email">Loading...</p>
                                 </div>
-                                <button class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
-                                    Change
-                                </button>
                             </div>
-                            <div class="flex items-center justify-between">
+                            <div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Password</p>
                                     <p class="text-gray-900 dark:text-white">••••••••</p>
                                 </div>
-                                <button class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
-                                    Change
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -197,14 +191,6 @@ export class Settings {
                     </div>
                 </div>
 
-                <!-- Kid Mode Settings -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-                    <div class="p-6">
-                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">🛡️ Kid Mode</h2>
-                        <p class="text-gray-600 dark:text-gray-400 mb-6">Safe mode for users under 13 with restricted features and parental controls.</p>
-                        ${this.renderKidModeSettings()}
-                    </div>
-                </div>
 
                 <!-- Interface Customization -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
@@ -325,54 +311,10 @@ export class Settings {
                                     </button>
                                 </div>
                             </div>
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white">Timezone</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Select your local timezone</p>
-                                </div>
-                                <select id="timezone-selector" class="form-input mt-1 block w-full max-w-xs rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm">
-                                    <option>Loading timezones...</option>
-                                </select>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white">Show Grades Tab</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Show or hide the Grades tab in the navigation bar</p>
-                                </div>
-                                <button id="grades-tab-toggle" class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors">
-                                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
-                                </button>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white">Notifications</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Manage your notification preferences</p>
-                                </div>
-                                <button class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
-                                    Configure
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Danger Zone -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-red-200 dark:border-red-800 mb-6">
-                    <div class="p-6">
-                        <h2 class="text-xl font-semibold text-red-600 dark:text-red-400 mb-4">Danger Zone</h2>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white">Delete Account</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Permanently delete your account and all data</p>
-                                </div>
-                                <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                                    Delete Account
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Legal -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
@@ -414,8 +356,8 @@ export class Settings {
         `
 
         this.loadUserEmail();
-        this.loadTimezones();
-        this.updateGradesToggleVisual();
+        // this.loadTimezones(); // Removed timezone functionality
+        // this.updateGradesToggleVisual(); // Removed grades toggle functionality
         this.loadOfflineStorageStatus();
         this.loadInterfaceSettings();
     }
@@ -581,6 +523,8 @@ export class Settings {
         `;
     }
 
+    // REMOVED: Kid Mode functionality
+    /*
     renderKidModeSettings() {
         const settings = this.kidModeSettings || {}
         const isEnabled = settings.enabled || false
@@ -692,6 +636,7 @@ export class Settings {
             </div>
         `
     }
+    */ // End of commented Kid Mode functionality
 
     setupEventListeners() {
         const container = document.getElementById('settings-container')
@@ -708,9 +653,7 @@ export class Settings {
             if (event.target.id === 'privacy-policy-link') this.showPrivacyPolicy();
             if (event.target.id === 'terms-of-service-link') this.showTermsOfService();
             
-            if (event.target.id === 'save-dob-btn') this.saveDateOfBirth();
-            if (event.target.id === 'enable-kid-mode-btn') this.enableKidMode();
-            if (event.target.id === 'disable-kid-mode-btn') this.showDisableKidModeModal();
+            // Kid Mode functionality removed
         });
 
         this.loadUserEmail()
@@ -724,24 +667,8 @@ export class Settings {
             })
         }
 
-        const timezoneSelector = container.querySelector('#timezone-selector');
-        if (timezoneSelector) {
-            timezoneSelector.addEventListener('change', (e) => {
-                localStorage.setItem('timezone', e.target.value);
-                window.dispatchEvent(new Event('timezoneChange'));
-            });
-        }
-
-        const gradesTabToggle = container.querySelector('#grades-tab-toggle');
-        if (gradesTabToggle) {
-            this.updateGradesToggleVisual();
-            gradesTabToggle.addEventListener('click', () => {
-                const isEnabled = localStorage.getItem('showGradesTab') !== 'false';
-                localStorage.setItem('showGradesTab', !isEnabled);
-                this.updateGradesToggleVisual();
-                window.dispatchEvent(new Event('settingsChange'));
-            });
-        }
+        // Timezone and grades tab functionality removed
+        // Grades tab toggle functionality removed
 
         document.getElementById('connect-google-btn')?.addEventListener('click', () => this.connectGoogle())
         document.getElementById('disconnect-google-btn')?.addEventListener('click', () => this.disconnectGoogle())
@@ -922,6 +849,8 @@ export class Settings {
         }, 3000)
     }
 
+    // REMOVED: Grades toggle functionality
+    /*
     updateGradesToggleVisual() {
         const gradesTabToggle = document.getElementById('grades-tab-toggle');
         if (!gradesTabToggle) return;
@@ -941,7 +870,10 @@ export class Settings {
             slider.classList.remove('translate-x-6');
         }
     }
+    */ // End of grades toggle functionality
 
+    // REMOVED: Timezone functionality
+    /*
     async loadTimezones() {
         const selector = document.getElementById('timezone-selector');
         if (!selector) return;
@@ -963,6 +895,7 @@ export class Settings {
             selector.innerHTML = '<option>Could not load timezones</option>';
         }
     }
+    */ // End of timezone functionality
 
     showCanvasConnectionModal() {
         const modal = document.createElement('div');
@@ -1215,6 +1148,8 @@ export class Settings {
         }
     }
 
+    // REMOVED: Kid Mode functionality
+    /*
     async saveDateOfBirth() {
         const dobInput = document.getElementById('kid-mode-dob')
         if (!dobInput) return
@@ -1361,11 +1296,18 @@ export class Settings {
             this.showMessage(error.message || 'Failed to disable Kid Mode', 'error')
         }
     }
+    */ // End of Kid Mode functionality
 
     async loadOfflineStorageStatus() {
         try {
+            // Check if getStatus method exists
+            if (typeof db.getStatus !== 'function') {
+                console.log('Offline storage status not available (simplified mode)')
+                return
+            }
+            
             const status = await db.getStatus()
-            const diagnostics = await db.getDiagnostics()
+            const diagnostics = typeof db.getDiagnostics === 'function' ? await db.getDiagnostics() : {}
             
             const statusContainer = document.getElementById('offline-storage-status')
             if (!statusContainer) return
@@ -1449,12 +1391,13 @@ export class Settings {
             this.setupOfflineStorageActions()
 
         } catch (error) {
-            console.error('Error loading offline storage status:', error)
+            // Silently handle storage status errors - don't show error notifications
+            console.log('Storage status not available:', error.message)
             const statusContainer = document.getElementById('offline-storage-status')
             if (statusContainer) {
                 statusContainer.innerHTML = `
-                    <div class="text-red-600 dark:text-red-400 text-sm">
-                        Failed to load storage status: ${error.message}
+                    <div class="text-gray-500 dark:text-gray-400 text-sm">
+                        Storage status not available in current mode
                     </div>
                 `
             }

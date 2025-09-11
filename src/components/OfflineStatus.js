@@ -274,8 +274,18 @@ export class OfflineStatus {
 
         if (!indicator || !statusText || !syncText) return
 
-        const dbStatus = await db.getStatus()
-        this.syncQueueCount = dbStatus.offlineStatus?.syncQueueLength || 0
+        try {
+            // Check if getStatus method exists before calling
+            if (typeof db.getStatus === 'function') {
+                const dbStatus = await db.getStatus()
+                this.syncQueueCount = dbStatus.offlineStatus?.syncQueueLength || 0
+            } else {
+                this.syncQueueCount = 0
+            }
+        } catch (error) {
+            // Silently handle status errors
+            this.syncQueueCount = 0
+        }
 
         const indicatorClass = 'w-3 h-3 rounded-full'
         indicator.className = indicatorClass

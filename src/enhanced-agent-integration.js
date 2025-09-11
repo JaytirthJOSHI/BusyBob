@@ -24,8 +24,11 @@ import { EnhancedAIAgent } from './components/EnhancedAIAgent.js'
 
 
 export function initializeEnhancedAI() {
-
-  window.enhancedAI = new EnhancedAIAgent()
+  // COMMENTED OUT TO PREVENT ERRORS
+  console.log('Enhanced AI initialization disabled to prevent errors')
+  return
+  
+  // window.enhancedAI = new EnhancedAIAgent()
   
 
   document.addEventListener('busybob:task-created', (event) => {
