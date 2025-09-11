@@ -47,7 +47,7 @@
     "@supabase/supabase-js": "^2.57.0",
     "chart.js": "^4.5.0",
     "express": "^4.18.2",
-    "express-session": "^1.18.1",
+    "express-session": "^1.18.2",
     "googleapis": "^133.0.0",
     "ical": "^0.8.0",
     "node-fetch": "^3.3.2",
@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.0",
-    "vite": "^5.4.19"
+    "vite": "^7.1.5"
   },
   "engines": {
     "node": ">=18.0.0",
